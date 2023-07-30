@@ -1,7 +1,8 @@
-import { App, Editor, MarkdownView, Modal, Notice, Plugin } from 'obsidian';
+import { App, Editor, MarkdownView, Modal, Notice, Plugin, setIcon } from 'obsidian';
 import { NostrModal} from './src/NostrModal';
 import { NostrWriterSettingTab, loadSettings , settings} from "./src/settings";
 import NostrTools from "./src/nostr/NostrTools";
+
 
 
 // interface NostrWriterPluginSettings {
@@ -23,9 +24,9 @@ export default class NostrWriterPlugin extends Plugin {
 		// This adds a settings tab so the user can configure various aspects of the plugin
 		this.addSettingTab(new NostrWriterSettingTab(this.app, this));
 
-
+	
 		// This creates an icon in the left ribbon.
-		const ribbonIconEl = this.addRibbonIcon('dice', 'Sample Plugin', (evt: MouseEvent) => {
+		const ribbonIconEl = this.addRibbonIcon('pencil', 'Publish To Nostr', (evt: MouseEvent) => {
 			// Called when the user clicks the icon.
 			new Notice('Hello Youuuuu!');
 		});
@@ -34,7 +35,9 @@ export default class NostrWriterPlugin extends Plugin {
 
 		// This adds a status bar item to the bottom of the app. Does not work on mobile apps.
 		const statusBarItemEl = this.addStatusBarItem();
-		statusBarItemEl.setText('Status Bar Text');
+		statusBarItemEl.setText('Status Bar Text XXX');
+		const item = this.addStatusBarItem();
+		setIcon(item, "info");
 
 		// This adds a simple command that can be triggered anywhere
 		this.addCommand({
@@ -46,6 +49,28 @@ export default class NostrWriterPlugin extends Plugin {
 				  }).open();
 			}
 		});
+
+		this.addCommand({
+            id: 'get-file-content',
+            name: 'Get File Content',
+            callback: async () => {
+                const file = this.app.workspace.getActiveFile();
+
+                if (!file) {
+                    new Notice('No active file.');
+                    return;
+                }
+
+                try {
+                    const content = await this.app.vault.read(file);
+                    new Notice(content); // Display file content in a notice
+                    // Send the content somewhere
+                } catch (err) {
+                    console.error(`Failed to read file: ${file.path}`, err);
+                }
+            },
+        });
+    
 
 		
 		// This adds an editor command that can perform some operation on the current editor instance
