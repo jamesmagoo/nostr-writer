@@ -1,24 +1,28 @@
-import { App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
+import { App, Editor, MarkdownView, Modal, Notice, Plugin } from 'obsidian';
 import { NostrModal} from './src/NostrModal';
-import { NostrWriterSettingTab } from "./src/settings";
+import { NostrWriterSettingTab, loadSettings , settings} from "./src/settings";
+import NostrTools from "./src/nostr/NostrTools";
 
 
-interface NostrWriterPluginSettings {
-	mySetting: string;
-	npub: string;
+// interface NostrWriterPluginSettings {
+// 	mySetting: string;
+// 	npub: string;
+// 	anotherSetting: string;
+// }
 
-}
-
-export const DEFAULT_SETTINGS: NostrWriterPluginSettings = {
-	mySetting: 'default',
-	npub: 'Nostr Public Key'
-}
+// export const DEFAULT_SETTINGS: NostrWriterPluginSettings = {
+// 	mySetting: 'default',
+// 	anotherSetting: 'blah blh',
+// 	npub: 'npub'
+// }
 
 export default class NostrWriterPlugin extends Plugin {
-	settings: NostrWriterPluginSettings;
-
 	async onload() {
-		await this.loadSettings();
+		//await this.loadSettings();
+		await loadSettings(this);
+		// This adds a settings tab so the user can configure various aspects of the plugin
+		this.addSettingTab(new NostrWriterSettingTab(this.app, this));
+
 
 		// This creates an icon in the left ribbon.
 		const ribbonIconEl = this.addRibbonIcon('dice', 'Sample Plugin', (evt: MouseEvent) => {
@@ -54,8 +58,7 @@ export default class NostrWriterPlugin extends Plugin {
 			}
 		});
 
-		// This adds a settings tab so the user can configure various aspects of the plugin
-		this.addSettingTab(new NostrWriterSettingTab(this.app, this));
+		
 
 		// If the plugin hooks up any global DOM events (on parts of the app that doesn't belong to this plugin)
 		// Using this function will automatically remove the event listener when this plugin is disabled.
@@ -71,11 +74,11 @@ export default class NostrWriterPlugin extends Plugin {
 
 	}
 
-	async loadSettings() {
-		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
-	}
+	// async loadSettings() {
+	// 	this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+	// }
 
-	async saveSettings() {
-		await this.saveData(this.settings);
-	}
+	// async saveSettings() {
+	// 	await this.saveData(this.settings);
+	// }
 }
