@@ -1,7 +1,6 @@
 import { App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
-import {NostrModal} from './src/NostrModal';
+import { NostrModal} from './src/NostrModal';
 import { NostrWriterSettingTab } from "./src/settings";
-
 
 
 interface NostrWriterPluginSettings {
@@ -10,7 +9,7 @@ interface NostrWriterPluginSettings {
 
 }
 
-const DEFAULT_SETTINGS: NostrWriterPluginSettings = {
+export const DEFAULT_SETTINGS: NostrWriterPluginSettings = {
 	mySetting: 'default',
 	npub: 'Nostr Public Key'
 }
@@ -55,26 +54,6 @@ export default class NostrWriterPlugin extends Plugin {
 			}
 		});
 
-		// This adds a complex command that can check whether the current state of the app allows execution of the command
-		this.addCommand({
-			id: 'open-sample-modal-complex',
-			name: 'Open sample modal (complex)',
-			checkCallback: (checking: boolean) => {
-				// Conditions to check
-				const markdownView = this.app.workspace.getActiveViewOfType(MarkdownView);
-				if (markdownView) {
-					// If checking is true, we're simply "checking" if the command can be run.
-					// If checking is false, then we want to actually perform the operation.
-					if (!checking) {
-						new SampleModal(this.app).open();
-					}
-
-					// This command will only show up in Command Palette when the check function returns true
-					return true;
-				}
-			}
-		});
-
 		// This adds a settings tab so the user can configure various aspects of the plugin
 		this.addSettingTab(new NostrWriterSettingTab(this.app, this));
 
@@ -98,21 +77,5 @@ export default class NostrWriterPlugin extends Plugin {
 
 	async saveSettings() {
 		await this.saveData(this.settings);
-	}
-}
-
-class SampleModal extends Modal {
-	constructor(app: App) {
-		super(app);
-	}
-
-	onOpen() {
-		const {contentEl} = this;
-		contentEl.setText('Woah!');
-	}
-
-	onClose() {
-		const {contentEl} = this;
-		contentEl.empty();
 	}
 }

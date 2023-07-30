@@ -1,17 +1,6 @@
 import NostrWriterPlugin from "../main";
 import { App, PluginSettingTab, Setting } from "obsidian";
 
-interface NostrWriterPluginSettings {
-	mySetting: string;
-	npub: string;
-
-}
-
-const DEFAULT_SETTINGS: NostrWriterPluginSettings = {
-	mySetting: 'default',
-	npub: 'Nostr Public Key'
-}
-
 export class NostrWriterSettingTab extends PluginSettingTab {
   plugin: NostrWriterPlugin;
 
