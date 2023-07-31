@@ -1,6 +1,6 @@
 import NostrWriterPlugin from "../main";
 import { App, PluginSettingTab, Setting, Plugin} from "obsidian";
-import NostrTools from "./nostr/NostrTools";
+import NostrTools from "./nostr/NostrService";
 
 interface NostrWriterPluginSettings {
 	mySetting: string;
