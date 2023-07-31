@@ -2,11 +2,12 @@
 > Directly publish from Obsidian to Nostr 
 
 ## A Match Made..
-Obsidian is an amazing markdown editor, note organiser, and idea synthesiser: the perfect tool for writers. 
+**Obsidian** is an amazing markdown editor, word processor, note organiser, and idea synthesiser: the perfect tool for writers. 
 
-Nostr represents the future of how we communicate and distribute the written word - decentralised, free, independent, incorruptable. 
+**Nostr** represents the future of how we communicate and distribute the written word - decentralised, free, independent, incorruptable. 
 
-They seem to me to be a match made in heaven. 
+They seem to me to be a match made in heaven...
+[![Did We Just Become Best Friends?](./docs/stepbros.png)](https://www.youtube.com/watch?v=3-ZUDtaGf3I)
 
 ## For Writers
 > This tool is low-friction..
