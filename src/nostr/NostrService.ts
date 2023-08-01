@@ -12,31 +12,30 @@ import {
 	relayInit,
 } from "nostr-tools";
 import { TFile } from "obsidian";
+import { NostrWriterPluginSettings } from "src/settings";
 
 export default class NostrService {
 	private relay?: Relay;
 	private privateKey: string;
 	private publicKey: string;
 
-	constructor(relayUrl: string) {
+	constructor(relayUrl: string, settings: NostrWriterPluginSettings) {
 		console.log(`Initializing NostrService. with relayUrl: ${relayUrl}`);
 		const basePath = (app.vault.adapter as any).basePath;
-		console.log(`basePath: ${basePath}`);
+		// Check if the public and private keys are set
+		if (!settings.privateKey) {
+			console.error(
+				"YourPlugin requires a private key to be set in the settings."
+			);
+			return;
+		}
 		dotenv.config({
 			path: `${basePath}/.obsidian/plugins//.env`,
 			debug: false,
 		});
-		console.log(process.env);
-		let key = "PRIVATE_KEY_NOSTR";
-		console.log(process.env[key]);
 		this.relay = relayInit(relayUrl);
-		this.privateKey = this.getEnvVar("PRIVATE_KEY_NOSTR");
-		console.log(`private key: ${this.privateKey}`);
+		this.privateKey = this.convertKeyToHex(settings.privateKey);
 		this.publicKey = getPublicKey(this.privateKey);
-		// try plugin
-		/**
-		 * Conencton to relay
-		 */
 		this.relay = relayInit(relayUrl);
 
 		this.relay.on("connect", () => {
@@ -73,23 +72,6 @@ export default class NostrService {
 
 	public getPublicKey(): string {
 		return this.publicKey;
-	}
-
-	// access your private key
-	getEnvVar(key: string): string {
-		//const value = process.env[key];
-		const value = process.env[key];
-		if (value && value.startsWith("nsec")) {
-			// need to convert to hex
-			console.log(`Converting ${value} to hex`);
-			let decodedPrivateKey = nip19.decode(value);
-			console.log(decodedPrivateKey.data);
-			return decodedPrivateKey.data as string;
-		}
-		if (!value) {
-			throw new Error(`Environment variable ${key} not found`);
-		}
-		return value;
 	}
 
 	async publishNote(fileContent: string, activeFile: TFile) {
@@ -159,5 +141,29 @@ export default class NostrService {
 				return false;
 			}
 		}
+	}
+
+	convertKeyToHex(value: string): string {
+		if (value && value.startsWith("nsec")) {
+			let decodedPrivateKey = nip19.decode(value);
+			return decodedPrivateKey.data as string;
+		}
+		if (value && value.startsWith("npub")) {
+			let decodedPublicKey = nip19.decode(value);
+			return decodedPublicKey.data as string;
+		}
+		return value;
+	}
+
+	getEnvVar(key: string): string {
+		const value = process.env[key];
+		if (value && value.startsWith("nsec")) {
+			let decodedPrivateKey = nip19.decode(value);
+			return decodedPrivateKey.data as string;
+		}
+		if (!value) {
+			throw new Error(`Environment variable ${key} not found`);
+		}
+		return value;
 	}
 }

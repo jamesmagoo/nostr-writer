@@ -4,7 +4,7 @@
 	"version": "0.0.1",
 	"minAppVersion": "0.15.0",
 	"description": "Publish your writing directly to Nostr..",
-	"author": "jamesmagoo",
+	"author": "James McGauran",
 	"authorUrl": "https://github.com/jamesmagoo",
 	"fundingUrl": {
 		"Buy Me a Coffee" : "https://bmc.link/jamesmagoo"},
