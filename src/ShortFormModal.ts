@@ -19,31 +19,31 @@ export default class ShortFormModal extends Modal {
 	async onOpen() {
 		let { contentEl } = this;
         contentEl.createEl("h2", { text: `Write A Short Note` });
-        let noteInfo = contentEl.createEl("p");
-        noteInfo.setText(`Write a short note to Nostr...`);
+        // let noteInfo = contentEl.createEl("p");
+        // noteInfo.setText(`Write a short note to Nostr...`);
 		let summaryText = new TextAreaComponent(contentEl)
-			.setPlaceholder("Enter a short note here...")
+			.setPlaceholder("Write a Nostr message here...")
 			.setValue("")
 
 		contentEl.createEl("p", {
-			text: `Are you sure you want to publish this note to Nostr?`,
+			text: `Are you sure you want to send this message to Nostr?`,
 		});
 
 		let publishButton = new ButtonComponent(contentEl)
-			.setButtonText("Confirm and Publish")
+			.setButtonText("Confirm and Send")
 			.setCta()
 			.onClick(async () => {
 				// Disable the button and change the text to show a loading state
                 if(summaryText.getValue().length > 1) {
-				publishButton.setButtonText("Publishing...").setDisabled(true);
+				publishButton.setButtonText("Sendinf...").setDisabled(true);
 				setTimeout(async () => {
 					// After 3 seconds, execute the publishing action
 					const summary = summaryText.getValue();
 					const success = await this.nostrService.publishShortFormNote(summary);
 					if (success) {
-						new Notice(`Successfully published note to Nostr.`);
+						new Notice(`Successfully sent note to Nostr.`);
 					} else {
-						new Notice(`Failed to publish note to Nostr.`);
+						new Notice(`Failed to send note to Nostr.`);
 					}
 
 					// Change the button text back and enable it

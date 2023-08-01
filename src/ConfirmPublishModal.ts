@@ -29,7 +29,7 @@ export default class ConfirmPublishModal extends Modal {
 		noteInfo.setText(`Title: ${noteTitle}, Words: ${noteWordCount}`);
 
 		let summaryText = new TextAreaComponent(contentEl)
-			.setPlaceholder("Enter a brief one line summary here...(optional)")
+			.setPlaceholder("Enter a brief summary here...(optional)")
 			.setValue("")
 
 		contentEl.createEl("p", {
