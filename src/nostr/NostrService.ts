@@ -79,7 +79,8 @@ export default class NostrService {
 		console.log(`trying to publish short form note from NostrService...`);
 		// TODO some validation here on the file content .. no html etc
 		if (message) {
-			let tags: any;
+			let uuid: any = uuidv4().substr(0, 8);
+			let tags: any = [["d", uuid]];
 			let eventTemplate: EventTemplate<Kind.Text> = {
 				kind: 1,
 				created_at: Math.floor(Date.now() / 1000),

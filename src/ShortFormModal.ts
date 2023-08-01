@@ -35,7 +35,7 @@ export default class ShortFormModal extends Modal {
 			.onClick(async () => {
 				// Disable the button and change the text to show a loading state
                 if(summaryText.getValue().length > 1) {
-				publishButton.setButtonText("Sendinf...").setDisabled(true);
+				publishButton.setButtonText("Sending...").setDisabled(true);
 				setTimeout(async () => {
 					// After 3 seconds, execute the publishing action
 					const summary = summaryText.getValue();
