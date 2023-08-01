@@ -35,6 +35,8 @@ export default class ConfirmPublishModal extends Modal {
 			text: `Are you sure you want to publish this note to Nostr?`,
 		});
 
+		// TODO Add Image URL input field here
+
 		let publishButton = new ButtonComponent(contentEl)
 			.setButtonText("Confirm and Publish")
 			.setCta()
@@ -43,21 +45,15 @@ export default class ConfirmPublishModal extends Modal {
 				publishButton.setButtonText("Publishing...").setDisabled(true);
 
 				setTimeout(async () => {
-					// After 3 seconds, execute the publishing action
-					const fileContent = await this.app.vault.read(this.file);
-					const summary = summaryText.getValue();
-					const success = await this.nostrService.publishNote(
-						fileContent,
-						this.file,
-						summary // assume your publishNote method takes a third parameter as summary
-					);
-					if (success) {
+					try {
+						const fileContent = await this.app.vault.read(this.file);
+						const summary = summaryText.getValue();
+						await this.nostrService.publishNote(fileContent, this.file, summary); 
+						// await will pause execution until the Promise resolves or rejects
 						new Notice(`Successfully published note to Nostr.`);
-					} else {
+					} catch (error) {
 						new Notice(`Failed to publish note to Nostr.`);
 					}
-
-					// Change the button text back and enable it
 					publishButton
 						.setButtonText("Confirm and Publish")
 						.setDisabled(false);

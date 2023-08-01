@@ -13,6 +13,7 @@ import {
 } from "nostr-tools";
 import { TFile } from "obsidian";
 import { NostrWriterPluginSettings } from "src/settings";
+import { v4 as uuidv4 } from "uuid";
 
 export default class NostrService {
 	private relay?: Relay;
@@ -78,11 +79,8 @@ export default class NostrService {
 		console.log(`trying to publish short form note from NostrService...`);
 		// TODO some validation here on the file content .. no html etc
 		if (message) {
-			// TODO figure out how to do this tag - should be unique
-			let tags: any = [["d", "vvv9438js"]];
-			tags.push(["summary", message]);
+			let tags: any;
 			let eventTemplate: EventTemplate<Kind.Text> = {
-				//kind: 30023, // TODO after init testing
 				kind: 1,
 				created_at: Math.floor(Date.now() / 1000),
 				tags: tags,
@@ -121,20 +119,26 @@ export default class NostrService {
 				console.error(error);
 				return false;
 			}
-		}}
+		}
+	}
 
 	async publishNote(fileContent: string, activeFile: TFile, summary: string) {
 		console.log(`trying to publish note from NostrService...`);
 		// TODO some validation here on the file content .. no html etc
 		if (fileContent) {
-			// TODO figure out how to do this tag - should be unique
-			// think its used for editing long-from nip23 notes
-			let tags: any = [["d", "vvv9438js"]];
+			/**
+			 * Generate id for d tag, allows editing later
+			 */
+			let uuid: any = uuidv4().substr(0, 8);
+			let tags: any = [["d", uuid]];
 
-			if(summary){
+			if (summary) {
 				console.log(`summary: ${summary}`);
 				tags.push(["summary", summary]);
 			}
+
+			let timestamp = Math.floor(Date.now() / 1000);
+			tags.push(["published_at", timestamp.toString()]);
 
 			const regex = /#\w+/g;
 			const matches = fileContent.match(regex) || [];
@@ -142,52 +146,49 @@ export default class NostrService {
 
 			for (const hashtag of hashtags) {
 				tags.push(["t", hashtag]);
-				console.log(hashtag);
 			}
 
 			const noteTitle = activeFile.basename;
 			console.log(noteTitle);
 			tags.push(["title", noteTitle]);
-			let eventTemplate: EventTemplate<Kind.Text> = {
-				//kind: 30023, // TODO after init testing
-				kind: 1,
-				created_at: Math.floor(Date.now() / 1000),
+			let eventTemplate: EventTemplate<Kind.Article> = {
+				kind: 30023,
+				created_at: timestamp,
 				tags: tags,
 				content: fileContent,
 			};
 			console.log(eventTemplate);
 
-			let event: UnsignedEvent<Kind.Text> = {
+			let event: UnsignedEvent<Kind.Article> = {
 				...eventTemplate,
 				pubkey: this.publicKey,
 			};
 
-			console.log(
-				`Event: ${event.content} & ${event.pubkey} & ${event.created_at} & ${event.kind} & ${event.tags} `
-			);
 			let eventHash = getEventHash(event);
 			try {
-				let finalEvent: Event<Kind.Text> = {
+				let finalEvent: Event<Kind.Article> = {
 					...event,
 					id: eventHash,
 					sig: getSignature(event, this.privateKey),
 				};
 
-				console.log(`Final Event: ${finalEvent.content} `);
-				let pub = this.relay?.publish(finalEvent);
+				return new Promise<boolean>((resolve, reject) => {
+					let pub = this.relay?.publish(finalEvent);
 
-				pub?.on("ok", () => {
-					console.log(`Event published successfully`);
-					return true;
-					// TODO save event data to logs or something
+					pub?.on("ok", () => {
+						console.log(`Event published successfully`);
+						console.log(finalEvent);
+						// resolve Promise with true
+						resolve(true);
+						// TODO save event data to logs or something
+					});
+
+					pub?.on("failed", (reason: any) => {
+						console.log(`Failed to publish event: ${reason}`);
+						console.log(finalEvent);
+						reject(false);
+					});
 				});
-
-				pub?.on("failed", (reason: any) => {
-					console.log(`Failed to publish event: ${reason}`);
-					return false;
-				});
-
-				return true;
 			} catch (error) {
 				console.error(error);
 				return false;
