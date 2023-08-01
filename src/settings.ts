@@ -63,14 +63,16 @@ export class NostrWriterSettingTab extends PluginSettingTab {
 			.addButton((button) =>
 				button
 					.setButtonText("Delete")
-					.setCta()
+          .setWarning()
 					.setTooltip("Delete the private key from memory")
 					.onClick(async () => {
+          if(confirm("Are you sure you want to delete your private key? This cannot be undone.")){
 						this.plugin.settings.privateKey = "";
 						await this.plugin.saveSettings();
 						new Notice("Private key deleted!");
 						privateKeyInput.setValue(""); // Clear the textarea
 						this.plugin.startupNostrService();
+          }
 					})
 			);
 

@@ -4,7 +4,6 @@ import {
 	Notice,
 	TFile,
 	App,
-	TextComponent,
     TextAreaComponent,
 } from "obsidian";
 import NostrService from "./nostr/NostrService";

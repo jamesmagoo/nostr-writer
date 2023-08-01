@@ -4,9 +4,10 @@
 ## A Match Made..
 **Obsidian** is an amazing markdown editor, word processor, note organiser, and idea synthesiser: the perfect tool for writers. 
 
-**Nostr** represents the future of how we communicate and distribute the written word: decentralised, free, independent, incorruptable. 
+**Nostr** represents the future of how we communicate and distribute the written word: decentralised, free, independent, incorruptible. 
 
 They seem to me to be a match made in heaven...
+***
 [![Did We Just Become Best Friends?](./docs/stepbros.png)](https://www.youtube.com/watch?v=3-ZUDtaGf3I)
 
 ## For Writers
@@ -41,9 +42,9 @@ With Nostr, you are not wed to any platform like Substack, Medium, or Twitter - 
 5. **Cost-Effective**: Nostr does not charge you fees for using their platform, unlike platforms like Substack. This makes it an economical choice for writers, particularly those who are just starting out or those who want to maximize their earnings.
 
 ### Long-Form Content
-On Nostr you can write messages specifically tagged as "long-form". This tool publishes messages of this kind. Long-form content aggregators and clients such as www.habla.news specifically channel these messages to readers. There'll be much more in the future.. 😉
+On Nostr you can write messages specifically tagged as "long-form". This tool publishes messages of this kind. Long-form content aggregators and clients such as https://habla.news & https://blogstack.io/ specifically channel these messages to readers. There'll be much more in the future.. 😉
 ### Short-Form Content
-This tool focuses on publishing full Obsidian .md files in the long-form, however if you've got a short note to send out there - an idea or a quip - just toggle on short-form writer in settings. 
+This tool focuses on publishing full .md files in the long-form from Obsidian. However, if you've got a short message to send out there - an idea or a quip - just toggle on short-form writer in settings; this will give you a place to write a message and send.
 ***
 ### Security Notice
 This plugin stores your private key within your local Obsidian settings file, specifically in:
