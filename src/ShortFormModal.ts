@@ -9,27 +9,20 @@ import {
 } from "obsidian";
 import NostrService from "./nostr/NostrService";
 
-export default class ConfirmPublishModal extends Modal {
+export default class ShortFormModal extends Modal {
 	constructor(
 		app: App,
-		private nostrService: NostrService,
-		private file: TFile
-	) {
+		private nostrService: NostrService	) {
 		super(app);
 	}
 
 	async onOpen() {
 		let { contentEl } = this;
-		let noteTitle = this.file.basename;
-		let noteWordCount = (await this.app.vault.read(this.file)).split(
-            " "
-            ).length;
-        contentEl.createEl("h2", { text: `Publish: ${noteTitle}` });
+        contentEl.createEl("h2", { text: `Write A Short Note` });
         let noteInfo = contentEl.createEl("p");
-		noteInfo.setText(`Title: ${noteTitle}, Words: ${noteWordCount}`);
-
+        noteInfo.setText(`Write a short note to Nostr...`);
 		let summaryText = new TextAreaComponent(contentEl)
-			.setPlaceholder("Enter a brief one line summary here...(optional)")
+			.setPlaceholder("Enter a short note here...")
 			.setValue("")
 
 		contentEl.createEl("p", {
@@ -41,17 +34,12 @@ export default class ConfirmPublishModal extends Modal {
 			.setCta()
 			.onClick(async () => {
 				// Disable the button and change the text to show a loading state
+                if(summaryText.getValue().length > 1) {
 				publishButton.setButtonText("Publishing...").setDisabled(true);
-
 				setTimeout(async () => {
 					// After 3 seconds, execute the publishing action
-					const fileContent = await this.app.vault.read(this.file);
 					const summary = summaryText.getValue();
-					const success = await this.nostrService.publishNote(
-						fileContent,
-						this.file,
-						summary // assume your publishNote method takes a third parameter as summary
-					);
+					const success = await this.nostrService.publishShortFormNote(summary);
 					if (success) {
 						new Notice(`Successfully published note to Nostr.`);
 					} else {
@@ -65,6 +53,10 @@ export default class ConfirmPublishModal extends Modal {
 
 					this.close();
 				}, 3000);
+            } else {
+                new Notice(`Please enter text to publish to Nostr`);
+            }
+
 			});
 
 		// Add some style

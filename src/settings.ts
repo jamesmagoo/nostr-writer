@@ -10,6 +10,7 @@ import {
 
 export interface NostrWriterPluginSettings {
 	privateKey: string;
+  shortFormEnabled: boolean;
 }
 
 export class NostrWriterSettingTab extends PluginSettingTab {
@@ -83,6 +84,20 @@ export class NostrWriterSettingTab extends PluginSettingTab {
 						privateKeyField.type = value ? "text" : "password";
 					}
 				})
+			);
+
+		new Setting(containerEl)
+			.setName("Short Form Mode")
+			.setDesc("Add short form writing button to ribbon")
+			.addToggle((toggle) =>
+				toggle
+					.setValue(this.plugin.settings.shortFormEnabled)
+					.onChange(async (value) => {
+						this.plugin.settings.shortFormEnabled = value;
+            await this.plugin.saveSettings();
+            this.plugin.updateRibbonIcon();
+            new Notice(`Short form mode ${value ? "enabled" : "disabled"}`);
+					})
 			);
 
 		new Setting(this.containerEl)

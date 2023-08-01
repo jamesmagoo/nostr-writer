@@ -74,6 +74,55 @@ export default class NostrService {
 		return this.publicKey;
 	}
 
+	async publishShortFormNote(message: string) {
+		console.log(`trying to publish short form note from NostrService...`);
+		// TODO some validation here on the file content .. no html etc
+		if (message) {
+			// TODO figure out how to do this tag - should be unique
+			let tags: any = [["d", "vvv9438js"]];
+			tags.push(["summary", message]);
+			let eventTemplate: EventTemplate<Kind.Text> = {
+				//kind: 30023, // TODO after init testing
+				kind: 1,
+				created_at: Math.floor(Date.now() / 1000),
+				tags: tags,
+				content: message,
+			};
+			console.log(eventTemplate);
+			let event: UnsignedEvent<Kind.Text> = {
+				...eventTemplate,
+				pubkey: this.publicKey,
+			};
+
+			let eventHash = getEventHash(event);
+			try {
+				let finalEvent: Event<Kind.Text> = {
+					...event,
+					id: eventHash,
+					sig: getSignature(event, this.privateKey),
+				};
+
+				console.log(`Final Event: ${finalEvent.content} `);
+				let pub = this.relay?.publish(finalEvent);
+
+				pub?.on("ok", () => {
+					console.log(`Event published successfully`);
+					return true;
+					// TODO save event data to short form logs or something
+				});
+
+				pub?.on("failed", (reason: any) => {
+					console.log(`Failed to publish event: ${reason}`);
+					return false;
+				});
+
+				return true;
+			} catch (error) {
+				console.error(error);
+				return false;
+			}
+		}}
+
 	async publishNote(fileContent: string, activeFile: TFile, summary: string) {
 		console.log(`trying to publish note from NostrService...`);
 		// TODO some validation here on the file content .. no html etc

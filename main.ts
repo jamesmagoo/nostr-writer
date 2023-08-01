@@ -6,23 +6,30 @@ import {
 	NostrWriterSettingTab,
 	NostrWriterPluginSettings,
 } from "./src/settings";
+import ShortFormModal from "src/ShortFormModal";
 
 export default class NostrWriterPlugin extends Plugin {
 	nostrService: NostrService;
 	settings: NostrWriterPluginSettings;
+	private ribbonIconElShortForm: HTMLElement | null;
+
 
 	async onload() {
 		await this.loadSettings();
 		this.startupNostrService();
 		this.addSettingTab(new NostrWriterSettingTab(this.app, this));
+		this.updateRibbonIcon();
+
 
 		// This creates an icon in the left ribbon.
 		const ribbonIconEl = this.addRibbonIcon(
-			"pencil",
-			"Publish To Nostr",
+			"file-up",
+			"Publish This Note To Nostr",
 			(evt: MouseEvent) => {
 				if (!this.settings.privateKey) {
-					new Notice(`Please set your private key in the Nostr Writer Plugin settings before publishing.`);
+					new Notice(
+						`Please set your private key in the Nostr Writer Plugin settings before publishing.`
+					);
 					return;
 				}
 				const activeFile = this.app.workspace.getActiveFile();
@@ -60,7 +67,9 @@ export default class NostrWriterPlugin extends Plugin {
 			name: "Publish note to Nostr",
 			callback: () => {
 				if (!this.settings.privateKey) {
-					new Notice(`Please set your private key in the Nostr Writer Plugin settings before publishing.`);
+					new Notice(
+						`Please set your private key in the Nostr Writer Plugin settings before publishing.`
+					);
 					return;
 				}
 				// Assuming you want to publish the current active file
@@ -88,16 +97,16 @@ export default class NostrWriterPlugin extends Plugin {
 	onunload() {}
 
 	startupNostrService() {
-        this.nostrService = new NostrService(
+		this.nostrService = new NostrService(
 			"wss://relay.damus.io/",
 			this.settings
 		);
-    }
+	}
 
 	async loadSettings() {
 		this.settings = Object.assign(
 			{},
-			{ privateKey: "" },
+			{ privateKey: "", shortFormEnabled: false },
 			await this.loadData()
 		);
 	}
@@ -105,4 +114,32 @@ export default class NostrWriterPlugin extends Plugin {
 	async saveSettings() {
 		await this.saveData(this.settings);
 	}
+
+	updateRibbonIcon() {
+		if (this.settings.shortFormEnabled) {
+			if (!this.ribbonIconElShortForm) {
+				// This creates an icon in the left ribbon.
+				this.ribbonIconElShortForm = this.addRibbonIcon(
+					"pencil",
+					"Write To Nostr (Short Form)",
+					(evt: MouseEvent) => {
+						if (!this.settings.privateKey) {
+							new Notice(
+								`Please set your private key in the Nostr Writer Plugin settings before publishing.`
+							);
+							return;
+						}
+						const activeFile = this.app.workspace.getActiveFile();
+						if (activeFile) {
+							new ShortFormModal(this.app, this.nostrService).open();
+						}
+					}
+				);
+			}
+		} else if (this.ribbonIconElShortForm) {
+			this.ribbonIconElShortForm.remove();
+			this.ribbonIconElShortForm = null;
+		}
+	}	
+	
 }
