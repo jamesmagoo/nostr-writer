@@ -27,3 +27,17 @@ On Nostr you can write messages specifically tagged as "long-form". This tool pu
 
 ### Short-Form Content
 This tool focuses on publishing full Obsidian .md files in the long-form, however if you've got a short note to send out there - an idea or a quip - a short-form writer for the job is in the works. 
+
+## Security Notice
+This plugin stores your private key within your local Obsidian settings file, specifically in:
+```
+<Vault Directory>/.obsidian/plugins/obsidian-nostr-writer/data.json
+```
+
+It is not transmitted elsewhere, but its security is fundamentally tied to the security of your device and Obsidian files.
+
+Please be aware that if an unauthorized person gains access to your device or your Obsidian files, they might be able to access your private key. The plugin obscures the key in its settings interface but this doesn't equate to strong encryption or secured storage.
+
+Therefore, it's important to ensure the overall security of your device and your Obsidian files to keep your private key safe. 
+
+> Remember, the security of your private key is your responsibility.
