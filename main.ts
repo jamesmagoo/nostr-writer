@@ -1,16 +1,19 @@
-import { Editor, MarkdownView, Notice, Plugin, setIcon } from "obsidian";
+import { Editor, Notice, Plugin, setIcon } from "obsidian";
 import { NostrModal } from "./src/NostrModal";
 import NostrService from "./src/nostr/NostrService";
-import { NostrWriterSettingTab, NostrWriterPluginSettings } from "./src/settings";
+import ConfirmPublishModal from "./src/ConfirmPublishModal";
+import {
+	NostrWriterSettingTab,
+	NostrWriterPluginSettings,
+} from "./src/settings";
 
 export default class NostrWriterPlugin extends Plugin {
 	nostrService: NostrService;
 	settings: NostrWriterPluginSettings;
 
-
 	async onload() {
 		await this.loadSettings();
-		this.nostrService = new NostrService("wss://relay.damus.io/", this.settings);
+		this.startupNostrService();
 		this.addSettingTab(new NostrWriterSettingTab(this.app, this));
 
 		// This creates an icon in the left ribbon.
@@ -18,9 +21,18 @@ export default class NostrWriterPlugin extends Plugin {
 			"pencil",
 			"Publish To Nostr",
 			(evt: MouseEvent) => {
-				// Called when the user clicks the icon.
-				// TODO modal here?
-				new Notice("Hello Youuuu!");
+				if (!this.settings.privateKey) {
+					new Notice(`Please set your private key in the Nostr Writer Plugin settings before publishing.`);
+					return;
+				}
+				const activeFile = this.app.workspace.getActiveFile();
+				if (activeFile) {
+					new ConfirmPublishModal(
+						this.app,
+						this.nostrService,
+						activeFile
+					).open();
+				}
 			}
 		);
 		// Perform additional things with the ribbon
@@ -28,7 +40,7 @@ export default class NostrWriterPlugin extends Plugin {
 
 		// This adds a status bar item to the bottom of the app. Does not work on mobile apps.
 		const statusBarItemEl = this.addStatusBarItem();
-		statusBarItemEl.setText("Status Bar Text TODO ");
+		statusBarItemEl.setText("Status Bar Text TODOxx ");
 		const item = this.addStatusBarItem();
 		setIcon(item, "info");
 
@@ -46,20 +58,19 @@ export default class NostrWriterPlugin extends Plugin {
 		this.addCommand({
 			id: "publish-note-to-nostr",
 			name: "Publish note to Nostr",
-			callback: async () => {
+			callback: () => {
+				if (!this.settings.privateKey) {
+					new Notice(`Please set your private key in the Nostr Writer Plugin settings before publishing.`);
+					return;
+				}
 				// Assuming you want to publish the current active file
 				const activeFile = this.app.workspace.getActiveFile();
 				if (activeFile) {
-					const fileContent = await this.app.vault.read(activeFile);
-					const success = await this.nostrService.publishNote(
-						fileContent,
+					new ConfirmPublishModal(
+						this.app,
+						this.nostrService,
 						activeFile
-					);
-					if (success) {
-						new Notice(`Successfully published note to Nostr.`);
-					} else {
-						new Notice(`Failed to publish note to Nostr.`);
-					}
+					).open();
 				}
 			},
 		});
@@ -74,17 +85,24 @@ export default class NostrWriterPlugin extends Plugin {
 		});
 	}
 
-
 	onunload() {}
 
-	async loadSettings() {
-		this.settings = Object.assign({}, 
-		  { privateKey: "" },
-		  await this.loadData()
+	startupNostrService() {
+        this.nostrService = new NostrService(
+			"wss://relay.damus.io/",
+			this.settings
 		);
-	  }
-	
-	  async saveSettings() {
+    }
+
+	async loadSettings() {
+		this.settings = Object.assign(
+			{},
+			{ privateKey: "" },
+			await this.loadData()
+		);
+	}
+
+	async saveSettings() {
 		await this.saveData(this.settings);
-	  }
+	}
 }

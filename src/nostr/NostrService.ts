@@ -74,13 +74,18 @@ export default class NostrService {
 		return this.publicKey;
 	}
 
-	async publishNote(fileContent: string, activeFile: TFile) {
+	async publishNote(fileContent: string, activeFile: TFile, summary: string) {
 		console.log(`trying to publish note from NostrService...`);
 		// TODO some validation here on the file content .. no html etc
 		if (fileContent) {
 			// TODO figure out how to do this tag - should be unique
 			// think its used for editing long-from nip23 notes
 			let tags: any = [["d", "vvv9438js"]];
+
+			if(summary){
+				console.log(`summary: ${summary}`);
+				tags.push(["summary", summary]);
+			}
 
 			const regex = /#\w+/g;
 			const matches = fileContent.match(regex) || [];
@@ -134,9 +139,7 @@ export default class NostrService {
 				});
 
 				return true;
-				// Show a success notification
 			} catch (error) {
-				// Show an error notification
 				console.error(error);
 				return false;
 			}

@@ -1,5 +1,12 @@
 import NostrWriterPlugin from "../main";
-import { App, PluginSettingTab, Setting, Plugin, Notice } from "obsidian";
+import {
+	App,
+	PluginSettingTab,
+	Setting,
+	Plugin,
+	Notice,
+	TextAreaComponent,
+} from "obsidian";
 
 export interface NostrWriterPluginSettings {
 	privateKey: string;
@@ -19,35 +26,52 @@ export class NostrWriterSettingTab extends PluginSettingTab {
 		containerEl.empty();
 
 		let privateKeyField: HTMLInputElement;
+		let privateKeyInput: any;
 
 		new Setting(containerEl)
 			.setName("Nostr Private key")
 			.setDesc("It's a secret")
 			.addText((text) => {
+				privateKeyInput = text;
 				text.setPlaceholder("nsec...")
 					.setValue(this.plugin.settings.privateKey)
 					.onChange(async (value) => {
 						if (isValidPrivateKey(value)) {
-              this.plugin.settings.privateKey = value;
-              await this.plugin.saveSettings();
-            } else {
-              // Invalid private key
-              new Notice('Invalid private key', 5000);
-            }
+							this.plugin.settings.privateKey = value;
+							await this.plugin.saveSettings();
+							this.plugin.startupNostrService(); // Refresh or restart the service
+							new Notice("Private key saved!");
+						} else {
+							// Invalid private key
+							new Notice("Invalid private key", 5000);
+						}
 					});
 
 				// Store the reference to the input field and change its type to 'password'
 				privateKeyField = text.inputEl;
 				privateKeyField.type = "password";
-        privateKeyField.style.width = '400px';  // Change the width here
+				privateKeyField.style.width = "400px"; // Change the width here
 			})
-      .addButton(button => button
-        .setButtonText('Copy')
-        .onClick(() => {
-          if (privateKeyField) {
-            navigator.clipboard.writeText(privateKeyField.value);
-          }
-        }));
+			.addButton((button) =>
+				button.setButtonText("Copy").onClick(() => {
+					if (privateKeyField) {
+						navigator.clipboard.writeText(privateKeyField.value);
+					}
+				})
+			)
+			.addButton((button) =>
+				button
+					.setButtonText("Delete")
+					.setCta()
+					.setTooltip("Delete the private key from memory")
+					.onClick(async () => {
+						this.plugin.settings.privateKey = "";
+						await this.plugin.saveSettings();
+						new Notice("Private key deleted!");
+						privateKeyInput.setValue(""); // Clear the textarea
+						this.plugin.startupNostrService();
+					})
+			);
 
 		new Setting(containerEl)
 			.setName("Show private key")
@@ -73,5 +97,7 @@ export class NostrWriterSettingTab extends PluginSettingTab {
 }
 
 function isValidPrivateKey(key: string): boolean {
-  return typeof key === 'string' && key.length === 32;
+	return (
+		typeof key === "string" && key.length === 63 && key.startsWith("nsec")
+	);
 }
