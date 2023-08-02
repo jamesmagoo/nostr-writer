@@ -24,4 +24,35 @@
   .publish-modal-input {
     width: 100%;
   }
+
+  .published-card {
+    /* background-color: #b40000; */
+    border: 1px solid #ccc;
+    padding: 15px;
+    margin: 10px 0;
+    border-radius: 5px;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+  }
+
+  .published-id {
+    display: flex;
+    align-items: center;
+  }
+  
+  .published-id button {
+    /* margin-left: 10px; */
+    padding: 5px 10px;
+    cursor: pointer;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    transition: background-color 0.3s;
+  }
+  
+  .published-id button:hover {
+    background-color: #0056b3;
+  }
+  
+  
   
