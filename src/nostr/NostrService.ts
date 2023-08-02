@@ -122,7 +122,7 @@ export default class NostrService {
 		}
 	}
 
-	async publishNote(fileContent: string, activeFile: TFile, summary: string) {
+	async publishNote(fileContent: string, activeFile: TFile, summary: string, imageUrl: string) {
 		console.log(`Publishing your note to Nostr...`);
 		if (fileContent) {
 			/**
@@ -133,6 +133,10 @@ export default class NostrService {
 
 			if (summary) {
 				tags.push(["summary", summary]);
+			}
+
+			if (imageUrl) {
+				tags.push(["image", imageUrl]);
 			}
 
 			let timestamp = Math.floor(Date.now() / 1000);
