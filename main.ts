@@ -1,12 +1,11 @@
-import { Editor, Notice, Plugin, setIcon } from "obsidian";
-import { NostrModal } from "./src/NostrModal";
-import NostrService from "./src/nostr/NostrService";
-import ConfirmPublishModal from "./src/ConfirmPublishModal";
-import {
-	NostrWriterSettingTab,
-	NostrWriterPluginSettings,
-} from "./src/settings";
+import { Notice, Plugin } from "obsidian";
 import ShortFormModal from "src/ShortFormModal";
+import ConfirmPublishModal from "./src/ConfirmPublishModal";
+import NostrService from "./src/nostr/NostrService";
+import {
+	NostrWriterPluginSettings,
+	NostrWriterSettingTab,
+} from "./src/settings";
 
 export default class NostrWriterPlugin extends Plugin {
 	nostrService: NostrService;
