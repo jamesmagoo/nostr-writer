@@ -1,12 +1,10 @@
-import NostrWriterPlugin from "../main";
 import {
 	App,
-	PluginSettingTab,
-	Setting,
-	Plugin,
 	Notice,
-	TextAreaComponent,
+	PluginSettingTab,
+	Setting
 } from "obsidian";
+import NostrWriterPlugin from "../main";
 
 export interface NostrWriterPluginSettings {
 	privateKey: string;

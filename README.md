@@ -2,9 +2,9 @@
 > Directly publish from Obsidian to Nostr 
 
 ## A Match Made..
-**Obsidian** is an amazing markdown editor, word processor, note organiser, and idea synthesiser: the perfect tool for writers. 
+[**Obsidian**](https://obsidian.md/) is an amazing markdown editor, word processor, note organiser, and idea synthesiser: the perfect tool for writers. 
 
-**Nostr** represents the future of how we communicate and distribute the written word: decentralised, free, independent, incorruptible. 
+[**Nostr**](https://nostr.com/) represents the future of how we communicate and distribute the written word: decentralised, free, independent, incorruptible. 
 
 They seem to me to be a match made in heaven...
 ***
@@ -61,7 +61,7 @@ Therefore, it's important to ensure the overall security of your device and your
 > Remember, the security of your private key is your responsibility.
 
 ## SEND⚡️SATS need ☕️
-lighting address:
+lightning address:
 ```text
 lnbc200u1pjv5400pp57cuefdhuwrmyvum62afe07x4dtxzyqmde6fc7nnf8cjujyqsfxeqdqsdfsk6etnd4skwmm0cqzzsxqyz5vqsp50fueknz7xnj828gv2n9tjnqhhkx7jyyvh6sg9r0jr8zeuy0d27ws9qyyssqeuwmtrhjt45vpky00cn5a63gl552wt8dxtdgeea6733l47ytl7kqwn90dp2859neswg0958tq8dwh7pjwyqdxwh02gx3teglk5zm06cpmmhau9
 ```

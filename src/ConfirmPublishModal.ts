@@ -37,15 +37,18 @@ export default class ConfirmPublishModal extends Modal {
 			)
 			.setValue("");
 
-		imageUrlText.inputEl.style.width = "100%";
-		imageUrlText.inputEl.style.marginBottom = "10px";
-		imageUrlText.inputEl.style.marginTop = "10px";
+		imageUrlText.inputEl.setCssStyles({
+			width: "100%",
+			marginBottom: "10px",
+			marginTop: "10px",
+		});
 
-		// Image Preview Section
 		let imagePreview = contentEl.createEl("img");
-		imagePreview.src = ""; // Set initial src
-		imagePreview.style.maxWidth = "100%";
-		imagePreview.style.display = "none"; // Hide initially
+		imagePreview.setCssStyles({
+			maxWidth: "100%",
+			display: "none",
+		});
+		imagePreview.src = "";
 
 		// Update Image Preview on URL change
 		imageUrlText.inputEl.addEventListener("input", () => {
@@ -101,11 +104,9 @@ export default class ConfirmPublishModal extends Modal {
 				}, 3000);
 			});
 
-		contentEl.style.fontFamily = "Arial, sans-serif";
-		contentEl.style.padding = "15px";
-		publishButton.buttonEl.style.display = "block";
-		publishButton.buttonEl.style.margin = "auto";
-		summaryText.inputEl.style.width = "100%";
+		contentEl.classList.add("publish-modal-content");
+		publishButton.buttonEl.classList.add("publish-modal-button");
+		summaryText.inputEl.classList.add("publish-modal-input");
 	}
 }
 

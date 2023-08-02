@@ -20,7 +20,7 @@ export default class NostrWriterPlugin extends Plugin {
 
 		const ribbonIconEl = this.addRibbonIcon(
 			"file-up",
-			"Publish This Note To Nostr",
+			"Publish this note to Nostr",
 			async (evt: MouseEvent) => {
 				await this.checkAndPublish();
 			}
@@ -28,7 +28,7 @@ export default class NostrWriterPlugin extends Plugin {
 
 		this.addCommand({
 			id: "publish-note-to-nostr",
-			name: "Publish Note to Nostr",
+			name: "Publish",
 			callback: async() => {
 				await this.checkAndPublish();
 			},
@@ -36,7 +36,7 @@ export default class NostrWriterPlugin extends Plugin {
 
 		this.addCommand({
 			id: "get-pub",
-			name: "See Your Public Key",
+			name: "See your public key",
 			callback: async () => {
 				let pubKey = this.nostrService.getPublicKey();
 				new Notice(`Public Key: ${pubKey}`);
@@ -45,7 +45,7 @@ export default class NostrWriterPlugin extends Plugin {
 
 		this.addCommand({
 			id: "get-pub-clipboard",
-			name: "Copy Public Key to Clipboard",
+			name: "Copy public key to clipboard",
 			callback: async () => {
 			  let pubKey = this.nostrService.getPublicKey();
 			  navigator.clipboard.writeText(pubKey).then(() => {

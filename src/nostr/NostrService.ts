@@ -24,7 +24,6 @@ export default class NostrService {
 
 	constructor(plugin: NostrWriterPlugin, app: App, relayUrl: string, settings: NostrWriterPluginSettings) {
 		console.log(`Initializing NostrService. with relayUrl: ${relayUrl}`);
-		const basePath = (app.vault.adapter as any).basePath;
 		if (!settings.privateKey) {
 			console.error(
 				"YourPlugin requires a private key to be set in the settings."
@@ -210,7 +209,7 @@ export default class NostrService {
 	}
 
 	async savePublishedEvent(finalEvent: Event<Kind.Article>) {
-		const pathToPlugin = normalizePath(app.vault.configDir + "//plugins/obsidian-nostr-writer/");
+		const pathToPlugin = normalizePath(this.app.vault.configDir + "//plugins/obsidian-nostr-writer/");
 		const filePath = `${pathToPlugin}/published.json`;
 			let publishedEvents;
 		try {
@@ -220,6 +219,6 @@ export default class NostrService {
 			publishedEvents = []; 
 		}
 		publishedEvents.push(finalEvent);
-		await app.vault.adapter.write(filePath, JSON.stringify(publishedEvents));
+		await this.app.vault.adapter.write(filePath, JSON.stringify(publishedEvents));
 	}
 }

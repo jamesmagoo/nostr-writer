@@ -1,8 +1,27 @@
-/*
+.short-form-modal-content {
+    font-family: Arial, sans-serif;
+    padding: 15px;
+}
 
-This CSS file will be included with your plugin, and
-available in the app when your plugin is enabled.
+.short-form-modal-button {
+    display: block;
+    margin: auto;
+}
 
-If your plugin does not need CSS, delete this file.
+.short-form-modal-input {
+    width: 100%;
+}
 
-*/
+.publish-modal-content {
+    padding: 15px;
+  }
+  
+  .publish-modal-button {
+    display: block;
+    margin: auto;
+  }
+  
+  .publish-modal-input {
+    width: 100%;
+  }
+  
