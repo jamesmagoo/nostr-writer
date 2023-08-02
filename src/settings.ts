@@ -10,7 +10,7 @@ import {
 
 export interface NostrWriterPluginSettings {
 	privateKey: string;
-  shortFormEnabled: boolean;
+	shortFormEnabled: boolean;
 }
 
 export class NostrWriterSettingTab extends PluginSettingTab {
@@ -63,16 +63,20 @@ export class NostrWriterSettingTab extends PluginSettingTab {
 			.addButton((button) =>
 				button
 					.setButtonText("Delete")
-          .setWarning()
+					.setWarning()
 					.setTooltip("Delete the private key from memory")
 					.onClick(async () => {
-          if(confirm("Are you sure you want to delete your private key? This cannot be undone.")){
-						this.plugin.settings.privateKey = "";
-						await this.plugin.saveSettings();
-						new Notice("Private key deleted!");
-						privateKeyInput.setValue(""); // Clear the textarea
-						this.plugin.startupNostrService();
-          }
+						if (
+							confirm(
+								"Are you sure you want to delete your private key? This cannot be undone."
+							)
+						) {
+							this.plugin.settings.privateKey = "";
+							await this.plugin.saveSettings();
+							new Notice("Private key deleted!");
+							privateKeyInput.setValue(""); // Clear the textarea
+							this.plugin.startupNostrService();
+						}
 					})
 			);
 
@@ -96,9 +100,11 @@ export class NostrWriterSettingTab extends PluginSettingTab {
 					.setValue(this.plugin.settings.shortFormEnabled)
 					.onChange(async (value) => {
 						this.plugin.settings.shortFormEnabled = value;
-            await this.plugin.saveSettings();
-            this.plugin.updateRibbonIcon();
-            new Notice(`Short form mode ${value ? "enabled" : "disabled"}`);
+						await this.plugin.saveSettings();
+						this.plugin.updateRibbonIcon();
+						new Notice(
+							`Short form mode ${value ? "enabled" : "disabled"}`
+						);
 					})
 			);
 
@@ -108,7 +114,17 @@ export class NostrWriterSettingTab extends PluginSettingTab {
 				"Has this plugin enhanced your workflow? Say thanks as a one-time payment and buy me a coffee"
 			)
 			.addButton((bt) => {
-				bt.buttonEl.outerHTML = `<a href="https://www.buymeacoffee.com/jamesmagoo" target="_blank"><img style="height: 35px;" src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" style="height: 60px !important;width: 217px !important;" ></a>`;
+				const anchor = document.createElement("a");
+				anchor.href = "https://www.buymeacoffee.com/jamesmagoo";
+				anchor.target = "_blank";
+
+				const img = document.createElement("img");
+				img.style.height = "35px";
+				img.src =
+					"https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png";
+				img.alt = "Buy Me A Coffee";
+				anchor.appendChild(img);
+				bt.buttonEl.replaceWith(anchor);
 			});
 	}
 }
