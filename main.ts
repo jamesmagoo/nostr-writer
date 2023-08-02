@@ -6,6 +6,8 @@ import {
 	NostrWriterPluginSettings,
 	NostrWriterSettingTab,
 } from "./src/settings";
+import { PublishedView, VIEW_TYPE_EXAMPLE } from "./src/PublishedView";
+
 
 export default class NostrWriterPlugin extends Plugin {
 	nostrService: NostrService;
@@ -17,6 +19,15 @@ export default class NostrWriterPlugin extends Plugin {
 		this.startupNostrService();
 		this.addSettingTab(new NostrWriterSettingTab(this.app, this));
 		this.updateRibbonIcon();
+
+		this.registerView(
+			VIEW_TYPE_EXAMPLE,
+			(leaf) => new PublishedView(leaf)
+		  );
+	  
+		  this.addRibbonIcon("scroll", "View published notes", () => {
+			this.activateView();
+		  });
 
 		const ribbonIconEl = this.addRibbonIcon(
 			"file-up",
@@ -59,6 +70,19 @@ export default class NostrWriterPlugin extends Plugin {
 	}
 
 	onunload() {}
+
+	async activateView() {
+		this.app.workspace.detachLeavesOfType(VIEW_TYPE_EXAMPLE);
+	
+		await this.app.workspace.getRightLeaf(false).setViewState({
+		  type: VIEW_TYPE_EXAMPLE,
+		  active: true,
+		});
+	
+		this.app.workspace.revealLeaf(
+		  this.app.workspace.getLeavesOfType(VIEW_TYPE_EXAMPLE)[0]
+		);
+	  }
 
 	startupNostrService() {
 		this.nostrService = new NostrService(
