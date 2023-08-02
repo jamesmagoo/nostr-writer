@@ -62,12 +62,8 @@ export default class ConfirmPublishModal extends Modal {
 				}, 3000);
 			});
 
-		// Add some style
 		contentEl.style.fontFamily = "Arial, sans-serif";
 		contentEl.style.padding = "15px";
-		// publishButton.buttonEl.style.background = "#268bd2";
-		// publishButton.buttonEl.style.color = "white";
-		publishButton.buttonEl.style.padding = "10px";
 		publishButton.buttonEl.style.display = "block";
 		publishButton.buttonEl.style.margin = "auto";
 		summaryText.inputEl.style.width = "100%";

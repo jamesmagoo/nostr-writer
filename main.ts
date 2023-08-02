@@ -13,91 +13,58 @@ export default class NostrWriterPlugin extends Plugin {
 	settings: NostrWriterPluginSettings;
 	private ribbonIconElShortForm: HTMLElement | null;
 
-
 	async onload() {
 		await this.loadSettings();
 		this.startupNostrService();
 		this.addSettingTab(new NostrWriterSettingTab(this.app, this));
 		this.updateRibbonIcon();
 
-
-		// This creates an icon in the left ribbon.
 		const ribbonIconEl = this.addRibbonIcon(
 			"file-up",
 			"Publish This Note To Nostr",
-			(evt: MouseEvent) => {
-				if (!this.settings.privateKey) {
-					new Notice(
-						`Please set your private key in the Nostr Writer Plugin settings before publishing.`
-					);
-					return;
-				}
-				const activeFile = this.app.workspace.getActiveFile();
-				if (activeFile) {
-					new ConfirmPublishModal(
-						this.app,
-						this.nostrService,
-						activeFile
-					).open();
-				}
+			async (evt: MouseEvent) => {
+				await this.checkAndPublish();
 			}
 		);
-		// Perform additional things with the ribbon
-		ribbonIconEl.addClass("my-plugin-ribbon-class");
-
-		// This adds a status bar item to the bottom of the app. Does not work on mobile apps.
-		const statusBarItemEl = this.addStatusBarItem();
-		statusBarItemEl.setText("Status Bar Text TODOxx ");
-		const item = this.addStatusBarItem();
-		setIcon(item, "info");
-
-		// This adds a simple command that can be triggered anywhere
-		this.addCommand({
-			id: "open-nostr-modal",
-			name: "Nostr Modal",
-			callback: () => {
-				new NostrModal(this.app, (result) => {
-					new Notice(`Hello, ${result}!`);
-				}).open();
-			},
-		});
 
 		this.addCommand({
 			id: "publish-note-to-nostr",
-			name: "Publish note to Nostr",
-			callback: () => {
-				if (!this.settings.privateKey) {
-					new Notice(
-						`Please set your private key in the Nostr Writer Plugin settings before publishing.`
-					);
-					return;
-				}
-				// Assuming you want to publish the current active file
-				const activeFile = this.app.workspace.getActiveFile();
-				if (activeFile) {
-					new ConfirmPublishModal(
-						this.app,
-						this.nostrService,
-						activeFile
-					).open();
-				}
+			name: "Publish Note to Nostr",
+			callback: async() => {
+				await this.checkAndPublish();
 			},
 		});
 
 		this.addCommand({
 			id: "get-pub",
-			name: "Public Key",
+			name: "See Your Public Key",
 			callback: async () => {
 				let pubKey = this.nostrService.getPublicKey();
 				new Notice(`Public Key: ${pubKey}`);
 			},
 		});
+
+		this.addCommand({
+			id: "get-pub-clipboard",
+			name: "Copy Public Key to Clipboard",
+			callback: async () => {
+			  let pubKey = this.nostrService.getPublicKey();
+			  navigator.clipboard.writeText(pubKey).then(() => {
+				new Notice(`Public Key copied to clipboard: ${pubKey}`);
+			  }).catch(err => {
+				new Notice(`Failed to copy Public Key: ${err}`);
+			  });
+			},
+		  });
+		  
 	}
 
 	onunload() {}
 
 	startupNostrService() {
 		this.nostrService = new NostrService(
+			this,
+			this.app,
 			"wss://relay.damus.io/",
 			this.settings
 		);
@@ -115,6 +82,30 @@ export default class NostrWriterPlugin extends Plugin {
 		await this.saveData(this.settings);
 	}
 
+	isEmptyContent(content: string): boolean {
+		return content.trim() === "";
+	}
+
+	async checkAndPublish() {
+		if (!this.settings.privateKey) {
+		  new Notice(`Please set your private key in the Nostr Writer Plugin settings before publishing.`);
+		  return;
+		}
+		const activeFile = this.app.workspace.getActiveFile();
+		if (activeFile) {
+		  const fileContent: string = await this.app.vault.read(activeFile);
+		  if (this.isEmptyContent(fileContent)) {
+			new Notice("The note is empty and cannot be published.");
+			return;
+		  }
+		  new ConfirmPublishModal(
+			this.app,
+			this.nostrService,
+			activeFile
+		  ).open();
+		}
+	  }
+
 	updateRibbonIcon() {
 		if (this.settings.shortFormEnabled) {
 			if (!this.ribbonIconElShortForm) {
@@ -131,7 +122,10 @@ export default class NostrWriterPlugin extends Plugin {
 						}
 						const activeFile = this.app.workspace.getActiveFile();
 						if (activeFile) {
-							new ShortFormModal(this.app, this.nostrService).open();
+							new ShortFormModal(
+								this.app,
+								this.nostrService
+							).open();
 						}
 					}
 				);
@@ -140,6 +134,5 @@ export default class NostrWriterPlugin extends Plugin {
 			this.ribbonIconElShortForm.remove();
 			this.ribbonIconElShortForm = null;
 		}
-	}	
-	
+	}
 }

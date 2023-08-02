@@ -23,5 +23,6 @@ data.json
 
 # env file for local testing with priv key
 .env
+/published.json
 
 

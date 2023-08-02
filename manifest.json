@@ -1,7 +1,7 @@
 {
 	"id": "obsidian-nostr-writer",
 	"name": "Nostr Writer",
-	"version": "1.0.01",
+	"version": "1.0.0",
 	"minAppVersion": "0.15.0",
 	"description": "Publish your writing directly to Nostr..",
 	"author": "James McGauran",

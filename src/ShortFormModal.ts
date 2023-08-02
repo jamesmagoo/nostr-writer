@@ -1,11 +1,9 @@
 import {
+	App,
 	ButtonComponent,
 	Modal,
 	Notice,
-	TFile,
-	App,
-	TextComponent,
-    TextAreaComponent,
+	TextAreaComponent
 } from "obsidian";
 import NostrService from "./nostr/NostrService";
 

@@ -1,4 +1,3 @@
-import * as dotenv from "dotenv";
 import {
 	Event,
 	EventTemplate,
@@ -11,33 +10,32 @@ import {
 	nip19,
 	relayInit,
 } from "nostr-tools";
-import { TFile } from "obsidian";
+import { TFile, App, normalizePath } from "obsidian";
 import { NostrWriterPluginSettings } from "src/settings";
 import { v4 as uuidv4 } from "uuid";
+import NostrWriterPlugin from "main";
 
 export default class NostrService {
 	private relay?: Relay;
 	private privateKey: string;
 	private publicKey: string;
+	private plugin: NostrWriterPlugin;
+	private app: App;
 
-	constructor(relayUrl: string, settings: NostrWriterPluginSettings) {
+	constructor(plugin: NostrWriterPlugin, app: App, relayUrl: string, settings: NostrWriterPluginSettings) {
 		console.log(`Initializing NostrService. with relayUrl: ${relayUrl}`);
 		const basePath = (app.vault.adapter as any).basePath;
-		// Check if the public and private keys are set
 		if (!settings.privateKey) {
 			console.error(
 				"YourPlugin requires a private key to be set in the settings."
 			);
 			return;
 		}
-		dotenv.config({
-			path: `${basePath}/.obsidian/plugins//.env`,
-			debug: false,
-		});
+		this.plugin = plugin;
+		this.app = app;
 		this.relay = relayInit(relayUrl);
 		this.privateKey = this.convertKeyToHex(settings.privateKey);
 		this.publicKey = getPublicKey(this.privateKey);
-		this.relay = relayInit(relayUrl);
 
 		this.relay.on("connect", () => {
 			console.log(`connected to ${this.relay?.url}`);
@@ -76,8 +74,7 @@ export default class NostrService {
 	}
 
 	async publishShortFormNote(message: string) {
-		console.log(`trying to publish short form note from NostrService...`);
-		// TODO some validation here on the file content .. no html etc
+		console.log(`Sending a short form note from NostrService...`);
 		if (message) {
 			let uuid: any = uuidv4().substr(0, 8);
 			let tags: any = [["d", uuid]];
@@ -101,18 +98,20 @@ export default class NostrService {
 					sig: getSignature(event, this.privateKey),
 				};
 
-				console.log(`Final Event: ${finalEvent.content} `);
-				let pub = this.relay?.publish(finalEvent);
+				return new Promise<boolean>((resolve, reject) => {
+					let pub = this.relay?.publish(finalEvent);
 
-				pub?.on("ok", () => {
-					console.log(`Event published successfully`);
-					return true;
-					// TODO save event data to short form logs or something
-				});
+					pub?.on("ok", () => {
+						console.log(`Event published successfully`);
+						console.log(finalEvent);
+						resolve(true);
+					});
 
-				pub?.on("failed", (reason: any) => {
-					console.log(`Failed to publish event: ${reason}`);
-					return false;
+					pub?.on("failed", (reason: any) => {
+						console.log(`Failed to publish event: ${reason}`);
+						console.log(finalEvent);
+						reject(false);
+					});
 				});
 
 				return true;
@@ -124,8 +123,7 @@ export default class NostrService {
 	}
 
 	async publishNote(fileContent: string, activeFile: TFile, summary: string) {
-		console.log(`trying to publish note from NostrService...`);
-		// TODO some validation here on the file content .. no html etc
+		console.log(`Publishing your note to Nostr...`);
 		if (fileContent) {
 			/**
 			 * Generate id for d tag, allows editing later
@@ -134,7 +132,6 @@ export default class NostrService {
 			let tags: any = [["d", uuid]];
 
 			if (summary) {
-				console.log(`summary: ${summary}`);
 				tags.push(["summary", summary]);
 			}
 
@@ -143,7 +140,7 @@ export default class NostrService {
 
 			const regex = /#\w+/g;
 			const matches = fileContent.match(regex) || [];
-			const hashtags = matches.map((match) => match.slice(1)); // Remove '#' from each hashtag
+			const hashtags = matches.map((match) => match.slice(1)); 
 
 			for (const hashtag of hashtags) {
 				tags.push(["t", hashtag]);
@@ -177,16 +174,15 @@ export default class NostrService {
 					let pub = this.relay?.publish(finalEvent);
 
 					pub?.on("ok", () => {
+						// Save the event to published.json
+						this.savePublishedEvent(finalEvent);
 						console.log(`Event published successfully`);
 						console.log(finalEvent);
-						// resolve Promise with true
 						resolve(true);
-						// TODO save event data to logs or something
 					});
 
 					pub?.on("failed", (reason: any) => {
 						console.log(`Failed to publish event: ${reason}`);
-						console.log(finalEvent);
 						reject(false);
 					});
 				});
@@ -209,15 +205,17 @@ export default class NostrService {
 		return value;
 	}
 
-	getEnvVar(key: string): string {
-		const value = process.env[key];
-		if (value && value.startsWith("nsec")) {
-			let decodedPrivateKey = nip19.decode(value);
-			return decodedPrivateKey.data as string;
+	async savePublishedEvent(finalEvent: Event<Kind.Article>) {
+		const pathToPlugin = normalizePath(app.vault.configDir + "//plugins/obsidian-nostr-writer/");
+		const filePath = `${pathToPlugin}/published.json`;
+			let publishedEvents;
+		try {
+			const fileContent = await this.app.vault.adapter.read(filePath);
+			publishedEvents = JSON.parse(fileContent);
+		} catch (e) {
+			publishedEvents = []; 
 		}
-		if (!value) {
-			throw new Error(`Environment variable ${key} not found`);
-		}
-		return value;
+		publishedEvents.push(finalEvent);
+		await app.vault.adapter.write(filePath, JSON.stringify(publishedEvents));
 	}
 }
