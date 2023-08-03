@@ -23,15 +23,7 @@ export default class NostrWriterPlugin extends Plugin {
 		this.registerView(
 			VIEW_TYPE_EXAMPLE,
 			(leaf) => new PublishedView(leaf)
-		  );
-	  
-		//   this.addRibbonIcon("scroll", "View published notes", () => {
-		// 	this.activateView();
-		//   });
-
-		
-		this.app.workspace.rightRibbon
-		  
+		  );		  
 
 		const ribbonIconEl = this.addRibbonIcon(
 			"file-up",
