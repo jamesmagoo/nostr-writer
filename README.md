@@ -76,6 +76,8 @@ lightning address:
 ```text
 lnbc200u1pjv5400pp57cuefdhuwrmyvum62afe07x4dtxzyqmde6fc7nnf8cjujyqsfxeqdqsdfsk6etnd4skwmm0cqzzsxqyz5vqsp50fueknz7xnj828gv2n9tjnqhhkx7jyyvh6sg9r0jr8zeuy0d27ws9qyyssqeuwmtrhjt45vpky00cn5a63gl552wt8dxtdgeea6733l47ytl7kqwn90dp2859neswg0958tq8dwh7pjwyqdxwh02gx3teglk5zm06cpmmhau9
 ```
-
-
+Message me on Nostr with ideas & feedback (or for something more formal, add an issue [here](https://github.com/jamesmagoo/obsidian-nostr-writer/issues))
+```
+npub10a8kw2hsevhfycl4yhtg7vzrcpwpu7s6med27juf4lzqpsvy270qrh8zkw
+```
 

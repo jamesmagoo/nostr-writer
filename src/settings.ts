@@ -33,7 +33,7 @@ export class NostrWriterSettingTab extends PluginSettingTab {
 						if (isValidPrivateKey(value)) {
 							this.plugin.settings.privateKey = value;
 							await this.plugin.saveSettings();
-							this.plugin.startupNostrService(); // Refresh or restart the service
+							this.plugin.startupNostrService(); 
 							new Notice("Private key saved!");
 						} else {
 							// Invalid private key
