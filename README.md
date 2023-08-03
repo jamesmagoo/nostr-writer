@@ -10,6 +10,7 @@ They seem to me to be a match made in heaven...
 ***
 [![Did We Just Become Best Friends?](./docs/stepbros.png)](https://www.youtube.com/watch?v=3-ZUDtaGf3I)
 
+
 ## For Writers
 > This tool is low-friction..
 1. Add your Nostr private key (once on set-up).
@@ -65,3 +66,4 @@ lightning address:
 ```text
 lnbc200u1pjv5400pp57cuefdhuwrmyvum62afe07x4dtxzyqmde6fc7nnf8cjujyqsfxeqdqsdfsk6etnd4skwmm0cqzzsxqyz5vqsp50fueknz7xnj828gv2n9tjnqhhkx7jyyvh6sg9r0jr8zeuy0d27ws9qyyssqeuwmtrhjt45vpky00cn5a63gl552wt8dxtdgeea6733l47ytl7kqwn90dp2859neswg0958tq8dwh7pjwyqdxwh02gx3teglk5zm06cpmmhau9
 ```
+<base target="_blank">
