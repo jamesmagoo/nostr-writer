@@ -23,6 +23,7 @@ This tool is completely abstracted from Nostr, allowing you to stay focused - th
 
 <div align="center">
 <a href="https://www.buymeacoffee.com/jamesmagoo" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" style="height: 60px !important;width: 217px !important;" ></a>
+</div>
 
 ## Writing On Nostr
 It's time to start building your blog, speaking to your audience, and publishing your work freely outside of any walled garden. 
