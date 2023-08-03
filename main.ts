@@ -25,9 +25,13 @@ export default class NostrWriterPlugin extends Plugin {
 			(leaf) => new PublishedView(leaf)
 		  );
 	  
-		  this.addRibbonIcon("scroll", "View published notes", () => {
-			this.activateView();
-		  });
+		//   this.addRibbonIcon("scroll", "View published notes", () => {
+		// 	this.activateView();
+		//   });
+
+		
+		this.app.workspace.rightRibbon
+		  
 
 		const ribbonIconEl = this.addRibbonIcon(
 			"file-up",
@@ -44,7 +48,7 @@ export default class NostrWriterPlugin extends Plugin {
 				await this.checkAndPublish();
 			},
 		});
-
+		
 		this.addCommand({
 			id: "get-pub",
 			name: "See your public key",
@@ -135,7 +139,7 @@ export default class NostrWriterPlugin extends Plugin {
 				// This creates an icon in the left ribbon.
 				this.ribbonIconElShortForm = this.addRibbonIcon(
 					"pencil",
-					"Write To Nostr (Short Form)",
+					"Write to Nostr (short form)",
 					(evt: MouseEvent) => {
 						if (!this.settings.privateKey) {
 							new Notice(

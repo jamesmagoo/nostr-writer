@@ -1,9 +1,4 @@
-import {
-	App,
-	Notice,
-	PluginSettingTab,
-	Setting
-} from "obsidian";
+import { App, Notice, PluginSettingTab, Setting } from "obsidian";
 import NostrWriterPlugin from "../main";
 
 export interface NostrWriterPluginSettings {
@@ -28,8 +23,8 @@ export class NostrWriterSettingTab extends PluginSettingTab {
 		let privateKeyInput: any;
 
 		new Setting(containerEl)
-			.setName("Nostr Private key")
-			.setDesc("It's a secret")
+			.setName("Nostr private key")
+			.setDesc("It's a secret!")
 			.addText((text) => {
 				privateKeyInput = text;
 				text.setPlaceholder("nsec...")
@@ -80,7 +75,7 @@ export class NostrWriterSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName("Show private key")
-			.setDesc("Toggle to show/hide the private key")
+			.setDesc("Toggle to show/hide the private key.")
 			.addToggle((toggle) =>
 				toggle.setValue(false).onChange((value) => {
 					if (privateKeyField) {
@@ -91,8 +86,28 @@ export class NostrWriterSettingTab extends PluginSettingTab {
 			);
 
 		new Setting(containerEl)
-			.setName("Short Form Mode")
-			.setDesc("Add short form writing button to ribbon")
+			.setName("Clear local published history")
+			.setDesc("This does not delete your notes from the Nostr network.")
+			.addButton((button) =>
+				button
+					.setButtonText("Clear")
+					.setIcon("trash")
+					.setTooltip("Delete the local published history")
+					.onClick(async () => {
+						if (
+							confirm(
+								"Are you sure you want to delete your local history? This cannot be undone."
+							)
+						) {
+							clearLocalPublishedFile();
+							new Notice("Published History deleted!");
+						}
+					})
+			);
+
+		new Setting(containerEl)
+			.setName("Short form mode")
+			.setDesc("Add short form writing button to your menu.")
 			.addToggle((toggle) =>
 				toggle
 					.setValue(this.plugin.settings.shortFormEnabled)
@@ -109,7 +124,7 @@ export class NostrWriterSettingTab extends PluginSettingTab {
 		new Setting(this.containerEl)
 			.setName("Sponsor")
 			.setDesc(
-				"Has this plugin enhanced your workflow? Say thanks as a one-time payment and buy me a coffee"
+				"Has this plugin enhanced your workflow? Say thanks as a one-time payment and buy me a coffee."
 			)
 			.addButton((bt) => {
 				const anchor = document.createElement("a");
@@ -131,4 +146,15 @@ function isValidPrivateKey(key: string): boolean {
 	return (
 		typeof key === "string" && key.length === 63 && key.startsWith("nsec")
 	);
+}
+
+async function clearLocalPublishedFile(){
+	// Clear the local published file
+	const pathToPlugin = this.app.vault.configDir + "/plugins/obsidian-nostr-writer";
+	const publishedFilePath = `${pathToPlugin}/published.json`;
+	try {
+		await this.app.vault.adapter.remove(publishedFilePath);
+	} catch (error) {
+		console.log(error);
+	}
 }
