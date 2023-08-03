@@ -63,7 +63,7 @@ export class PublishedView extends ItemView {
 					const cardDiv = container.createEl("div", {
 						cls: "published-card",
 					});
-					cardDiv.createEl("span", { text: `✅ ${title}` });
+					cardDiv.createEl("span", { text: `📜 ${title}` });
 					//cardDiv.createEl("p", { text: `${summary}` });
 					let detailsDiv = cardDiv.createEl("div", {
 						cls: "published-details-div",
