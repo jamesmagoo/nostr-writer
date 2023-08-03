@@ -126,6 +126,18 @@ export class NostrWriterSettingTab extends PluginSettingTab {
 			.setDesc(
 				"Has this plugin enhanced your workflow? Say thanks as a one-time payment and buy me a coffee."
 			)
+			.addButton((button) => {
+				button
+					.setTooltip("Sponsor on GitHub")
+					.setIcon("github")
+					.onClick(() =>
+						window.open(
+							"https://github.com/sponsors/jamesmagoo",
+							"_blank"
+						)
+					);
+				button.buttonEl.style.height = "35px";
+			})
 			.addButton((bt) => {
 				const anchor = document.createElement("a");
 				anchor.href = "https://www.buymeacoffee.com/jamesmagoo";
