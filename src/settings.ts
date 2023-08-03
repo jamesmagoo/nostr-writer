@@ -1,9 +1,4 @@
-import {
-	App,
-	Notice,
-	PluginSettingTab,
-	Setting
-} from "obsidian";
+import { App, Notice, PluginSettingTab, Setting } from "obsidian";
 import NostrWriterPlugin from "../main";
 
 export interface NostrWriterPluginSettings {
@@ -29,7 +24,7 @@ export class NostrWriterSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName("Nostr Private key")
-			.setDesc("It's a secret")
+			.setDesc("It's a secret!")
 			.addText((text) => {
 				privateKeyInput = text;
 				text.setPlaceholder("nsec...")
@@ -80,7 +75,7 @@ export class NostrWriterSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName("Show private key")
-			.setDesc("Toggle to show/hide the private key")
+			.setDesc("Toggle to show/hide the private key.")
 			.addToggle((toggle) =>
 				toggle.setValue(false).onChange((value) => {
 					if (privateKeyField) {
@@ -92,7 +87,7 @@ export class NostrWriterSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName("Short Form Mode")
-			.setDesc("Add short form writing button to ribbon")
+			.setDesc("Add short form writing button to ribbon.")
 			.addToggle((toggle) =>
 				toggle
 					.setValue(this.plugin.settings.shortFormEnabled)
@@ -109,8 +104,20 @@ export class NostrWriterSettingTab extends PluginSettingTab {
 		new Setting(this.containerEl)
 			.setName("Sponsor")
 			.setDesc(
-				"Has this plugin enhanced your workflow? Say thanks as a one-time payment and buy me a coffee"
+				"Has this plugin enhanced your workflow? Say thanks and become a sponsor or buy me a coffee."
 			)
+			.addButton((button) => {
+				button
+					.setTooltip("Sponsor on GitHub")
+					.setIcon("github")
+					.onClick(() =>
+						window.open(
+							"https://github.com/sponsors/jamesmagoo",
+							"_blank"
+						)
+					);
+				button.buttonEl.style.height = "35px";
+			})
 			.addButton((bt) => {
 				const anchor = document.createElement("a");
 				anchor.href = "https://www.buymeacoffee.com/jamesmagoo";
