@@ -47,7 +47,10 @@ export class NostrWriterSettingTab extends PluginSettingTab {
 				privateKeyField.style.width = "400px"; // Change the width here
 			})
 			.addButton((button) =>
-				button.setButtonText("Copy").onClick(() => {
+				button
+				.setTooltip("Copy private key")
+				.setIcon("copy")
+				.onClick(() => {
 					if (privateKeyField) {
 						navigator.clipboard.writeText(privateKeyField.value);
 					}
