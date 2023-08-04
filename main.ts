@@ -8,7 +8,6 @@ import {
 } from "./src/settings";
 import { PublishedView, PUBLISHED_VIEW } from "./src/PublishedView";
 
-
 export default class NostrWriterPlugin extends Plugin {
 	nostrService: NostrService;
 	settings: NostrWriterPluginSettings;
@@ -20,11 +19,11 @@ export default class NostrWriterPlugin extends Plugin {
 		this.addSettingTab(new NostrWriterSettingTab(this.app, this));
 		this.updateRibbonIcon();
 
-		this.registerView(
-			PUBLISHED_VIEW,
-			(leaf) => new PublishedView(leaf)
-			);		  
-		this.activateView();
+		this.registerView(PUBLISHED_VIEW, (leaf) => new PublishedView(leaf));
+
+		this.addRibbonIcon("scroll", "See notes published to Nostr", () => {
+			this.togglePublishedView();
+		});
 
 		this.addRibbonIcon(
 			"file-up",
@@ -37,11 +36,11 @@ export default class NostrWriterPlugin extends Plugin {
 		this.addCommand({
 			id: "publish-note-to-nostr",
 			name: "Publish",
-			callback: async() => {
+			callback: async () => {
 				await this.checkAndPublish();
 			},
 		});
-		
+
 		this.addCommand({
 			id: "get-pub",
 			name: "See your public key",
@@ -55,29 +54,41 @@ export default class NostrWriterPlugin extends Plugin {
 			id: "get-pub-clipboard",
 			name: "Copy public key to clipboard",
 			callback: async () => {
-			  let pubKey = this.nostrService.getPublicKey();
-			  navigator.clipboard.writeText(pubKey).then(() => {
-				new Notice(`Public Key copied to clipboard: ${pubKey}`);
-			  }).catch(err => {
-				new Notice(`Failed to copy Public Key: ${err}`);
-			  });
+				let pubKey = this.nostrService.getPublicKey();
+				navigator.clipboard
+					.writeText(pubKey)
+					.then(() => {
+						new Notice(`Public Key copied to clipboard: ${pubKey}`);
+					})
+					.catch((err) => {
+						new Notice(`Failed to copy Public Key: ${err}`);
+					});
 			},
-		  });
-		  
+		});
 	}
 
-	async activateView() {
-		this.app.workspace.detachLeavesOfType(PUBLISHED_VIEW);
-	
+	togglePublishedView = async (): Promise<void> => {
+		const existing = this.app.workspace.getLeavesOfType(PUBLISHED_VIEW);
+		if (existing.length) {
+			this.app.workspace.revealLeaf(existing[0]);
+			return;
+		}
+
 		await this.app.workspace.getRightLeaf(false).setViewState({
-		  type: PUBLISHED_VIEW,
-		  active: true,
+			type: PUBLISHED_VIEW,
+			active: true,
 		});
-	
+
 		this.app.workspace.revealLeaf(
-		  this.app.workspace.getLeavesOfType(PUBLISHED_VIEW)[0]
+			this.app.workspace.getLeavesOfType(PUBLISHED_VIEW)[0]
 		);
-	  }
+	};
+
+	onunload(): void {
+		this.app.workspace
+			.getLeavesOfType(PUBLISHED_VIEW)
+			.forEach((leaf) => leaf.detach());
+	}
 
 	startupNostrService() {
 		this.nostrService = new NostrService(
@@ -106,23 +117,25 @@ export default class NostrWriterPlugin extends Plugin {
 
 	async checkAndPublish() {
 		if (!this.settings.privateKey) {
-		  new Notice(`Please set your private key in the Nostr Writer Plugin settings before publishing.`);
-		  return;
+			new Notice(
+				`Please set your private key in the Nostr Writer Plugin settings before publishing.`
+			);
+			return;
 		}
 		const activeFile = this.app.workspace.getActiveFile();
 		if (activeFile) {
-		  const fileContent: string = await this.app.vault.read(activeFile);
-		  if (this.isEmptyContent(fileContent)) {
-			new Notice("The note is empty and cannot be published.");
-			return;
-		  }
-		  new ConfirmPublishModal(
-			this.app,
-			this.nostrService,
-			activeFile
-		  ).open();
+			const fileContent: string = await this.app.vault.read(activeFile);
+			if (this.isEmptyContent(fileContent)) {
+				new Notice("The note is empty and cannot be published.");
+				return;
+			}
+			new ConfirmPublishModal(
+				this.app,
+				this.nostrService,
+				activeFile
+			).open();
 		}
-	  }
+	}
 
 	updateRibbonIcon() {
 		if (this.settings.shortFormEnabled) {
