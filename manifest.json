@@ -3,9 +3,12 @@
 	"name": "Nostr Writer",
 	"version": "1.0.1",
 	"minAppVersion": "0.15.0",
-	"description": "Publish your writing directly to Nostr..",
+	"description": "Publish your writing directly to Nostr.",
 	"author": "James McGauran",
 	"authorUrl": "https://github.com/jamesmagoo",
-	"fundingUrl": {"Buy Me a Coffee" : "https://bmc.link/jamesmagoo"},
+	"fundingUrl": {
+		"Buy Me a Coffee" : "https://bmc.link/jamesmagoo",
+		"Github Sponsors" : "https://github.com/sponsors/jamesmagoo"
+	},
 	"isDesktopOnly": true
 }

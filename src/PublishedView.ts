@@ -1,6 +1,6 @@
 import { ButtonComponent, ItemView, Notice, WorkspaceLeaf } from "obsidian";
 
-export const VIEW_TYPE_EXAMPLE = "example-view";
+export const PUBLISHED_VIEW = "published-view";
 
 export class PublishedView extends ItemView {
 	constructor(leaf: WorkspaceLeaf) {
@@ -8,7 +8,7 @@ export class PublishedView extends ItemView {
 	}
 
 	getViewType() {
-		return VIEW_TYPE_EXAMPLE;
+		return PUBLISHED_VIEW;
 	}
 
 	getDisplayText() {
@@ -102,9 +102,5 @@ export class PublishedView extends ItemView {
 			const noPostsDiv = container.createEl("div", {cls: "no-posts",});
 			noPostsDiv.createEl("h6", {text : "No Posts 📝" });
 		}
-	}
-
-	async onClose() {
-		// Nothing to clean up.
 	}
 }

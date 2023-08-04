@@ -56,18 +56,18 @@
     justify-content: space-between;
     padding: 5px 0;
     /* border-bottom: 1px solid #ddd; subtle line to separate each item */
-    font-size: 12px; /* smaller font size for a more refined appearance */
-    color: #b6b5b5; /* muted color */
+    font-size: 12px; 
+    color: #b6b5b5; 
 }
 
 .published-details-div p {
-    margin: 0; /* removing default paragraph margins */
+    margin: 0; 
 }
 
 .published-details-div button {
-    background: none; /* removing the default background */
-    border: none; /* removing the default border */
-    color: #cacaca; /* subtle color for the button */
+    background: none;
+    border: none; 
+    color: #cacaca; 
     cursor: pointer;
 }
 
@@ -80,8 +80,8 @@
 }
 
 .published-card b {
-    color: #ffffff; /* slightly darker color for the title */
-    font-size: 16px; /* slightly larger font size for the title */
+    color: #ffffff; 
+    font-size: 16px; 
 }
   
   

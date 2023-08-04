@@ -6,7 +6,7 @@ import {
 	NostrWriterPluginSettings,
 	NostrWriterSettingTab,
 } from "./src/settings";
-import { PublishedView, VIEW_TYPE_EXAMPLE } from "./src/PublishedView";
+import { PublishedView, PUBLISHED_VIEW } from "./src/PublishedView";
 
 
 export default class NostrWriterPlugin extends Plugin {
@@ -21,11 +21,12 @@ export default class NostrWriterPlugin extends Plugin {
 		this.updateRibbonIcon();
 
 		this.registerView(
-			VIEW_TYPE_EXAMPLE,
+			PUBLISHED_VIEW,
 			(leaf) => new PublishedView(leaf)
-		  );		  
+			);		  
+		this.activateView();
 
-		const ribbonIconEl = this.addRibbonIcon(
+		this.addRibbonIcon(
 			"file-up",
 			"Publish this note to Nostr",
 			async (evt: MouseEvent) => {
@@ -65,18 +66,16 @@ export default class NostrWriterPlugin extends Plugin {
 		  
 	}
 
-	onunload() {}
-
 	async activateView() {
-		this.app.workspace.detachLeavesOfType(VIEW_TYPE_EXAMPLE);
+		this.app.workspace.detachLeavesOfType(PUBLISHED_VIEW);
 	
 		await this.app.workspace.getRightLeaf(false).setViewState({
-		  type: VIEW_TYPE_EXAMPLE,
+		  type: PUBLISHED_VIEW,
 		  active: true,
 		});
 	
 		this.app.workspace.revealLeaf(
-		  this.app.workspace.getLeavesOfType(VIEW_TYPE_EXAMPLE)[0]
+		  this.app.workspace.getLeavesOfType(PUBLISHED_VIEW)[0]
 		);
 	  }
 
@@ -128,7 +127,6 @@ export default class NostrWriterPlugin extends Plugin {
 	updateRibbonIcon() {
 		if (this.settings.shortFormEnabled) {
 			if (!this.ribbonIconElShortForm) {
-				// This creates an icon in the left ribbon.
 				this.ribbonIconElShortForm = this.addRibbonIcon(
 					"pencil",
 					"Write to Nostr (short form)",
