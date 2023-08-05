@@ -132,9 +132,9 @@ export class NostrWriterSettingTab extends PluginSettingTab {
 			.setDesc("Show/hide Nostr connection status.")
 			.addToggle((toggle) =>
 				toggle
-				.setValue(this.plugin.settings.statusBarEnabled)
-				.onChange(async (value) => {
-					this.plugin.settings.statusBarEnabled = value;
+					.setValue(this.plugin.settings.statusBarEnabled)
+					.onChange(async (value) => {
+						this.plugin.settings.statusBarEnabled = value;
 						await this.plugin.saveSettings();
 						this.plugin.updateStatusBar();
 						new Notice(
@@ -143,11 +143,11 @@ export class NostrWriterSettingTab extends PluginSettingTab {
 						new Notice(
 							`Reopen the vault for updates to take effect.`
 						);
-				})
+					})
 			);
 
+		containerEl.createEl("h5", { text: "Sponsor" });
 		new Setting(this.containerEl)
-			.setName("Sponsor")
 			.setDesc(
 				"Has this plugin enhanced your workflow? Say thanks as a one-time payment and buy me a coffee."
 			)
@@ -175,6 +175,24 @@ export class NostrWriterSettingTab extends PluginSettingTab {
 				img.alt = "Buy Me A Coffee";
 				anchor.appendChild(img);
 				bt.buttonEl.replaceWith(anchor);
+			});
+
+		new Setting(this.containerEl)
+			.setDesc("⚡️⚡️⚡️ IYKYK ⚡️⚡️⚡️")
+			.addButton((bt) => {
+				bt.setTooltip("Copy lightning address")
+					.setIcon("zap")
+					.onClick(() => {
+						if (privateKeyField) {
+							navigator.clipboard.writeText(
+								"lnbc200u1pjvu03dpp5x20p0q5tdwylg5hsqw3av6qxufah0y64efldazmgad2rsffgda8qdpdfehhxarjypthy6t5v4ezqnmzwd5kg6tpdcs9qmr4va5kucqzzsxqyz5vqsp5w55p4tzawyfz5fasflmsvdfnnappd6hqnw9p7y2p0nl974f0mtkq9qyyssqq6gvpnvvuftqsdqyxzn9wrre3qfkpefzz6kqwssa3pz8l9mzczyq4u7qdc09jpatw9ekln9gh47vxrvx6zg6vlsqw7pq4a7kvj4ku4qpdrflwj"
+							);
+							new Notice("Invoice Address Copied!");
+							setTimeout(()=>{new Notice("Thank You 🤝");},500);
+							setTimeout(()=>{new Notice("Stay Humble ⚖️");},1000);
+							setTimeout(()=>{new Notice("Stack Sats ⚡️");},1500);
+						}
+					});
 			});
 	}
 }

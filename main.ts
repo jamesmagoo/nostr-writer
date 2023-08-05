@@ -176,7 +176,6 @@ export default class NostrWriterPlugin extends Plugin {
 	}
 
 	updateStatusBar() {
-		// Add status bar item
 		if (this.settings.statusBarEnabled) {
 			if (!this.statusBar) {
 				this.statusBar = this.addStatusBarItem();

@@ -71,10 +71,10 @@ Therefore, it's important to ensure the overall security of your device and your
 -   Copy and paste over `main.js`, `styles.css`, `manifest.json` into the newly created `/nostr-writer` folder.
 -   Make sure you enable the plugin by going into Settings > Community plugins > Installed plugins > toggle 'nostr-writer'.
 
-## SEND⚡️SATS need ☕️
+## ⚡️SATS
 lightning address:
-```text
-lnbc200u1pjv5400pp57cuefdhuwrmyvum62afe07x4dtxzyqmde6fc7nnf8cjujyqsfxeqdqsdfsk6etnd4skwmm0cqzzsxqyz5vqsp50fueknz7xnj828gv2n9tjnqhhkx7jyyvh6sg9r0jr8zeuy0d27ws9qyyssqeuwmtrhjt45vpky00cn5a63gl552wt8dxtdgeea6733l47ytl7kqwn90dp2859neswg0958tq8dwh7pjwyqdxwh02gx3teglk5zm06cpmmhau9
+```
+lnbc200u1pjvu03dpp5x20p0q5tdwylg5hsqw3av6qxufah0y64efldazmgad2rsffgda8qdpdfehhxarjypthy6t5v4ezqnmzwd5kg6tpdcs9qmr4va5kucqzzsxqyz5vqsp5w55p4tzawyfz5fasflmsvdfnnappd6hqnw9p7y2p0nl974f0mtkq9qyyssqq6gvpnvvuftqsdqyxzn9wrre3qfkpefzz6kqwssa3pz8l9mzczyq4u7qdc09jpatw9ekln9gh47vxrvx6zg6vlsqw7pq4a7kvj4ku4qpdrflwj
 ```
 Message me on Nostr with ideas & feedback (or for something more formal, add an issue [here](https://github.com/jamesmagoo/nostr-writer/issues))
 ```

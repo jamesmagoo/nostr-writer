@@ -43,12 +43,12 @@ export default class NostrService {
 
 		this.relay.on("connect", () => {
 			console.log(`connected to ${this.relay?.url}`);
-			this.plugin.statusBar?.setText("Connected to Nostr 🍏");
+			this.plugin.statusBar?.setText("Connected to Nostr 🟣");
 		});
 
 		this.relay.on("error", () => {
 			console.error(`failed to connect to ${this.relay?.url}}`);
-			this.plugin.statusBar?.setText("Not connected to Nostr 🍎");
+			this.plugin.statusBar?.setText("Not connected to Nostr 🌚");
 		});
 
 		this.relay.connect();
@@ -139,7 +139,6 @@ export default class NostrService {
 			}
 
 			const noteTitle = activeFile.basename;
-			console.log(noteTitle);
 			tags.push(["title", noteTitle]);
 			let eventTemplate: EventTemplate<Kind.Article> = {
 				kind: 30023,
