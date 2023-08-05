@@ -50,7 +50,7 @@ This tool focuses on publishing full .md files in the long-form from Obsidian. H
 ### Security Notice
 This plugin stores your private key within your local Obsidian settings file, specifically in:
 ```
-<Vault Directory>/.obsidian/plugins/obsidian-nostr-writer/data.json
+<Vault Directory>/.obsidian/plugins/nostr-writer/data.json
 ```
 
 It is not transmitted elsewhere, but its security is fundamentally tied to the security of your device and Obsidian files.
@@ -65,7 +65,7 @@ Therefore, it's important to ensure the overall security of your device and your
 <!-- Install from the Community Plugin list by searching "Nostr Writer" -->
 
 ### Manually Installing the Plugin
--   Head over to [releases](https://github.com/jamesmagoo/nostr-writer/releases) and download a release (latest is recommended).
+-   Head over to [releases](https://github.com/jamesmagoo/nostr-writer/releases) and download a release (latest is recommended) or the pre-release for upcoming features.
 -   Navigate to your plugin folder in your prefered vault: `VaultFolder/.obsidian/plugins/`
 -   Create a new folder called `nostr-writer`
 -   Copy and paste over `main.js`, `styles.css`, `manifest.json` into the newly created `/nostr-writer` folder.
