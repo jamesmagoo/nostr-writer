@@ -1,7 +1,7 @@
 {
-	"name": "obsidian-nostr-writer",
-	"version": "1.0.0",
-	"description": "Publish your writing directly to Nostr..",
+	"name": "nostr-writer",
+	"version": "1.0.1",
+	"description": "Publish your writing directly to Nostr.",
 	"main": "main.js",
 	"scripts": {
 		"dev": "node esbuild.config.mjs",

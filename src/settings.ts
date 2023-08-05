@@ -165,7 +165,7 @@ function isValidPrivateKey(key: string): boolean {
 
 async function clearLocalPublishedFile(){
 	// Clear the local published file
-	const pathToPlugin = this.app.vault.configDir + "/plugins/obsidian-nostr-writer";
+	const pathToPlugin = this.app.vault.configDir + "/plugins/nostr-writer";
 	const publishedFilePath = `${pathToPlugin}/published.json`;
 	try {
 		await this.app.vault.adapter.remove(publishedFilePath);

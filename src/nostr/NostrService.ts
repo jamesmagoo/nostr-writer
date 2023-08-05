@@ -209,7 +209,7 @@ export default class NostrService {
 	}
 
 	async savePublishedEvent(finalEvent: Event<Kind.Article>) {
-		const pathToPlugin = normalizePath(this.app.vault.configDir + "//plugins/obsidian-nostr-writer/");
+		const pathToPlugin = normalizePath(this.app.vault.configDir + "//plugins/nostr-writer/");
 		const filePath = `${pathToPlugin}/published.json`;
 			let publishedEvents;
 		try {

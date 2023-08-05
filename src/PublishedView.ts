@@ -24,7 +24,7 @@ export class PublishedView extends ItemView {
 		container.empty();
 		container.createEl("h4", { text: "Published" });
 
-		const pathToPlugin = this.app.vault.configDir + "/plugins/obsidian-nostr-writer";
+		const pathToPlugin = this.app.vault.configDir + "/plugins/nostr-writer";
 		const publishedFilePath = `${pathToPlugin}/published.json`;
 		try {
 			const file = await this.app.vault.adapter.read(publishedFilePath);
