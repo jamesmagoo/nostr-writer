@@ -42,38 +42,16 @@ export default class NostrService {
 		this.publicKey = getPublicKey(this.privateKey);
 
 		this.relay.on("connect", () => {
-			console.log(`connected xxx to ${this.relay?.url}`);
-			this.plugin.statusBar.setText("Connected to Nostr 🍏");
+			console.log(`connected to ${this.relay?.url}`);
+			this.plugin.statusBar?.setText("Connected to Nostr 🍏");
 		});
 
 		this.relay.on("error", () => {
 			console.error(`failed to connect to ${this.relay?.url}}`);
-			this.plugin.statusBar.setText("Not connected to Nostr 🍎");
+			this.plugin.statusBar?.setText("Not connected to Nostr 🍎");
 		});
 
 		this.relay.connect();
-	}
-
-	connect(): Promise<void> {
-		console.log(`this is getting used.....`);
-		return new Promise((resolve, reject) => {
-			if (!this.relay) {
-				reject(new Error("Relay not initialized"));
-				return;
-			}
-
-			this.relay.on("connect", () => {
-				console.log(`connected to ${this.relay?.url}`);
-				resolve();
-			});
-
-			this.relay.on("error", () => {
-				console.error(`failed to connect to ${this.relay?.url}`);
-				reject(new Error("Failed to connect to relay."));
-			});
-
-			this.relay.connect();
-		});
 	}
 
 	public getPublicKey(): string {
@@ -81,7 +59,7 @@ export default class NostrService {
 	}
 
 	async publishShortFormNote(message: string) {
-		console.log(`Sending a short form note from NostrService...`);
+		console.log(`Sending a short form note (kind 1) to Nostr...`);
 		if (message) {
 			let uuid: any = uuidv4().substr(0, 8);
 			let tags: any = [["d", uuid]];

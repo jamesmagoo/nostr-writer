@@ -12,21 +12,19 @@ export default class NostrWriterPlugin extends Plugin {
 	nostrService: NostrService;
 	settings: NostrWriterPluginSettings;
 	private ribbonIconElShortForm: HTMLElement | null;
-	statusBar : any;
+	statusBar: any;
 
 	async onload() {
 		await this.loadSettings();
-		 // Initialize or load your plugin here
-
-        // Add status bar item
-        this.statusBar = this.addStatusBarItem();
-        this.statusBar.setText('Connecting...');
+		// Initialize or load your plugin here
+		this.updateStatusBar();
 		this.startupNostrService();
-		
-
 		this.addSettingTab(new NostrWriterSettingTab(this.app, this));
 		this.updateRibbonIcon();
-		this.registerView(PUBLISHED_VIEW, (leaf) => new PublishedView(leaf,this));
+		this.registerView(
+			PUBLISHED_VIEW,
+			(leaf) => new PublishedView(leaf, this)
+		);
 
 		this.addRibbonIcon("scroll", "See notes published to Nostr", () => {
 			this.togglePublishedView();
@@ -109,7 +107,11 @@ export default class NostrWriterPlugin extends Plugin {
 	async loadSettings() {
 		this.settings = Object.assign(
 			{},
-			{ privateKey: "", shortFormEnabled: false },
+			{
+				privateKey: "",
+				shortFormEnabled: false,
+				statusBarEnabled: false,
+			},
 			await this.loadData()
 		);
 	}
@@ -170,6 +172,18 @@ export default class NostrWriterPlugin extends Plugin {
 		} else if (this.ribbonIconElShortForm) {
 			this.ribbonIconElShortForm.remove();
 			this.ribbonIconElShortForm = null;
+		}
+	}
+
+	updateStatusBar() {
+		// Add status bar item
+		if (this.settings.statusBarEnabled) {
+			if (!this.statusBar) {
+				this.statusBar = this.addStatusBarItem();
+			}
+		} else if (this.statusBar) {
+			this.statusBar.remove();
+			this.statusBar = null;
 		}
 	}
 }

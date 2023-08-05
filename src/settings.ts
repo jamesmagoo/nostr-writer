@@ -4,6 +4,7 @@ import NostrWriterPlugin from "../main";
 export interface NostrWriterPluginSettings {
 	privateKey: string;
 	shortFormEnabled: boolean;
+	statusBarEnabled: boolean;
 }
 
 export class NostrWriterSettingTab extends PluginSettingTab {
@@ -33,7 +34,7 @@ export class NostrWriterSettingTab extends PluginSettingTab {
 						if (isValidPrivateKey(value)) {
 							this.plugin.settings.privateKey = value;
 							await this.plugin.saveSettings();
-							this.plugin.startupNostrService(); 
+							this.plugin.startupNostrService();
 							new Notice("Private key saved!");
 						} else {
 							// Invalid private key
@@ -48,13 +49,15 @@ export class NostrWriterSettingTab extends PluginSettingTab {
 			})
 			.addButton((button) =>
 				button
-				.setTooltip("Copy private key")
-				.setIcon("copy")
-				.onClick(() => {
-					if (privateKeyField) {
-						navigator.clipboard.writeText(privateKeyField.value);
-					}
-				})
+					.setTooltip("Copy private key")
+					.setIcon("copy")
+					.onClick(() => {
+						if (privateKeyField) {
+							navigator.clipboard.writeText(
+								privateKeyField.value
+							);
+						}
+					})
 			)
 			.addButton((button) =>
 				button
@@ -124,6 +127,25 @@ export class NostrWriterSettingTab extends PluginSettingTab {
 					})
 			);
 
+		new Setting(containerEl)
+			.setName("Show status bar")
+			.setDesc("Show/hide Nostr connection status.")
+			.addToggle((toggle) =>
+				toggle
+				.setValue(this.plugin.settings.statusBarEnabled)
+				.onChange(async (value) => {
+					this.plugin.settings.statusBarEnabled = value;
+						await this.plugin.saveSettings();
+						this.plugin.updateStatusBar();
+						new Notice(
+							`Nostr status bar ${value ? "enabled" : "disabled"}`
+						);
+						new Notice(
+							`Reopen the vault for updates to take effect.`
+						);
+				})
+			);
+
 		new Setting(this.containerEl)
 			.setName("Sponsor")
 			.setDesc(
@@ -163,7 +185,7 @@ function isValidPrivateKey(key: string): boolean {
 	);
 }
 
-async function clearLocalPublishedFile(){
+async function clearLocalPublishedFile() {
 	const pathToPlugin = this.app.vault.configDir + "/plugins/nostr-writer";
 	const publishedFilePath = `${pathToPlugin}/published.json`;
 	try {
