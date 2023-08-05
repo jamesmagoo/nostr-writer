@@ -12,14 +12,21 @@ export default class NostrWriterPlugin extends Plugin {
 	nostrService: NostrService;
 	settings: NostrWriterPluginSettings;
 	private ribbonIconElShortForm: HTMLElement | null;
+	statusBar : any;
 
 	async onload() {
 		await this.loadSettings();
+		 // Initialize or load your plugin here
+
+        // Add status bar item
+        this.statusBar = this.addStatusBarItem();
+        this.statusBar.setText('Connecting...');
 		this.startupNostrService();
+		
+
 		this.addSettingTab(new NostrWriterSettingTab(this.app, this));
 		this.updateRibbonIcon();
-
-		this.registerView(PUBLISHED_VIEW, (leaf) => new PublishedView(leaf));
+		this.registerView(PUBLISHED_VIEW, (leaf) => new PublishedView(leaf,this));
 
 		this.addRibbonIcon("scroll", "See notes published to Nostr", () => {
 			this.togglePublishedView();

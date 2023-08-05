@@ -10,7 +10,7 @@ import {
 	nip19,
 	relayInit,
 } from "nostr-tools";
-import { TFile, App, normalizePath } from "obsidian";
+import { TFile, App } from "obsidian";
 import { NostrWriterPluginSettings } from "src/settings";
 import { v4 as uuidv4 } from "uuid";
 import NostrWriterPlugin from "main";
@@ -22,7 +22,12 @@ export default class NostrService {
 	private plugin: NostrWriterPlugin;
 	private app: App;
 
-	constructor(plugin: NostrWriterPlugin, app: App, relayUrl: string, settings: NostrWriterPluginSettings) {
+	constructor(
+		plugin: NostrWriterPlugin,
+		app: App,
+		relayUrl: string,
+		settings: NostrWriterPluginSettings
+	) {
 		console.log(`Initializing NostrService. with relayUrl: ${relayUrl}`);
 		if (!settings.privateKey) {
 			console.error(
@@ -37,17 +42,20 @@ export default class NostrService {
 		this.publicKey = getPublicKey(this.privateKey);
 
 		this.relay.on("connect", () => {
-			console.log(`connected to ${this.relay?.url}`);
+			console.log(`connected xxx to ${this.relay?.url}`);
+			this.plugin.statusBar.setText("Connected to Nostr 🍏");
 		});
 
 		this.relay.on("error", () => {
 			console.error(`failed to connect to ${this.relay?.url}}`);
+			this.plugin.statusBar.setText("Not connected to Nostr 🍎");
 		});
 
 		this.relay.connect();
 	}
 
 	connect(): Promise<void> {
+		console.log(`this is getting used.....`);
 		return new Promise((resolve, reject) => {
 			if (!this.relay) {
 				reject(new Error("Relay not initialized"));
@@ -112,8 +120,6 @@ export default class NostrService {
 						reject(false);
 					});
 				});
-
-				return true;
 			} catch (error) {
 				console.error(error);
 				return false;
@@ -121,7 +127,12 @@ export default class NostrService {
 		}
 	}
 
-	async publishNote(fileContent: string, activeFile: TFile, summary: string, imageUrl: string) {
+	async publishNote(
+		fileContent: string,
+		activeFile: TFile,
+		summary: string,
+		imageUrl: string
+	) {
 		console.log(`Publishing your note to Nostr...`);
 		if (fileContent) {
 			/**
@@ -143,7 +154,7 @@ export default class NostrService {
 
 			const regex = /#\w+/g;
 			const matches = fileContent.match(regex) || [];
-			const hashtags = matches.map((match) => match.slice(1)); 
+			const hashtags = matches.map((match) => match.slice(1));
 
 			for (const hashtag of hashtags) {
 				tags.push(["t", hashtag]);
@@ -209,16 +220,18 @@ export default class NostrService {
 	}
 
 	async savePublishedEvent(finalEvent: Event<Kind.Article>) {
-		const pathToPlugin = normalizePath(this.app.vault.configDir + "//plugins/nostr-writer/");
-		const filePath = `${pathToPlugin}/published.json`;
-			let publishedEvents;
+		const filePath = `${this.plugin.manifest.dir}/published.json`;
+		let publishedEvents;
 		try {
 			const fileContent = await this.app.vault.adapter.read(filePath);
 			publishedEvents = JSON.parse(fileContent);
 		} catch (e) {
-			publishedEvents = []; 
+			publishedEvents = [];
 		}
 		publishedEvents.push(finalEvent);
-		await this.app.vault.adapter.write(filePath, JSON.stringify(publishedEvents));
+		await this.app.vault.adapter.write(
+			filePath,
+			JSON.stringify(publishedEvents)
+		);
 	}
 }

@@ -1,10 +1,15 @@
+import NostrWriterPlugin from "main";
 import { ButtonComponent, ItemView, Notice, WorkspaceLeaf } from "obsidian";
 
 export const PUBLISHED_VIEW = "published-view";
 
 export class PublishedView extends ItemView {
-	constructor(leaf: WorkspaceLeaf) {
+	plugin: NostrWriterPlugin;
+
+
+	constructor(leaf: WorkspaceLeaf, plugin: NostrWriterPlugin) {
 		super(leaf);
+		this.plugin = plugin;
 	}
 
 	getViewType() {
@@ -23,9 +28,7 @@ export class PublishedView extends ItemView {
 		const container = this.containerEl.children[1];
 		container.empty();
 		container.createEl("h4", { text: "Published" });
-
-		const pathToPlugin = this.app.vault.configDir + "/plugins/nostr-writer";
-		const publishedFilePath = `${pathToPlugin}/published.json`;
+		const publishedFilePath = `${this.plugin.manifest.dir}/published.json`;
 		try {
 			const file = await this.app.vault.adapter.read(publishedFilePath);
 			const publishedNotes = JSON.parse(file);
