@@ -138,11 +138,19 @@ export default class NostrWriterPlugin extends Plugin {
 				new Notice("The note is empty and cannot be published.");
 				return;
 			}
+			if (this.nostrService.getConnectionStatus()) {
 			new ConfirmPublishModal(
 				this.app,
 				this.nostrService,
 				activeFile
 			).open();
+			} else {
+				new Notice(
+					`Please connect to Nostr before publishing.`
+				);
+			}
+		} else {
+			new Notice("No note is currently active. Click into a note.");
 		}
 	}
 
@@ -159,12 +167,16 @@ export default class NostrWriterPlugin extends Plugin {
 							);
 							return;
 						}
-						const activeFile = this.app.workspace.getActiveFile();
-						if (activeFile) {
+						if (this.nostrService.getConnectionStatus()) {
 							new ShortFormModal(
 								this.app,
 								this.nostrService
 							).open();
+							return;
+						} else {
+							new Notice(
+								`Please connect to Nostr before publishing.`
+							);
 						}
 					}
 				);

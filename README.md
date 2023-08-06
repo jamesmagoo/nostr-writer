@@ -22,9 +22,6 @@ They seem to me to be a match made in heaven...
 
 This tool is completely abstracted from Nostr, allowing you to stay focused - the plugin does not read Nostr messages or give you any view into the public space. It just publishes what you've written. Stay focused on your work and disconnected from the noise. 
 
-<div align="center">
-<a href="https://www.buymeacoffee.com/jamesmagoo" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" style="height: 60px !important;width: 217px !important;" ></a>
-</div>
 
 ## Writing On Nostr
 It's time to start building your blog, speaking to your audience, and publishing your work freely outside of any walled garden. 
@@ -80,4 +77,8 @@ Message me on Nostr with ideas & feedback (or for something more formal, add an 
 ```
 npub10a8kw2hsevhfycl4yhtg7vzrcpwpu7s6med27juf4lzqpsvy270qrh8zkw
 ```
+</br>
+<div align="center">
+<a href="https://www.buymeacoffee.com/jamesmagoo" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" style="height: 60px !important;width: 217px !important;" ></a>
+</div>
 

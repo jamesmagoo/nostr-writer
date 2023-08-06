@@ -21,6 +21,7 @@ export default class NostrService {
 	private publicKey: string;
 	private plugin: NostrWriterPlugin;
 	private app: App;
+	private isConnected: boolean;
 
 	constructor(
 		plugin: NostrWriterPlugin,
@@ -44,14 +45,26 @@ export default class NostrService {
 		this.relay.on("connect", () => {
 			console.log(`connected to ${this.relay?.url}`);
 			this.plugin.statusBar?.setText("Connected to Nostr 🟣");
+			this.isConnected = true;
+		})
+		
+		this.relay.on("disconnect", () => {
+			console.log(`disconnected from ${this.relay?.url}`);
+			this.plugin.statusBar?.setText("Not connected to Nostr 🌚");
+			this.isConnected = false;
 		});
 
 		this.relay.on("error", () => {
 			console.error(`failed to connect to ${this.relay?.url}}`);
 			this.plugin.statusBar?.setText("Not connected to Nostr 🌚");
+			this.isConnected = false;
 		});
 
 		this.relay.connect();
+	}
+
+	public getConnectionStatus(): boolean {
+		return this.isConnected;
 	}
 
 	public getPublicKey(): string {
@@ -59,7 +72,7 @@ export default class NostrService {
 	}
 
 	async publishShortFormNote(message: string) {
-		console.log(`Sending a short form note (kind 1) to Nostr...`);
+		console.log(`Sending a short form note to Nostr...`);
 		if (message) {
 			let uuid: any = uuidv4().substr(0, 8);
 			let tags: any = [["d", uuid]];

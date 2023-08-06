@@ -56,6 +56,8 @@ export class NostrWriterSettingTab extends PluginSettingTab {
 							navigator.clipboard.writeText(
 								privateKeyField.value
 							);
+							new Notice("Private Key Copied - Be Careful 🔐");
+
 						}
 					})
 			)
@@ -72,9 +74,9 @@ export class NostrWriterSettingTab extends PluginSettingTab {
 						) {
 							this.plugin.settings.privateKey = "";
 							await this.plugin.saveSettings();
-							new Notice("Private key deleted!");
-							privateKeyInput.setValue(""); // Clear the textarea
+							privateKeyInput.setValue(""); 
 							this.plugin.startupNostrService();
+							new Notice("Private key deleted!🗑");
 						}
 					})
 			);
@@ -182,12 +184,13 @@ export class NostrWriterSettingTab extends PluginSettingTab {
 			.addButton((bt) => {
 				bt.setTooltip("Copy lightning address")
 					.setIcon("zap")
+					.setCta()
 					.onClick(() => {
 						if (privateKeyField) {
 							navigator.clipboard.writeText(
 								"lnbc200u1pjvu03dpp5x20p0q5tdwylg5hsqw3av6qxufah0y64efldazmgad2rsffgda8qdpdfehhxarjypthy6t5v4ezqnmzwd5kg6tpdcs9qmr4va5kucqzzsxqyz5vqsp5w55p4tzawyfz5fasflmsvdfnnappd6hqnw9p7y2p0nl974f0mtkq9qyyssqq6gvpnvvuftqsdqyxzn9wrre3qfkpefzz6kqwssa3pz8l9mzczyq4u7qdc09jpatw9ekln9gh47vxrvx6zg6vlsqw7pq4a7kvj4ku4qpdrflwj"
 							);
-							new Notice("Invoice Address Copied!");
+							new Notice("Lightning Invoice Address Copied!⚡️");
 							setTimeout(()=>{new Notice("Thank You 🤝");},500);
 							setTimeout(()=>{new Notice("Stay Humble ⚖️");},1000);
 							setTimeout(()=>{new Notice("Stack Sats ⚡️");},1500);

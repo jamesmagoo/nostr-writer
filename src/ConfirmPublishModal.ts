@@ -23,6 +23,7 @@ export default class ConfirmPublishModal extends Modal {
 		let noteWordCount = (await this.app.vault.read(this.file)).split(
 			" "
 		).length;
+		// TODO REVAMP THIS
 		contentEl.createEl("h2", { text: `Publish: ${noteTitle}` });
 		let noteInfo = contentEl.createEl("p");
 		noteInfo.setText(`Title: ${noteTitle}, Words: ${noteWordCount}`);
