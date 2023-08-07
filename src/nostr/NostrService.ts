@@ -61,16 +61,16 @@ export default class NostrService {
 
 		this.relay.connect();
 
-		this.relayURLs = []
+		this.relayURLs = [];
 		if (!settings.relayURLs) {
 			console.error(
 				"YourPlugin requires a list of relay urls to be set in the settings, defaulting to Damus."
 			);
 			this.relayURLs = ["wss://relay.damus.io/"];
 		} else {
-			for(let url of settings.relayURLs){
-				if(this.isValidURL(url)){
-					this.relayURLs.push(url)
+			for (let url of settings.relayURLs) {
+				if (this.isValidURL(url)) {
+					this.relayURLs.push(url);
 				}
 			}
 		}
@@ -78,6 +78,7 @@ export default class NostrService {
 	}
 
 	connectToRelays() {
+		this.refreshRelayUrls();
 		this.connectedRelays = [];
 		let connectionPromises = this.relayURLs.map((url) => {
 			return new Promise<Relay | null>((resolve) => {
@@ -120,6 +121,33 @@ export default class NostrService {
 				);
 			}
 		});
+	}
+
+	refreshRelayUrls() {
+		this.relayURLs = [];
+		if (!this.plugin.settings.relayURLs) {
+			console.error(
+				"YourPlugin requires a list of relay urls to be set in the settings, defaulting to Damus."
+			);
+			// TODO make a relay for this plugins users & add it here
+			this.relayURLs = ["wss://relay.damus.io/"];
+		} else {
+			for (let url of this.plugin.settings.relayURLs) {
+				if (this.isValidURL(url)) {
+					this.relayURLs.push(url);
+				}
+			}
+		}
+	}
+
+	getRelayInfo(relayUrl: string): boolean {
+		let connected: boolean = false;
+		for (let r of this.connectedRelays) {
+			if (r.url == relayUrl) {
+				connected = true;
+			}
+		}
+		return connected;
 	}
 
 	public getConnectionStatus(): boolean {
@@ -294,11 +322,11 @@ export default class NostrService {
 
 	isValidURL(url: string) {
 		try {
-		  new URL(url);
-		  return true;
-		} catch ( error) {
-			console.log(error)
-		  return false;  
+			new URL(url);
+			return true;
+		} catch (error) {
+			console.log(error);
+			return false;
 		}
-	  }
+	}
 }

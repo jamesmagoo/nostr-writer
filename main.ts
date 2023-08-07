@@ -120,7 +120,8 @@ export default class NostrWriterPlugin extends Plugin {
 			{
 				privateKey: "",
 				shortFormEnabled: false,
-				statusBarEnabled: false,
+				statusBarEnabled: true,
+				relayConfigEnabled: false,
 				relayURLs: [
 					"ws://127.0.0.1:8080",
 					"ws://127.0.0.1:8080",
@@ -129,7 +130,6 @@ export default class NostrWriterPlugin extends Plugin {
 					"ws://www.example.com",
 					"ws://www.example.com",
 					"ws://www.examplescom",
-					""
 				]
 			},
 			await this.loadData()
