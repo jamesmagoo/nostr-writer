@@ -114,6 +114,7 @@ export default class NostrWriterPlugin extends Plugin {
 		);
 	}
 
+	// TODO configure these default relays ...
 	async loadSettings() {
 		this.settings = Object.assign(
 			{},

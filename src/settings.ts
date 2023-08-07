@@ -160,9 +160,7 @@ export class NostrWriterSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName("Configure relays")
-			.setDesc(
-				"Edit the default configuration & see details."
-			)
+			.setDesc("Edit the default configuration & see details.")
 			.addToggle((toggle) =>
 				toggle
 					.setValue(this.plugin.settings.relayConfigEnabled)
@@ -189,15 +187,20 @@ export class NostrWriterSettingTab extends PluginSettingTab {
 					btn.setCta();
 					btn.setTooltip("Add this relay");
 					btn.onClick(async () => {
-						try{
+						try {
 							let addedRelayUrl = this.relayUrlInput.getValue();
 							if (this.isValidUrl(addedRelayUrl)) {
-								this.plugin.settings.relayURLs.push(addedRelayUrl);
+								this.plugin.settings.relayURLs.push(
+									addedRelayUrl
+								);
 								this.plugin.saveSettings();
-								new Notice(`Added ${addedRelayUrl} to relay configuration.`);
+								new Notice(
+									`Added ${addedRelayUrl} to relay configuration.`
+								);
 								new Notice(`Re-connecting to Nostr...`);
-								this.refreshDisplay()
+								this.refreshDisplay();
 								this.plugin.nostrService.connectToRelays();
+								this.relayUrlInput.setValue("");
 							} else {
 								new Notice("Invalid URL added");
 							}
@@ -208,18 +211,36 @@ export class NostrWriterSettingTab extends PluginSettingTab {
 				});
 			for (const [i, url] of this.plugin.settings.relayURLs.entries()) {
 				new Setting(this.containerEl)
-					.setDesc(`${url} is ${this.plugin.nostrService.getRelayInfo(url) ? 'connected' : 'disconnected'}`)
-					.setName(`Relay ${i+1} - ${this.plugin.nostrService.getRelayInfo(url) ? '🟢' : '💀'}`)
+					.setDesc(
+						`${url} is ${
+							this.plugin.nostrService.getRelayInfo(url)
+								? "connected"
+								: "disconnected"
+						}`
+					)
+					.setName(
+						`Relay ${i + 1} - ${
+							this.plugin.nostrService.getRelayInfo(url)
+								? "🟢"
+								: "💀"
+						}`
+					)
 					.addButton((btn) => {
 						btn.setIcon("trash");
 						btn.setTooltip("Remove this relay");
 						btn.onClick(async () => {
-							this.plugin.settings.relayURLs.splice(i, 1);
-							await this.plugin.saveSettings();
-							this.refreshDisplay();
-							new Notice("Relay successfully deleted.");
-							new Notice(`Re-connecting to Nostr...`);
-							this.plugin.nostrService.connectToRelays();
+							if (
+								confirm(
+									"Are you sure you want to delete this relay? This cannot be undone."
+								)
+							) {
+								this.plugin.settings.relayURLs.splice(i, 1);
+								await this.plugin.saveSettings();
+								this.refreshDisplay();
+								new Notice("Relay successfully deleted.");
+								new Notice(`Re-connecting to Nostr...`);
+								this.plugin.nostrService.connectToRelays();
+							}
 						});
 					});
 			}
@@ -230,6 +251,28 @@ export class NostrWriterSettingTab extends PluginSettingTab {
 			.setDesc(
 				"Has this plugin enhanced your workflow? Say thanks as a one-time payment and buy me a coffee."
 			)
+			.addButton((bt) => {
+				bt.setTooltip("Copy lightning address")
+					.setIcon("zap")
+					.setCta()
+					.onClick(() => {
+						if (privateKeyField) {
+							navigator.clipboard.writeText(
+								"lnbc200u1pjvu03dpp5x20p0q5tdwylg5hsqw3av6qxufah0y64efldazmgad2rsffgda8qdpdfehhxarjypthy6t5v4ezqnmzwd5kg6tpdcs9qmr4va5kucqzzsxqyz5vqsp5w55p4tzawyfz5fasflmsvdfnnappd6hqnw9p7y2p0nl974f0mtkq9qyyssqq6gvpnvvuftqsdqyxzn9wrre3qfkpefzz6kqwssa3pz8l9mzczyq4u7qdc09jpatw9ekln9gh47vxrvx6zg6vlsqw7pq4a7kvj4ku4qpdrflwj"
+							);
+							new Notice("Lightning Invoice Address Copied!⚡️");
+							setTimeout(() => {
+								new Notice("Thank You 🤝");
+							}, 500);
+							setTimeout(() => {
+								new Notice("Stay Humble ⚖️");
+							}, 1000);
+							setTimeout(() => {
+								new Notice("Stack Sats ⚡️");
+							}, 1500);
+						}
+					});
+			})
 			.addButton((button) => {
 				button
 					.setTooltip("Sponsor on GitHub")
@@ -254,31 +297,6 @@ export class NostrWriterSettingTab extends PluginSettingTab {
 				img.alt = "Buy Me A Coffee";
 				anchor.appendChild(img);
 				bt.buttonEl.replaceWith(anchor);
-			});
-
-		new Setting(this.containerEl)
-			.setDesc("⚡️⚡️⚡️ IYKYK ⚡️⚡️⚡️")
-			.addButton((bt) => {
-				bt.setTooltip("Copy lightning address")
-					.setIcon("zap")
-					.setCta()
-					.onClick(() => {
-						if (privateKeyField) {
-							navigator.clipboard.writeText(
-								"lnbc200u1pjvu03dpp5x20p0q5tdwylg5hsqw3av6qxufah0y64efldazmgad2rsffgda8qdpdfehhxarjypthy6t5v4ezqnmzwd5kg6tpdcs9qmr4va5kucqzzsxqyz5vqsp5w55p4tzawyfz5fasflmsvdfnnappd6hqnw9p7y2p0nl974f0mtkq9qyyssqq6gvpnvvuftqsdqyxzn9wrre3qfkpefzz6kqwssa3pz8l9mzczyq4u7qdc09jpatw9ekln9gh47vxrvx6zg6vlsqw7pq4a7kvj4ku4qpdrflwj"
-							);
-							new Notice("Lightning Invoice Address Copied!⚡️");
-							setTimeout(() => {
-								new Notice("Thank You 🤝");
-							}, 500);
-							setTimeout(() => {
-								new Notice("Stay Humble ⚖️");
-							}, 1000);
-							setTimeout(() => {
-								new Notice("Stack Sats ⚡️");
-							}, 1500);
-						}
-					});
 			});
 	}
 
