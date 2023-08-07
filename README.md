@@ -22,6 +22,23 @@ They seem to me to be a match made in heaven...
 
 This tool is completely abstracted from Nostr, allowing you to stay focused - the plugin does not read Nostr messages or give you any view into the public space. It just publishes what you've written. Stay focused on your work and disconnected from the noise. 
 
+## Features
+- Publishing to Nostr: Directly publish your notes from Obsidian to Nostr with a single click.
+- Private Key Integration: Securely set and store your private key within the plugin settings for authenticated publishing.
+- Summary and Image URL Support: Add an optional summary and image URL to accompany your note, with live preview functionality.
+- Public Key Retrieval: Easily retrieve and copy your public key to the clipboard.
+- Local Record Keeping: Keep a local record of published events in a JSON file for your reference and tracking.
+- Published View : See all posts sent from Obsidian
+- Short Format Message Writer: Quickly compose and publish short form messages directly to Nostr from within Obsidian.
+
+### Coming Soon...
+- Relays Configuration: Configure to send to whatever relays you like.
+- After publishing get a link to the published note
+
+### Ideas..
+- Plugin User Relay: A relay specific to this plugin - see what everyone else is writing.
+- Image CDN : Images in your file will be uploaded to a CDN & plugged into your nostr message
+- Frontmatter : after publishing it would be cool if this also creates a "front matter" in the published .md file
 
 ## Writing On Nostr
 It's time to start building your blog, speaking to your audience, and publishing your work freely outside of any walled garden. 
