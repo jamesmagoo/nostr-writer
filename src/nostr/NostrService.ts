@@ -22,6 +22,8 @@ export default class NostrService {
 	private plugin: NostrWriterPlugin;
 	private app: App;
 	private isConnected: boolean;
+	private relayURLs: string[];
+	private connectedRelays: Relay[];
 
 	constructor(
 		plugin: NostrWriterPlugin,
@@ -44,23 +46,76 @@ export default class NostrService {
 
 		this.relay.on("connect", () => {
 			console.log(`connected to ${this.relay?.url}`);
-			this.plugin.statusBar?.setText("Connected to Nostr 🟣");
 			this.isConnected = true;
-		})
-		
+		});
+
 		this.relay.on("disconnect", () => {
 			console.log(`disconnected from ${this.relay?.url}`);
-			this.plugin.statusBar?.setText("Not connected to Nostr 🌚");
 			this.isConnected = false;
 		});
 
 		this.relay.on("error", () => {
 			console.error(`failed to connect to ${this.relay?.url}}`);
-			this.plugin.statusBar?.setText("Not connected to Nostr 🌚");
 			this.isConnected = false;
 		});
 
 		this.relay.connect();
+
+		// TODO get from settings
+		// TODO make sure they are validated as URLs prior..
+		this.relayURLs = [
+			"ws://127.0.0.1:8080",
+			"ws://127.0.0.1:8080",
+			"ws://127.0.0.1:8080",
+			"ws://127.0.0.1:8080",
+			"ws://127.0.0.1:8089",
+			"ws://127.0.0.1:8080",
+			"ws://127.0.0.1:8088",
+		];
+
+		this.connectedRelays = [];
+
+		let connectionPromises = this.relayURLs.map((url) => {
+			return new Promise<Relay | null>((resolve) => {
+				console.log(`Trying.. ${url}`);
+				let relayAttempt = relayInit(url);
+
+				relayAttempt.on("connect", () => {
+					console.log(`connected/m to ${relayAttempt.url}`);
+					this.connectedRelays.push(relayAttempt);
+					resolve(relayAttempt);
+				});
+
+				const handleFailure = () => {
+					console.log(`failed to connect to ${url}`);
+					resolve(null);
+				};
+
+				relayAttempt.on("disconnect", handleFailure);
+				relayAttempt.on("error", handleFailure);
+
+				try {
+					relayAttempt.connect();
+				} catch (error) {
+					console.log(error);
+					console.log("in this error block");
+					resolve(null);
+				}
+			});
+		});
+
+		Promise.all(connectionPromises).then(() => {
+			console.log(
+				`Connected to ${this.connectedRelays.length} / ${this.relayURLs.length}`
+			);
+			if (this.connectedRelays.length === 0) {
+				this.plugin.statusBar?.setText("Not connected to Nostr 🌚");
+			} else {
+				this.plugin.statusBar?.setText(
+					`Connected to Nostr 🟣 ${this.connectedRelays.length} / ${this.relayURLs.length} relays.`
+				);
+			}
+		});
 	}
 
 	public getConnectionStatus(): boolean {
