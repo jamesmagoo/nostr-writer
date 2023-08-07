@@ -252,6 +252,14 @@ export default class NostrService {
 		}
 	}
 
+	shutdownRelays(){
+		console.log('Shutting down Nostr service')
+		this.relay?.close();
+		for(let r of this.connectedRelays){
+			r.close();
+		}
+	}
+
 	convertKeyToHex(value: string): string {
 		if (value && value.startsWith("nsec")) {
 			let decodedPrivateKey = nip19.decode(value);

@@ -90,6 +90,7 @@ export default class NostrWriterPlugin extends Plugin {
 	};
 
 	onunload(): void {
+		this.nostrService.shutdownRelays();
 		this.app.workspace
 			.getLeavesOfType(PUBLISHED_VIEW)
 			.forEach((leaf) => leaf.detach());
