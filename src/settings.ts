@@ -5,6 +5,7 @@ export interface NostrWriterPluginSettings {
 	privateKey: string;
 	shortFormEnabled: boolean;
 	statusBarEnabled: boolean;
+	relayURLs: string[];
 }
 
 export class NostrWriterSettingTab extends PluginSettingTab {

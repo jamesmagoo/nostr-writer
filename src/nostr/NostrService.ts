@@ -61,27 +61,31 @@ export default class NostrService {
 
 		this.relay.connect();
 
-		// TODO get from settings
-		// TODO make sure they are validated as URLs prior..
-		this.relayURLs = [
-			"ws://127.0.0.1:8080",
-			"ws://127.0.0.1:8080",
-			"ws://127.0.0.1:8080",
-			"ws://127.0.0.1:8080",
-			"ws://127.0.0.1:8089",
-			"ws://127.0.0.1:8080",
-			"ws://127.0.0.1:8088",
-		];
+		this.relayURLs = []
+		if (!settings.relayURLs) {
+			console.error(
+				"YourPlugin requires a list of relay urls to be set in the settings, defaulting to Damus."
+			);
+			this.relayURLs = ["wss://relay.damus.io/"];
+		} else {
+			for(let url of settings.relayURLs){
+				if(this.isValidURL(url)){
+					this.relayURLs.push(url)
+				}
+			}
+		}
+		this.connectToRelays();
+	}
 
+	connectToRelays() {
 		this.connectedRelays = [];
-
 		let connectionPromises = this.relayURLs.map((url) => {
 			return new Promise<Relay | null>((resolve) => {
 				console.log(`Trying.. ${url}`);
 				let relayAttempt = relayInit(url);
 
 				relayAttempt.on("connect", () => {
-					console.log(`connected/m to ${relayAttempt.url}`);
+					console.log(`connected to ${relayAttempt.url}`);
 					this.connectedRelays.push(relayAttempt);
 					resolve(relayAttempt);
 				});
@@ -252,10 +256,10 @@ export default class NostrService {
 		}
 	}
 
-	shutdownRelays(){
-		console.log('Shutting down Nostr service')
+	shutdownRelays() {
+		console.log("Shutting down Nostr service");
 		this.relay?.close();
-		for(let r of this.connectedRelays){
+		for (let r of this.connectedRelays) {
 			r.close();
 		}
 	}
@@ -287,4 +291,14 @@ export default class NostrService {
 			JSON.stringify(publishedEvents)
 		);
 	}
+
+	isValidURL(url: string) {
+		try {
+		  new URL(url);
+		  return true;
+		} catch ( error) {
+			console.log(error)
+		  return false;  
+		}
+	  }
 }

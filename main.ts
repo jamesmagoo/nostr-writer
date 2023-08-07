@@ -56,6 +56,15 @@ export default class NostrWriterPlugin extends Plugin {
 		});
 
 		this.addCommand({
+			id: "re-connect",
+			name: "Re-connect to relays",
+			callback: async () => {
+				let pubKey = this.nostrService.connectToRelays();
+				new Notice(`Attempting re-connect, see status bar.`);
+			},
+		});
+
+		this.addCommand({
 			id: "get-pub-clipboard",
 			name: "Copy public key to clipboard",
 			callback: async () => {
@@ -112,6 +121,16 @@ export default class NostrWriterPlugin extends Plugin {
 				privateKey: "",
 				shortFormEnabled: false,
 				statusBarEnabled: false,
+				relayURLs: [
+					"ws://127.0.0.1:8080",
+					"ws://127.0.0.1:8080",
+					"ws://127.0.0.1:8080",
+					"ws://127.0.0.1:8080",
+					"ws://www.example.com",
+					"ws://www.example.com",
+					"ws://www.examplescom",
+					""
+				]
 			},
 			await this.loadData()
 		);
