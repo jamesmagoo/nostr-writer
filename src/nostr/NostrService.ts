@@ -158,7 +158,9 @@ export default class NostrService {
 		return this.publicKey;
 	}
 
-	async publishShortFormNote(message: string) {
+	async publishShortFormNote(
+		message: string
+	): Promise<{ success: boolean; publishedRelays: string[] }> {
 		console.log(`Sending a short form note to Nostr...`);
 		if (message) {
 			let uuid: any = uuidv4().substr(0, 8);
@@ -176,32 +178,16 @@ export default class NostrService {
 			};
 
 			let eventHash = getEventHash(event);
-			try {
-				let finalEvent: Event<Kind.Text> = {
-					...event,
-					id: eventHash,
-					sig: getSignature(event, this.privateKey),
-				};
 
-				return new Promise<boolean>((resolve, reject) => {
-					let pub = this.relay?.publish(finalEvent);
-
-					pub?.on("ok", () => {
-						console.log(`Event published successfully`);
-						console.log(finalEvent);
-						resolve(true);
-					});
-
-					pub?.on("failed", (reason: any) => {
-						console.log(`Failed to publish event: ${reason}`);
-						console.log(finalEvent);
-						reject(false);
-					});
-				});
-			} catch (error) {
-				console.error(error);
-				return false;
-			}
+			let finalEvent: Event<Kind.Text> = {
+				...event,
+				id: eventHash,
+				sig: getSignature(event, this.privateKey),
+			};
+			return this.publishToRelays<Kind.Text>(finalEvent);
+		} else {
+			console.error("No message to publish");
+			return { success: false, publishedRelays: [] };
 		}
 	}
 
@@ -284,6 +270,64 @@ export default class NostrService {
 		}
 	}
 
+	async publishToRelays<T extends Kind>(
+		finalEvent: Event<T>
+	): Promise<{ success: boolean; publishedRelays: string[] }> {
+		try {
+			let publishingPromises = this.connectedRelays.map((relay) => {
+				return new Promise<{ success: boolean; url?: string }>(
+					(resolve) => {
+						console.log(`Publishing to.. ${relay.url}`);
+
+						let pub = relay.publish(finalEvent);
+
+						pub?.on("ok", () => {
+							console.log(
+								`Event published successfully to ${relay.url}`
+							);
+							if (finalEvent.kind === Kind.Article) {
+								console.log(
+									"30032 kind, save to published json"
+								);
+								this.savePublishedEvent(finalEvent);
+							}
+							resolve({ success: true, url: relay.url });
+						});
+
+						pub?.on("failed", (reason: any) => {
+							console.log(
+								`Failed to publish event to ${relay.url}: ${reason}`
+							);
+							resolve({ success: false });
+						});
+					}
+				);
+			});
+
+			let results = await Promise.all(publishingPromises);
+			let publishedRelays = results
+				.filter((result) => result.success)
+				.map((result) => result.url!);
+
+			console.log(
+				`Published to ${publishedRelays.length} / ${this.connectedRelays.length} relays.`
+			);
+
+			if (publishedRelays.length === 0) {
+				console.log("Didn't send to any relays");
+				return { success: false, publishedRelays: [] };
+			} else {
+				return { success: true, publishedRelays };
+			}
+		} catch (error) {
+			console.error(
+				"An error occurred while publishing to relays",
+				error
+			);
+			return { success: false, publishedRelays: [] };
+		}
+	}
+
 	shutdownRelays() {
 		console.log("Shutting down Nostr service");
 		this.relay?.close();
@@ -304,7 +348,8 @@ export default class NostrService {
 		return value;
 	}
 
-	async savePublishedEvent(finalEvent: Event<Kind.Article>) {
+	// TODO add relays information to event post...
+	async savePublishedEvent<T extends Kind>(finalEvent: Event<T>) {
 		const filePath = `${this.plugin.manifest.dir}/published.json`;
 		let publishedEvents;
 		try {

@@ -131,7 +131,7 @@ export default class NostrWriterPlugin extends Plugin {
 					"ws://www.example.com",
 					"ws://www.example.com",
 					"ws://www.examplescom",
-				]
+				],
 			},
 			await this.loadData()
 		);
@@ -159,16 +159,15 @@ export default class NostrWriterPlugin extends Plugin {
 				new Notice("The note is empty and cannot be published.");
 				return;
 			}
+			// TODO update this connection check for multiple relays
 			if (this.nostrService.getConnectionStatus()) {
-			new ConfirmPublishModal(
-				this.app,
-				this.nostrService,
-				activeFile
-			).open();
+				new ConfirmPublishModal(
+					this.app,
+					this.nostrService,
+					activeFile
+				).open();
 			} else {
-				new Notice(
-					`Please connect to Nostr before publishing.`
-				);
+				new Notice(`Please connect to Nostr before publishing.`);
 			}
 		} else {
 			new Notice("No note is currently active. Click into a note.");
@@ -188,17 +187,9 @@ export default class NostrWriterPlugin extends Plugin {
 							);
 							return;
 						}
-						if (this.nostrService.getConnectionStatus()) {
-							new ShortFormModal(
-								this.app,
-								this.nostrService
-							).open();
-							return;
-						} else {
-							new Notice(
-								`Please connect to Nostr before publishing.`
-							);
-						}
+
+						new ShortFormModal(this.app, this.nostrService).open();
+						return;
 					}
 				);
 			}
