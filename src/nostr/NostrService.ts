@@ -16,7 +16,6 @@ import { v4 as uuidv4 } from "uuid";
 import NostrWriterPlugin from "main";
 
 export default class NostrService {
-	private relay?: Relay;
 	private privateKey: string;
 	private publicKey: string;
 	private plugin: NostrWriterPlugin;
@@ -28,10 +27,8 @@ export default class NostrService {
 	constructor(
 		plugin: NostrWriterPlugin,
 		app: App,
-		relayUrl: string,
 		settings: NostrWriterPluginSettings
 	) {
-		console.log(`Initializing NostrService. with relayUrl: ${relayUrl}`);
 		if (!settings.privateKey) {
 			console.error(
 				"YourPlugin requires a private key to be set in the settings."
@@ -40,33 +37,21 @@ export default class NostrService {
 		}
 		this.plugin = plugin;
 		this.app = app;
-		this.relay = relayInit(relayUrl);
 		this.privateKey = this.convertKeyToHex(settings.privateKey);
 		this.publicKey = getPublicKey(this.privateKey);
-
-		this.relay.on("connect", () => {
-			console.log(`connected to ${this.relay?.url}`);
-			this.isConnected = true;
-		});
-
-		this.relay.on("disconnect", () => {
-			console.log(`disconnected from ${this.relay?.url}`);
-			this.isConnected = false;
-		});
-
-		this.relay.on("error", () => {
-			console.error(`failed to connect to ${this.relay?.url}}`);
-			this.isConnected = false;
-		});
-
-		this.relay.connect();
-
 		this.relayURLs = [];
 		if (!settings.relayURLs) {
 			console.error(
-				"YourPlugin requires a list of relay urls to be set in the settings, defaulting to Damus."
+				"YourPlugin requires a list of relay urls to be set in the settings, defaulting."
 			);
-			this.relayURLs = ["wss://relay.damus.io/"];
+			this.relayURLs = [
+				"wss://nos.lol ",
+				"wss://relay.damus.io",
+				"wss://relay.nostr.band",
+				"wss://relayable.org",
+				"wss://nostr.rocks",
+				"wss://nostr.fmt.wiz.biz",
+			];
 		} else {
 			for (let url of settings.relayURLs) {
 				if (this.isValidURL(url)) {
@@ -82,7 +67,7 @@ export default class NostrService {
 		this.connectedRelays = [];
 		let connectionPromises = this.relayURLs.map((url) => {
 			return new Promise<Relay | null>((resolve) => {
-				console.log(`Trying.. ${url}`);
+				console.log(`Initializing NostrService. with relay: ${url}`);
 				let relayAttempt = relayInit(url);
 
 				relayAttempt.on("connect", () => {
@@ -94,6 +79,7 @@ export default class NostrService {
 				const handleFailure = () => {
 					console.log(`failed to connect to ${url}`);
 					resolve(null);
+
 				};
 
 				relayAttempt.on("disconnect", handleFailure);
@@ -103,7 +89,6 @@ export default class NostrService {
 					relayAttempt.connect();
 				} catch (error) {
 					console.log(error);
-					console.log("in this error block");
 					resolve(null);
 				}
 			});
@@ -115,10 +100,12 @@ export default class NostrService {
 			);
 			if (this.connectedRelays.length === 0) {
 				this.plugin.statusBar?.setText("Not connected to Nostr 🌚");
+				this.isConnected = false;
 			} else {
 				this.plugin.statusBar?.setText(
 					`Connected to Nostr 🟣 ${this.connectedRelays.length} / ${this.relayURLs.length} relays.`
 				);
+				this.isConnected = true; 
 			}
 		});
 	}
@@ -130,7 +117,14 @@ export default class NostrService {
 				"YourPlugin requires a list of relay urls to be set in the settings, defaulting to Damus."
 			);
 			// TODO make a relay for this plugins users & add it here
-			this.relayURLs = ["wss://relay.damus.io/"];
+			this.relayURLs = [
+				"wss://nos.lol ",
+				"wss://relay.damus.io",
+				"wss://relay.nostr.band",
+				"wss://relayable.org",
+				"wss://nostr.rocks",
+				"wss://nostr.fmt.wiz.biz",
+			];
 		} else {
 			for (let url of this.plugin.settings.relayURLs) {
 				if (this.isValidURL(url)) {
@@ -313,9 +307,10 @@ export default class NostrService {
 
 	shutdownRelays() {
 		console.log("Shutting down Nostr service");
-		this.relay?.close();
-		for (let r of this.connectedRelays) {
-			r.close();
+		if (this.connectedRelays.length > 0) {
+			for (let r of this.connectedRelays) {
+				r.close();
+			}
 		}
 	}
 

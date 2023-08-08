@@ -109,12 +109,10 @@ export default class NostrWriterPlugin extends Plugin {
 		this.nostrService = new NostrService(
 			this,
 			this.app,
-			"wss://relay.damus.io/",
 			this.settings
 		);
 	}
 
-	// TODO configure these default relays ...
 	async loadSettings() {
 		this.settings = Object.assign(
 			{},
@@ -124,13 +122,12 @@ export default class NostrWriterPlugin extends Plugin {
 				statusBarEnabled: true,
 				relayConfigEnabled: false,
 				relayURLs: [
-					"ws://127.0.0.1:8080",
-					"ws://127.0.0.1:8080",
-					"ws://127.0.0.1:8080",
-					"ws://127.0.0.1:8080",
-					"ws://www.example.com",
-					"ws://www.example.com",
-					"ws://www.examplescom",
+					"wss://nos.lol ",
+					"wss://relay.damus.io",
+					"wss://relay.nostr.band",
+					"wss://relayable.org",
+					"wss://nostr.rocks",
+					"wss://nostr.fmt.wiz.biz",
 				],
 			},
 			await this.loadData()
@@ -187,9 +184,17 @@ export default class NostrWriterPlugin extends Plugin {
 							);
 							return;
 						}
-
-						new ShortFormModal(this.app, this.nostrService).open();
-						return;
+						if (this.nostrService.getConnectionStatus()) {
+							new ShortFormModal(
+								this.app,
+								this.nostrService
+							).open();
+							return; 
+						} else {
+							new Notice(
+								`Please connect to Nostr before publishing.`
+							);
+						}
 					}
 				);
 			}
