@@ -193,7 +193,7 @@ export class NostrWriterSettingTab extends PluginSettingTab {
 								this.plugin.settings.relayURLs.push(
 									addedRelayUrl
 								);
-								this.plugin.saveSettings();
+								await this.plugin.saveSettings();
 								new Notice(
 									`Added ${addedRelayUrl} to relay configuration.`
 								);

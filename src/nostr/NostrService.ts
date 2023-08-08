@@ -196,7 +196,7 @@ export default class NostrService {
 		activeFile: TFile,
 		summary: string,
 		imageUrl: string
-	) {
+	): Promise<{ success: boolean; publishedRelays: string[] }> {
 		console.log(`Publishing your note to Nostr...`);
 		if (fileContent) {
 			/**
@@ -232,7 +232,6 @@ export default class NostrService {
 				tags: tags,
 				content: fileContent,
 			};
-			console.log(eventTemplate);
 
 			let event: UnsignedEvent<Kind.Article> = {
 				...eventTemplate,
@@ -240,33 +239,17 @@ export default class NostrService {
 			};
 
 			let eventHash = getEventHash(event);
-			try {
-				let finalEvent: Event<Kind.Article> = {
-					...event,
-					id: eventHash,
-					sig: getSignature(event, this.privateKey),
-				};
 
-				return new Promise<boolean>((resolve, reject) => {
-					let pub = this.relay?.publish(finalEvent);
+			let finalEvent: Event<Kind.Article> = {
+				...event,
+				id: eventHash,
+				sig: getSignature(event, this.privateKey),
+			};
 
-					pub?.on("ok", () => {
-						// Save the event to published.json
-						this.savePublishedEvent(finalEvent);
-						console.log(`Event published successfully`);
-						console.log(finalEvent);
-						resolve(true);
-					});
-
-					pub?.on("failed", (reason: any) => {
-						console.log(`Failed to publish event: ${reason}`);
-						reject(false);
-					});
-				});
-			} catch (error) {
-				console.error(error);
-				return false;
-			}
+			return this.publishToRelays<Kind.Article>(finalEvent);
+		} else {
+			console.error("No message to publish");
+			return { success: false, publishedRelays: [] };
 		}
 	}
 

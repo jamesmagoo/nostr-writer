@@ -86,14 +86,20 @@ export default class ConfirmPublishModal extends Modal {
 						);
 						const summary = summaryText.getValue();
 						const imageUrl = imageUrlText.getValue();
-						await this.nostrService.publishNote(
+						let res = await this.nostrService.publishNote(
 							fileContent,
 							this.file,
 							summary,
 							imageUrl
 						);
-						// await will pause execution until the Promise resolves or rejects
-						new Notice(`Successfully published note to Nostr.`);
+						if (res.success) {
+							setTimeout(()=>{new Notice(`Successfully sent note to Nostr.`)},500)
+							for(let relay of res.publishedRelays){
+								setTimeout(()=>{new Notice(`✅ - Sent to ${relay}`)},500)
+							}
+						} else {
+							new Notice(`❌ Failed to send note to Nostr.`);
+						}
 					} catch (error) {
 						new Notice(`Failed to publish note to Nostr.`);
 					}
