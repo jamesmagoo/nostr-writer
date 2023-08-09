@@ -97,5 +97,9 @@ npub10a8kw2hsevhfycl4yhtg7vzrcpwpu7s6med27juf4lzqpsvy270qrh8zkw
 </br>
 <div align="center">
 <a href="https://www.buymeacoffee.com/jamesmagoo" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" style="height: 60px !important;width: 217px !important;" ></a>
+
+
+<!-- <a id="usdButton" class="button suggested-action green" href="https://getalby.com/p/winterpaper90109" target="_blank"><i class="fas fa-dollar-sign" aria-hidden="true"></i>Buy Me a <span id="thing">Pizza</span></a> -->
+
 </div>
 

@@ -78,8 +78,19 @@ export default class NostrService {
 
 				const handleFailure = () => {
 					console.log(`failed to connect to ${url}`);
+					console.log("Removing ...");
+					this.connectedRelays.remove(relayAttempt);
+					if (this.connectedRelays.length === 0) {
+						this.plugin.statusBar?.setText(
+							"Nostr 🌚"
+						);
+						this.isConnected = false;
+					} else {
+						this.plugin.statusBar?.setText(
+							`Nostr 🟣 ${this.connectedRelays.length} / ${this.relayURLs.length} relays.`
+						);
+					}
 					resolve(null);
-
 				};
 
 				relayAttempt.on("disconnect", handleFailure);
@@ -99,13 +110,13 @@ export default class NostrService {
 				`Connected to ${this.connectedRelays.length} / ${this.relayURLs.length}`
 			);
 			if (this.connectedRelays.length === 0) {
-				this.plugin.statusBar?.setText("Not connected to Nostr 🌚");
+				this.plugin.statusBar?.setText("Nostr 🌚");
 				this.isConnected = false;
 			} else {
 				this.plugin.statusBar?.setText(
-					`Connected to Nostr 🟣 ${this.connectedRelays.length} / ${this.relayURLs.length} relays.`
+					`Nostr 🟣 ${this.connectedRelays.length} / ${this.relayURLs.length} relays.`
 				);
-				this.isConnected = true; 
+				this.isConnected = true;
 			}
 		});
 	}

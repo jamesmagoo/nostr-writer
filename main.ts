@@ -122,7 +122,7 @@ export default class NostrWriterPlugin extends Plugin {
 				statusBarEnabled: true,
 				relayConfigEnabled: false,
 				relayURLs: [
-					"wss://nos.lol ",
+					"wss://nos.lol",
 					"wss://relay.damus.io",
 					"wss://relay.nostr.band",
 					"wss://relayable.org",
@@ -208,6 +208,15 @@ export default class NostrWriterPlugin extends Plugin {
 		if (this.settings.statusBarEnabled) {
 			if (!this.statusBar) {
 				this.statusBar = this.addStatusBarItem();
+				this.statusBar.addClass("mod-clickable");
+				setAttributes(this.statusBar, {
+				"aria-label": "Re-connect to Nostr",
+				"aria-label-position": "top",
+				});
+				this.statusBar.addEventListener("click", () => {
+					this.nostrService.connectToRelays();
+					new Notice("Re-connecting to Nostr..")
+				});
 			}
 		} else if (this.statusBar) {
 			this.statusBar.remove();
@@ -215,3 +224,9 @@ export default class NostrWriterPlugin extends Plugin {
 		}
 	}
 }
+
+export function setAttributes(element: any, attributes: any) {
+	for (let key in attributes) {
+	  element.setAttribute(key, attributes[key]);
+	}
+  }
