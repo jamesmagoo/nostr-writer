@@ -70,26 +70,24 @@ export default class NostrService {
 				console.log(`Initializing NostrService. with relay: ${url}`);
 				let relayAttempt = relayInit(url);
 
+				const timeout = setTimeout(() => {
+					console.log("Connection time out!!")
+					resolve(null);
+				}, 10000);
+
 				relayAttempt.on("connect", () => {
+					clearTimeout(timeout);
 					console.log(`connected to ${relayAttempt.url}`);
 					this.connectedRelays.push(relayAttempt);
 					resolve(relayAttempt);
 				});
 
 				const handleFailure = () => {
+					clearTimeout(timeout);
 					console.log(`failed to connect to ${url}`);
 					console.log("Removing ...");
-					this.connectedRelays.remove(relayAttempt);
-					if (this.connectedRelays.length === 0) {
-						this.plugin.statusBar?.setText(
-							"Nostr 🌚"
-						);
-						this.isConnected = false;
-					} else {
-						this.plugin.statusBar?.setText(
-							`Nostr 🟣 ${this.connectedRelays.length} / ${this.relayURLs.length} relays.`
-						);
-					}
+					this.connectedRelays = this.connectedRelays.filter(relay => relay !== relayAttempt);
+					this.updateStatusBar();
 					resolve(null);
 				};
 
@@ -109,17 +107,21 @@ export default class NostrService {
 			console.log(
 				`Connected to ${this.connectedRelays.length} / ${this.relayURLs.length}`
 			);
-			if (this.connectedRelays.length === 0) {
-				this.plugin.statusBar?.setText("Nostr 🌚");
-				this.isConnected = false;
-			} else {
-				this.plugin.statusBar?.setText(
-					`Nostr 🟣 ${this.connectedRelays.length} / ${this.relayURLs.length} relays.`
-				);
+			this.updateStatusBar();
+			if (this.connectedRelays.length > 0) {
 				this.isConnected = true;
-			}
+			} 
 		});
 	}
+
+	updateStatusBar = () => {
+        if (this.connectedRelays.length === 0) {
+            this.plugin.statusBar?.setText("Nostr 🌚");
+            this.isConnected = false;
+        } else {
+            this.plugin.statusBar?.setText(`Nostr 🟣 ${this.connectedRelays.length} / ${this.relayURLs.length} relays.`);
+        }
+    };
 
 	refreshRelayUrls() {
 		this.relayURLs = [];
@@ -265,11 +267,19 @@ export default class NostrService {
 			let publishingPromises = this.connectedRelays.map((relay) => {
 				return new Promise<{ success: boolean; url?: string }>(
 					(resolve) => {
+						const timeout = setTimeout(() => {
+							console.log(`Publishing to ${relay.url} timed out`);
+							resolve({ success: false });
+						}, 5000);
+
+						if(relay.status === 1){
+
 						console.log(`Publishing to.. ${relay.url}`);
 
 						let pub = relay.publish(finalEvent);
 
 						pub?.on("ok", () => {
+							clearTimeout(timeout);
 							console.log(
 								`Event published successfully to ${relay.url}`
 							);
@@ -283,11 +293,24 @@ export default class NostrService {
 						});
 
 						pub?.on("failed", (reason: any) => {
+							clearTimeout(timeout);
 							console.log(
 								`Failed to publish event to ${relay.url}: ${reason}`
 							);
 							resolve({ success: false });
 						});
+
+						relay.on("disconnect", () => {
+							clearTimeout(timeout);
+							console.log(`Disconnected from ${relay.url}`);
+							resolve({ success: false });
+						});
+					} else {
+						clearTimeout(timeout);
+                        console.log(`Skipping disconnected relay: ${relay.url}`);
+                        resolve({ success: false });
+					}
+						
 					}
 				);
 			});
@@ -362,5 +385,5 @@ export default class NostrService {
 			console.log(error);
 			return false;
 		}
-	}
+	}		
 }
