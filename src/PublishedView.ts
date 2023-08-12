@@ -37,13 +37,10 @@ export class PublishedView extends ItemView {
 
 			publishedNotes
 				.reverse()
-				.forEach((note: { tags: any[]; created_at: number , id : string}) => {
+				.forEach((note: { tags: any[]; created_at: number , id : string, filepath: string}) => {
 					const titleTag = note.tags.find(
 						(tag: any[]) => tag[0] === "title"
 					);
-					// const summaryTag = note.tags.find(
-					// 	(tag: any[]) => tag[0] === "summary"
-					// );
 					const publishedAtTag = note.tags.find(
 						(tag: any[]) => tag[0] === "published_at"
 					);
@@ -81,6 +78,7 @@ export class PublishedView extends ItemView {
 
 					let copyButton = new ButtonComponent(detailsDiv)
 						.setIcon("copy")
+						.setCta()
 						.setTooltip("Copy Nostr event ID")
 						.onClick(() => {
 							// Copy the note ID to the clipboard
@@ -95,6 +93,20 @@ export class PublishedView extends ItemView {
 									);
 								});
 						});
+					
+						let gotoFileButton = new ButtonComponent(detailsDiv)
+						.setIcon("file-text")
+						.setCta()
+						.setTooltip("Go to file in Obsidian")
+						.onClick(() => {
+							if(note.filepath == null){
+								const openFile = this.app.workspace.getActiveFile();
+								console.log(openFile?.path)
+								new Notice("File path not available")
+							} else {
+								this.focusFile(note.filepath)
+							}
+						});
 				});
 			} else {
 				const noPostsDiv = container.createEl("div", {cls: "published-card",});
@@ -106,4 +118,24 @@ export class PublishedView extends ItemView {
 			noPostsDiv.createEl("h6", {text : "No Posts 📝" });
 		}
 	}
+
+	focusFile = (path: string, shouldSplit = false): void => {
+		const targetFile = this.app.vault
+		  .getFiles()
+		  .find((f) => f.path === path);
+		if (targetFile) {
+		  let leaf = this.app.workspace.getMostRecentLeaf();
+		  const createLeaf = shouldSplit || leaf?.getViewState().pinned;
+		  if (createLeaf) {
+			  leaf = this.app.workspace.getLeaf('tab');
+		  }
+		  leaf?.openFile(targetFile);
+		} else {
+		  new Notice('Cannot find a file with that name');
+		}
+	};
+
 }
+
+
+

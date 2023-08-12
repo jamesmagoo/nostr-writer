@@ -56,16 +56,21 @@ export default class ConfirmPublishModal extends Modal {
 			let url = imageUrlText.getValue();
 			const imageUrl = imageUrlText.getValue();
 
-			if (!isValidURL(imageUrl)) {
-				new Notice(`Invalid image URL. Please enter a valid URL.`);
-				return;
-			}
 			if (url) {
-				imagePreview.src = url;
-				imagePreview.style.display = "block"; // Show preview
+				if (!isValidURL(url)) {
+					new Notice(`Invalid image URL. Please enter a valid URL.`);
+					publishButton.setDisabled(true); 
+					publishButton.setButtonText("Invalid image url");
+					return;
+				} else {
+					imagePreview.src = url;
+					imagePreview.style.display = "block"; 
+				}
 			} else {
-				imagePreview.style.display = "none"; // Hide preview
+				imagePreview.style.display = "none"; 
 			}
+			publishButton.setButtonText("Confirm and Publish");
+			publishButton.setDisabled(false);
 		});
 
 		contentEl.createEl("p", {
@@ -106,7 +111,6 @@ export default class ConfirmPublishModal extends Modal {
 					publishButton
 						.setButtonText("Confirm and Publish")
 						.setDisabled(false);
-
 					this.close();
 				}, 3000);
 			});

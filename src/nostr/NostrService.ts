@@ -71,7 +71,7 @@ export default class NostrService {
 				let relayAttempt = relayInit(url);
 
 				const timeout = setTimeout(() => {
-					console.log("Connection time out!!")
+					console.log("Connection time out!!");
 					resolve(null);
 				}, 10000);
 
@@ -86,7 +86,7 @@ export default class NostrService {
 					clearTimeout(timeout);
 					console.log(`failed to connect to ${url}`);
 					console.log("Removing ...");
-					this.connectedRelays.remove(relayAttempt)
+					this.connectedRelays.remove(relayAttempt);
 					this.updateStatusBar();
 					resolve(null);
 				};
@@ -110,18 +110,20 @@ export default class NostrService {
 			this.updateStatusBar();
 			if (this.connectedRelays.length > 0) {
 				this.isConnected = true;
-			} 
+			}
 		});
 	}
 
 	updateStatusBar = () => {
-        if (this.connectedRelays.length === 0) {
-            this.plugin.statusBar?.setText("Nostr 🌚");
-            this.isConnected = false;
-        } else {
-            this.plugin.statusBar?.setText(`Nostr 🟣 ${this.connectedRelays.length} / ${this.relayURLs.length} relays.`);
-        }
-    };
+		if (this.connectedRelays.length === 0) {
+			this.plugin.statusBar?.setText("Nostr 🌚");
+			this.isConnected = false;
+		} else {
+			this.plugin.statusBar?.setText(
+				`Nostr 🟣 ${this.connectedRelays.length} / ${this.relayURLs.length} relays.`
+			);
+		}
+	};
 
 	refreshRelayUrls() {
 		this.relayURLs = [];
@@ -191,7 +193,7 @@ export default class NostrService {
 				id: eventHash,
 				sig: getSignature(event, this.privateKey),
 			};
-			return this.publishToRelays<Kind.Text>(finalEvent);
+			return this.publishToRelays<Kind.Text>(finalEvent,"");
 		} else {
 			console.error("No message to publish");
 			return { success: false, publishedRelays: [] };
@@ -253,7 +255,7 @@ export default class NostrService {
 				sig: getSignature(event, this.privateKey),
 			};
 
-			return this.publishToRelays<Kind.Article>(finalEvent);
+			return this.publishToRelays<Kind.Article>(finalEvent, activeFile.path);
 		} else {
 			console.error("No message to publish");
 			return { success: false, publishedRelays: [] };
@@ -261,7 +263,8 @@ export default class NostrService {
 	}
 
 	async publishToRelays<T extends Kind>(
-		finalEvent: Event<T>
+		finalEvent: Event<T>,
+		filePath: string
 	): Promise<{ success: boolean; publishedRelays: string[] }> {
 		try {
 			let publishingPromises = this.connectedRelays.map((relay) => {
@@ -272,45 +275,39 @@ export default class NostrService {
 							resolve({ success: false });
 						}, 5000);
 
-						if(relay.status === 1){
+						if (relay.status === 1) {
+							console.log(`Publishing to.. ${relay.url}`);
 
-						console.log(`Publishing to.. ${relay.url}`);
+							let pub = relay.publish(finalEvent);
 
-						let pub = relay.publish(finalEvent);
-
-						pub?.on("ok", () => {
-							clearTimeout(timeout);
-							console.log(
-								`Event published successfully to ${relay.url}`
-							);
-							if (finalEvent.kind === Kind.Article) {
+							pub?.on("ok", () => {
+								clearTimeout(timeout);
 								console.log(
-									"30032 kind, save to published json"
+									`Event published successfully to ${relay.url}`
 								);
-								this.savePublishedEvent(finalEvent);
-							}
-							resolve({ success: true, url: relay.url });
-						});
+								resolve({ success: true, url: relay.url });
+							});
 
-						pub?.on("failed", (reason: any) => {
+							pub?.on("failed", (reason: any) => {
+								clearTimeout(timeout);
+								console.log(
+									`Failed to publish event to ${relay.url}: ${reason}`
+								);
+								resolve({ success: false });
+							});
+
+							relay.on("disconnect", () => {
+								clearTimeout(timeout);
+								console.log(`Disconnected from ${relay.url}`);
+								resolve({ success: false });
+							});
+						} else {
 							clearTimeout(timeout);
 							console.log(
-								`Failed to publish event to ${relay.url}: ${reason}`
+								`Skipping disconnected relay: ${relay.url}`
 							);
 							resolve({ success: false });
-						});
-
-						relay.on("disconnect", () => {
-							clearTimeout(timeout);
-							console.log(`Disconnected from ${relay.url}`);
-							resolve({ success: false });
-						});
-					} else {
-						clearTimeout(timeout);
-                        console.log(`Skipping disconnected relay: ${relay.url}`);
-                        resolve({ success: false });
-					}
-						
+						}
 					}
 				);
 			});
@@ -328,6 +325,13 @@ export default class NostrService {
 				console.log("Didn't send to any relays");
 				return { success: false, publishedRelays: [] };
 			} else {
+				if (finalEvent.kind === Kind.Article) {
+					this.savePublishedEvent(
+						finalEvent,
+						filePath,
+						publishedRelays,
+					);
+				}
 				return { success: true, publishedRelays };
 			}
 		} catch (error) {
@@ -360,19 +364,28 @@ export default class NostrService {
 		return value;
 	}
 
-	// TODO add relays information to event post...
-	async savePublishedEvent<T extends Kind>(finalEvent: Event<T>) {
-		const filePath = `${this.plugin.manifest.dir}/published.json`;
+	async savePublishedEvent<T extends Kind>(
+		finalEvent: Event<T>,
+		publishedFilePath: string,
+		relays: string[]
+	) {
+		const publishedDataPath = `${this.plugin.manifest.dir}/published.json`;
 		let publishedEvents;
 		try {
-			const fileContent = await this.app.vault.adapter.read(filePath);
+			const fileContent = await this.app.vault.adapter.read(publishedDataPath);
 			publishedEvents = JSON.parse(fileContent);
 		} catch (e) {
 			publishedEvents = [];
 		}
-		publishedEvents.push(finalEvent);
+		
+		const eventWithMetaData = {
+			...finalEvent,
+			filepath: publishedFilePath,
+			publishedToRelays: relays
+		};
+		publishedEvents.push(eventWithMetaData);
 		await this.app.vault.adapter.write(
-			filePath,
+			publishedDataPath,
 			JSON.stringify(publishedEvents)
 		);
 	}
@@ -385,5 +398,5 @@ export default class NostrService {
 			console.log(error);
 			return false;
 		}
-	}		
+	}
 }
