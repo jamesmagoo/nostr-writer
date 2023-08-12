@@ -22,7 +22,7 @@ export default class NostrService {
 	private app: App;
 	private isConnected: boolean;
 	private relayURLs: string[];
-	private connectedRelays: Relay[];
+	connectedRelays: Relay[];
 
 	constructor(
 		plugin: NostrWriterPlugin,
@@ -62,7 +62,7 @@ export default class NostrService {
 		this.connectToRelays();
 	}
 
-	connectToRelays() {
+	async connectToRelays() {
 		this.refreshRelayUrls();
 		this.connectedRelays = [];
 		let connectionPromises = this.relayURLs.map((url) => {
@@ -86,7 +86,7 @@ export default class NostrService {
 					clearTimeout(timeout);
 					console.log(`failed to connect to ${url}`);
 					console.log("Removing ...");
-					this.connectedRelays = this.connectedRelays.filter(relay => relay !== relayAttempt);
+					this.connectedRelays.remove(relayAttempt)
 					this.updateStatusBar();
 					resolve(null);
 				};
@@ -105,7 +105,7 @@ export default class NostrService {
 
 		Promise.all(connectionPromises).then(() => {
 			console.log(
-				`Connected to ${this.connectedRelays.length} / ${this.relayURLs.length}`
+				`Connected to ${this.connectedRelays.length} / ${this.relayURLs.length} relays`
 			);
 			this.updateStatusBar();
 			if (this.connectedRelays.length > 0) {

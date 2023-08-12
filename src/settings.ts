@@ -199,7 +199,7 @@ export class NostrWriterSettingTab extends PluginSettingTab {
 								);
 								new Notice(`Re-connecting to Nostr...`);
 								this.refreshDisplay();
-								this.plugin.nostrService.connectToRelays();
+								await this.plugin.nostrService.connectToRelays();
 								this.relayUrlInput.setValue("");
 							} else {
 								new Notice("Invalid URL added");

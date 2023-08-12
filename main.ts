@@ -47,6 +47,16 @@ export default class NostrWriterPlugin extends Plugin {
 		});
 
 		this.addCommand({
+			id: "test-print",
+			name: "Show connected relays",
+			callback: async () => {
+				for(let r of this.nostrService.connectedRelays){
+					new Notice(`Connected to ${r.url}`)
+				}
+			},
+		});
+
+		this.addCommand({
 			id: "get-pub",
 			name: "See your public key",
 			callback: async () => {
