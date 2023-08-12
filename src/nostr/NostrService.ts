@@ -137,7 +137,6 @@ export default class NostrService {
 				"wss://relay.damus.io",
 				"wss://relay.nostr.band",
 				"wss://relayable.org",
-				"wss://nostr.rocks",
 				"wss://nostr.fmt.wiz.biz",
 			];
 		} else {
