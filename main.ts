@@ -47,11 +47,30 @@ export default class NostrWriterPlugin extends Plugin {
 		});
 
 		this.addCommand({
+			id: "test-print",
+			name: "Show connected relays",
+			callback: async () => {
+				for(let r of this.nostrService.connectedRelays){
+					new Notice(`Connected to ${r.url}`)
+				}
+			},
+		});
+
+		this.addCommand({
 			id: "get-pub",
 			name: "See your public key",
 			callback: async () => {
 				let pubKey = this.nostrService.getPublicKey();
 				new Notice(`Public Key: ${pubKey}`);
+			},
+		});
+
+		this.addCommand({
+			id: "re-connect",
+			name: "Re-connect to relays",
+			callback: async () => {
+				let pubKey = this.nostrService.connectToRelays();
+				new Notice(`Attempting re-connect, see status bar.`);
 			},
 		});
 
@@ -90,6 +109,7 @@ export default class NostrWriterPlugin extends Plugin {
 	};
 
 	onunload(): void {
+		this.nostrService.shutdownRelays();
 		this.app.workspace
 			.getLeavesOfType(PUBLISHED_VIEW)
 			.forEach((leaf) => leaf.detach());
@@ -99,7 +119,6 @@ export default class NostrWriterPlugin extends Plugin {
 		this.nostrService = new NostrService(
 			this,
 			this.app,
-			"wss://relay.damus.io/",
 			this.settings
 		);
 	}
@@ -110,7 +129,16 @@ export default class NostrWriterPlugin extends Plugin {
 			{
 				privateKey: "",
 				shortFormEnabled: false,
-				statusBarEnabled: false,
+				statusBarEnabled: true,
+				relayConfigEnabled: false,
+				relayURLs: [
+					"wss://nos.lol",
+					"wss://relay.damus.io",
+					"wss://relay.nostr.band",
+					"wss://relayable.org",
+					"wss://nostr.rocks",
+					"wss://nostr.fmt.wiz.biz",
+				],
 			},
 			await this.loadData()
 		);
@@ -138,16 +166,15 @@ export default class NostrWriterPlugin extends Plugin {
 				new Notice("The note is empty and cannot be published.");
 				return;
 			}
+			// TODO update this connection check for multiple relays
 			if (this.nostrService.getConnectionStatus()) {
-			new ConfirmPublishModal(
-				this.app,
-				this.nostrService,
-				activeFile
-			).open();
+				new ConfirmPublishModal(
+					this.app,
+					this.nostrService,
+					activeFile
+				).open();
 			} else {
-				new Notice(
-					`Please connect to Nostr before publishing.`
-				);
+				new Notice(`Please connect to Nostr before publishing.`);
 			}
 		} else {
 			new Notice("No note is currently active. Click into a note.");
@@ -172,7 +199,7 @@ export default class NostrWriterPlugin extends Plugin {
 								this.app,
 								this.nostrService
 							).open();
-							return;
+							return; 
 						} else {
 							new Notice(
 								`Please connect to Nostr before publishing.`
@@ -191,6 +218,15 @@ export default class NostrWriterPlugin extends Plugin {
 		if (this.settings.statusBarEnabled) {
 			if (!this.statusBar) {
 				this.statusBar = this.addStatusBarItem();
+				this.statusBar.addClass("mod-clickable");
+				setAttributes(this.statusBar, {
+				"aria-label": "Re-connect to Nostr",
+				"aria-label-position": "top",
+				});
+				this.statusBar.addEventListener("click", () => {
+					this.nostrService.connectToRelays();
+					new Notice("Re-connecting to Nostr..")
+				});
 			}
 		} else if (this.statusBar) {
 			this.statusBar.remove();
@@ -198,3 +234,9 @@ export default class NostrWriterPlugin extends Plugin {
 		}
 	}
 }
+
+export function setAttributes(element: any, attributes: any) {
+	for (let key in attributes) {
+	  element.setAttribute(key, attributes[key]);
+	}
+  }

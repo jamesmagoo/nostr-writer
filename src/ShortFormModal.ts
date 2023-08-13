@@ -32,17 +32,21 @@ export default class ShortFormModal extends Modal {
 					publishButton.setButtonText("Sending...").setDisabled(true);
 					setTimeout(async () => {
 						const summary = summaryText.getValue();
-						const success =
-							await this.nostrService.publishShortFormNote(
-								summary
-							);
-						if (success) {
-							new Notice(`Successfully sent note to Nostr.`);
-						} else {
-							new Notice(`Failed to send note to Nostr.`);
+						try {
+							let res =
+								await this.nostrService.publishShortFormNote(summary);
+							if (res.success) {
+								setTimeout(()=>{new Notice(`Successfully sent note to Nostr.`)},500)
+								for(let relay of res.publishedRelays){
+									setTimeout(()=>{new Notice(`✅ - Sent to ${relay}`)},500)
+								}
+							} else {
+								new Notice(`❌ Failed to send note to Nostr.`);
+							}	
+						} catch {
+							new Notice(`❌ Failed to send note to Nostr.`);
 						}
-
-						// Change the button text back and enable it
+						summaryText.setValue("");
 						publishButton
 							.setButtonText("Confirm and Publish")
 							.setDisabled(false);

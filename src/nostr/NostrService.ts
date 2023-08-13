@@ -16,20 +16,19 @@ import { v4 as uuidv4 } from "uuid";
 import NostrWriterPlugin from "main";
 
 export default class NostrService {
-	private relay?: Relay;
 	private privateKey: string;
 	private publicKey: string;
 	private plugin: NostrWriterPlugin;
 	private app: App;
 	private isConnected: boolean;
+	private relayURLs: string[];
+	connectedRelays: Relay[];
 
 	constructor(
 		plugin: NostrWriterPlugin,
 		app: App,
-		relayUrl: string,
 		settings: NostrWriterPluginSettings
 	) {
-		console.log(`Initializing NostrService. with relayUrl: ${relayUrl}`);
 		if (!settings.privateKey) {
 			console.error(
 				"YourPlugin requires a private key to be set in the settings."
@@ -38,29 +37,125 @@ export default class NostrService {
 		}
 		this.plugin = plugin;
 		this.app = app;
-		this.relay = relayInit(relayUrl);
 		this.privateKey = this.convertKeyToHex(settings.privateKey);
 		this.publicKey = getPublicKey(this.privateKey);
+		this.relayURLs = [];
+		if (!settings.relayURLs) {
+			console.error(
+				"YourPlugin requires a list of relay urls to be set in the settings, defaulting."
+			);
+			this.relayURLs = [
+				"wss://nos.lol ",
+				"wss://relay.damus.io",
+				"wss://relay.nostr.band",
+				"wss://relayable.org",
+				"wss://nostr.rocks",
+				"wss://nostr.fmt.wiz.biz",
+			];
+		} else {
+			for (let url of settings.relayURLs) {
+				if (this.isValidURL(url)) {
+					this.relayURLs.push(url);
+				}
+			}
+		}
+		this.connectToRelays();
+	}
 
-		this.relay.on("connect", () => {
-			console.log(`connected to ${this.relay?.url}`);
-			this.plugin.statusBar?.setText("Connected to Nostr 🟣");
-			this.isConnected = true;
-		})
-		
-		this.relay.on("disconnect", () => {
-			console.log(`disconnected from ${this.relay?.url}`);
-			this.plugin.statusBar?.setText("Not connected to Nostr 🌚");
-			this.isConnected = false;
+	async connectToRelays() {
+		this.refreshRelayUrls();
+		this.connectedRelays = [];
+		let connectionPromises = this.relayURLs.map((url) => {
+			return new Promise<Relay | null>((resolve) => {
+				console.log(`Initializing NostrService. with relay: ${url}`);
+				let relayAttempt = relayInit(url);
+
+				const timeout = setTimeout(() => {
+					console.log("Connection time out!!");
+					resolve(null);
+				}, 10000);
+
+				relayAttempt.on("connect", () => {
+					clearTimeout(timeout);
+					console.log(`connected to ${relayAttempt.url}`);
+					this.connectedRelays.push(relayAttempt);
+					resolve(relayAttempt);
+				});
+
+				const handleFailure = () => {
+					clearTimeout(timeout);
+					console.log(`failed to connect to ${url}`);
+					console.log("Removing ...");
+					this.connectedRelays.remove(relayAttempt);
+					this.updateStatusBar();
+					resolve(null);
+				};
+
+				relayAttempt.on("disconnect", handleFailure);
+				relayAttempt.on("error", handleFailure);
+
+				try {
+					relayAttempt.connect();
+				} catch (error) {
+					console.log(error);
+					resolve(null);
+				}
+			});
 		});
 
-		this.relay.on("error", () => {
-			console.error(`failed to connect to ${this.relay?.url}}`);
-			this.plugin.statusBar?.setText("Not connected to Nostr 🌚");
-			this.isConnected = false;
+		Promise.all(connectionPromises).then(() => {
+			console.log(
+				`Connected to ${this.connectedRelays.length} / ${this.relayURLs.length} relays`
+			);
+			this.updateStatusBar();
+			if (this.connectedRelays.length > 0) {
+				this.isConnected = true;
+			}
 		});
+	}
 
-		this.relay.connect();
+	updateStatusBar = () => {
+		if (this.connectedRelays.length === 0) {
+			this.plugin.statusBar?.setText("Nostr 🌚");
+			this.isConnected = false;
+		} else {
+			this.plugin.statusBar?.setText(
+				`Nostr 🟣 ${this.connectedRelays.length} / ${this.relayURLs.length} relays.`
+			);
+		}
+	};
+
+	refreshRelayUrls() {
+		this.relayURLs = [];
+		if (!this.plugin.settings.relayURLs) {
+			console.error(
+				"YourPlugin requires a list of relay urls to be set in the settings, defaulting to Damus."
+			);
+			// TODO make a relay for this plugins users & add it here
+			this.relayURLs = [
+				"wss://nos.lol ",
+				"wss://relay.damus.io",
+				"wss://relay.nostr.band",
+				"wss://relayable.org",
+				"wss://nostr.fmt.wiz.biz",
+			];
+		} else {
+			for (let url of this.plugin.settings.relayURLs) {
+				if (this.isValidURL(url)) {
+					this.relayURLs.push(url);
+				}
+			}
+		}
+	}
+
+	getRelayInfo(relayUrl: string): boolean {
+		let connected: boolean = false;
+		for (let r of this.connectedRelays) {
+			if (r.url == relayUrl) {
+				connected = true;
+			}
+		}
+		return connected;
 	}
 
 	public getConnectionStatus(): boolean {
@@ -71,7 +166,9 @@ export default class NostrService {
 		return this.publicKey;
 	}
 
-	async publishShortFormNote(message: string) {
+	async publishShortFormNote(
+		message: string
+	): Promise<{ success: boolean; publishedRelays: string[] }> {
 		console.log(`Sending a short form note to Nostr...`);
 		if (message) {
 			let uuid: any = uuidv4().substr(0, 8);
@@ -89,32 +186,16 @@ export default class NostrService {
 			};
 
 			let eventHash = getEventHash(event);
-			try {
-				let finalEvent: Event<Kind.Text> = {
-					...event,
-					id: eventHash,
-					sig: getSignature(event, this.privateKey),
-				};
 
-				return new Promise<boolean>((resolve, reject) => {
-					let pub = this.relay?.publish(finalEvent);
-
-					pub?.on("ok", () => {
-						console.log(`Event published successfully`);
-						console.log(finalEvent);
-						resolve(true);
-					});
-
-					pub?.on("failed", (reason: any) => {
-						console.log(`Failed to publish event: ${reason}`);
-						console.log(finalEvent);
-						reject(false);
-					});
-				});
-			} catch (error) {
-				console.error(error);
-				return false;
-			}
+			let finalEvent: Event<Kind.Text> = {
+				...event,
+				id: eventHash,
+				sig: getSignature(event, this.privateKey),
+			};
+			return this.publishToRelays<Kind.Text>(finalEvent,"");
+		} else {
+			console.error("No message to publish");
+			return { success: false, publishedRelays: [] };
 		}
 	}
 
@@ -123,7 +204,7 @@ export default class NostrService {
 		activeFile: TFile,
 		summary: string,
 		imageUrl: string
-	) {
+	): Promise<{ success: boolean; publishedRelays: string[] }> {
 		console.log(`Publishing your note to Nostr...`);
 		if (fileContent) {
 			/**
@@ -159,7 +240,6 @@ export default class NostrService {
 				tags: tags,
 				content: fileContent,
 			};
-			console.log(eventTemplate);
 
 			let event: UnsignedEvent<Kind.Article> = {
 				...eventTemplate,
@@ -167,32 +247,106 @@ export default class NostrService {
 			};
 
 			let eventHash = getEventHash(event);
-			try {
-				let finalEvent: Event<Kind.Article> = {
-					...event,
-					id: eventHash,
-					sig: getSignature(event, this.privateKey),
-				};
 
-				return new Promise<boolean>((resolve, reject) => {
-					let pub = this.relay?.publish(finalEvent);
+			let finalEvent: Event<Kind.Article> = {
+				...event,
+				id: eventHash,
+				sig: getSignature(event, this.privateKey),
+			};
 
-					pub?.on("ok", () => {
-						// Save the event to published.json
-						this.savePublishedEvent(finalEvent);
-						console.log(`Event published successfully`);
-						console.log(finalEvent);
-						resolve(true);
-					});
+			return this.publishToRelays<Kind.Article>(finalEvent, activeFile.path);
+		} else {
+			console.error("No message to publish");
+			return { success: false, publishedRelays: [] };
+		}
+	}
 
-					pub?.on("failed", (reason: any) => {
-						console.log(`Failed to publish event: ${reason}`);
-						reject(false);
-					});
-				});
-			} catch (error) {
-				console.error(error);
-				return false;
+	async publishToRelays<T extends Kind>(
+		finalEvent: Event<T>,
+		filePath: string
+	): Promise<{ success: boolean; publishedRelays: string[] }> {
+		try {
+			let publishingPromises = this.connectedRelays.map((relay) => {
+				return new Promise<{ success: boolean; url?: string }>(
+					(resolve) => {
+						const timeout = setTimeout(() => {
+							console.log(`Publishing to ${relay.url} timed out`);
+							resolve({ success: false });
+						}, 5000);
+
+						if (relay.status === 1) {
+							console.log(`Publishing to.. ${relay.url}`);
+
+							let pub = relay.publish(finalEvent);
+
+							pub?.on("ok", () => {
+								clearTimeout(timeout);
+								console.log(
+									`Event published successfully to ${relay.url}`
+								);
+								resolve({ success: true, url: relay.url });
+							});
+
+							pub?.on("failed", (reason: any) => {
+								clearTimeout(timeout);
+								console.log(
+									`Failed to publish event to ${relay.url}: ${reason}`
+								);
+								resolve({ success: false });
+							});
+
+							relay.on("disconnect", () => {
+								clearTimeout(timeout);
+								console.log(`Disconnected from ${relay.url}`);
+								resolve({ success: false });
+							});
+						} else {
+							clearTimeout(timeout);
+							console.log(
+								`Skipping disconnected relay: ${relay.url}`
+							);
+							resolve({ success: false });
+						}
+					}
+				);
+			});
+
+			let results = await Promise.all(publishingPromises);
+			let publishedRelays = results
+				.filter((result) => result.success)
+				.map((result) => result.url!);
+
+			console.log(
+				`Published to ${publishedRelays.length} / ${this.connectedRelays.length} relays.`
+			);
+
+			if (publishedRelays.length === 0) {
+				console.log("Didn't send to any relays");
+				return { success: false, publishedRelays: [] };
+			} else {
+				if (finalEvent.kind === Kind.Article) {
+					this.savePublishedEvent(
+						finalEvent,
+						filePath,
+						publishedRelays,
+					);
+				}
+				return { success: true, publishedRelays };
+			}
+		} catch (error) {
+			console.error(
+				"An error occurred while publishing to relays",
+				error
+			);
+			return { success: false, publishedRelays: [] };
+		}
+	}
+
+	shutdownRelays() {
+		console.log("Shutting down Nostr service");
+		if (this.connectedRelays.length > 0) {
+			for (let r of this.connectedRelays) {
+				r.close();
 			}
 		}
 	}
@@ -209,19 +363,39 @@ export default class NostrService {
 		return value;
 	}
 
-	async savePublishedEvent(finalEvent: Event<Kind.Article>) {
-		const filePath = `${this.plugin.manifest.dir}/published.json`;
+	async savePublishedEvent<T extends Kind>(
+		finalEvent: Event<T>,
+		publishedFilePath: string,
+		relays: string[]
+	) {
+		const publishedDataPath = `${this.plugin.manifest.dir}/published.json`;
 		let publishedEvents;
 		try {
-			const fileContent = await this.app.vault.adapter.read(filePath);
+			const fileContent = await this.app.vault.adapter.read(publishedDataPath);
 			publishedEvents = JSON.parse(fileContent);
 		} catch (e) {
 			publishedEvents = [];
 		}
-		publishedEvents.push(finalEvent);
+		
+		const eventWithMetaData = {
+			...finalEvent,
+			filepath: publishedFilePath,
+			publishedToRelays: relays
+		};
+		publishedEvents.push(eventWithMetaData);
 		await this.app.vault.adapter.write(
-			filePath,
+			publishedDataPath,
 			JSON.stringify(publishedEvents)
 		);
+	}
+
+	isValidURL(url: string) {
+		try {
+			new URL(url);
+			return true;
+		} catch (error) {
+			console.log(error);
+			return false;
+		}
 	}
 }

@@ -56,16 +56,21 @@ export default class ConfirmPublishModal extends Modal {
 			let url = imageUrlText.getValue();
 			const imageUrl = imageUrlText.getValue();
 
-			if (!isValidURL(imageUrl)) {
-				new Notice(`Invalid image URL. Please enter a valid URL.`);
-				return;
-			}
 			if (url) {
-				imagePreview.src = url;
-				imagePreview.style.display = "block"; // Show preview
+				if (!isValidURL(url)) {
+					new Notice(`Invalid image URL. Please enter a valid URL.`);
+					publishButton.setDisabled(true); 
+					publishButton.setButtonText("Invalid image url");
+					return;
+				} else {
+					imagePreview.src = url;
+					imagePreview.style.display = "block"; 
+				}
 			} else {
-				imagePreview.style.display = "none"; // Hide preview
+				imagePreview.style.display = "none"; 
 			}
+			publishButton.setButtonText("Confirm and Publish");
+			publishButton.setDisabled(false);
 		});
 
 		contentEl.createEl("p", {
@@ -86,21 +91,26 @@ export default class ConfirmPublishModal extends Modal {
 						);
 						const summary = summaryText.getValue();
 						const imageUrl = imageUrlText.getValue();
-						await this.nostrService.publishNote(
+						let res = await this.nostrService.publishNote(
 							fileContent,
 							this.file,
 							summary,
 							imageUrl
 						);
-						// await will pause execution until the Promise resolves or rejects
-						new Notice(`Successfully published note to Nostr.`);
+						if (res.success) {
+							setTimeout(()=>{new Notice(`Successfully sent note to Nostr.`)},500)
+							for(let relay of res.publishedRelays){
+								setTimeout(()=>{new Notice(`✅ - Sent to ${relay}`)},500)
+							}
+						} else {
+							new Notice(`❌ Failed to send note to Nostr.`);
+						}
 					} catch (error) {
 						new Notice(`Failed to publish note to Nostr.`);
 					}
 					publishButton
 						.setButtonText("Confirm and Publish")
 						.setDisabled(false);
-
 					this.close();
 				}, 3000);
 			});
