@@ -27,14 +27,16 @@ export class PublishedView extends ItemView {
 	async onOpen() {
 		const container = this.containerEl.children[1];
 		container.empty();
-		container.createEl("h4", { text: "Published" });
+		const banner = container.createEl("h4", { text: "Published" });
+		
 		const publishedFilePath = `${this.plugin.manifest.dir}/published.json`;
 		try {
 			const file = await this.app.vault.adapter.read(publishedFilePath);
 			const publishedNotes = JSON.parse(file);
-
+			
 			if(publishedNotes){
-
+				
+			container.createEl("p", {text: `Total: ${publishedNotes.length} 📝` })
 			publishedNotes
 				.reverse()
 				.forEach((note: { tags: any[]; created_at: number , id : string, filepath: string}) => {
