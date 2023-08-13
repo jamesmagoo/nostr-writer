@@ -60,6 +60,15 @@
     color: #b6b5b5; 
 }
 
+.published-banner-div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 5px 0;
+  /* border-bottom: 1px solid #ddd; subtle line to separate each item */
+  font-size: 12px; 
+}
+
 .published-details-div p {
     margin: 0; 
 }

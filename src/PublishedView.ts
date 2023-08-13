@@ -5,11 +5,13 @@ export const PUBLISHED_VIEW = "published-view";
 
 export class PublishedView extends ItemView {
 	plugin: NostrWriterPlugin;
+	private refreshDisplay: () => void;
 
 
 	constructor(leaf: WorkspaceLeaf, plugin: NostrWriterPlugin) {
 		super(leaf);
 		this.plugin = plugin;
+		this.refreshDisplay = () => this.onOpen()
 	}
 
 	getViewType() {
@@ -27,16 +29,26 @@ export class PublishedView extends ItemView {
 	async onOpen() {
 		const container = this.containerEl.children[1];
 		container.empty();
-		const banner = container.createEl("h4", { text: "Published" });
+		let banner = container.createEl("div", {
+			cls: "published-banner-div",
+		});
+		banner.createEl("h4", { text: "Published" });
+		new ButtonComponent(banner)
+						.setIcon("refresh-cw")
+						.setCta()
+						.setTooltip("Refresh view")
+						.onClick(() => {
+							this.refreshDisplay()		
+							new Notice("View refreshed")					
+						});
 		
 		const publishedFilePath = `${this.plugin.manifest.dir}/published.json`;
 		try {
 			const file = await this.app.vault.adapter.read(publishedFilePath);
 			const publishedNotes = JSON.parse(file);
 			
-			if(publishedNotes){
-				
-			container.createEl("p", {text: `Total: ${publishedNotes.length} 📝` })
+			if(publishedNotes){				
+			container.createEl("p", {text: `Total: ${publishedNotes.length} ✅` })
 			publishedNotes
 				.reverse()
 				.forEach((note: { tags: any[]; created_at: number , id : string, filepath: string}) => {
@@ -78,7 +90,7 @@ export class PublishedView extends ItemView {
 						cls: "published-id",
 					});
 
-					let copyButton = new ButtonComponent(detailsDiv)
+					new ButtonComponent(detailsDiv)
 						.setIcon("copy")
 						.setCta()
 						.setTooltip("Copy Nostr event ID")
@@ -96,7 +108,7 @@ export class PublishedView extends ItemView {
 								});
 						});
 					
-						let gotoFileButton = new ButtonComponent(detailsDiv)
+						new ButtonComponent(detailsDiv)
 						.setIcon("file-text")
 						.setCta()
 						.setTooltip("Go to file in Obsidian")
