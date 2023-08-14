@@ -30,10 +30,10 @@ This tool is completely abstracted from Nostr, allowing you to stay focused - th
 - Local Record Keeping: Keep a local record of published events in a JSON file for your reference and tracking.
 - Published View : See all posts sent from Obsidian
 - Short Format Message Writer: Quickly compose and publish short form messages directly to Nostr from within Obsidian.
+- Relays Configuration: Configure to send to whatever relays you like.
 
 ### Coming Soon...
-- Relays Configuration: Configure to send to whatever relays you like.
-- After publishing get a link to the published note
+- After publishing get a link to the published note on focal.ink
 
 ### Ideas..
 - Plugin User Relay: A relay specific to this plugin - see what everyone else is writing.
@@ -86,7 +86,12 @@ Therefore, it's important to ensure the overall security of your device and your
 -   Make sure you enable the plugin by going into Settings > Community plugins > Installed plugins > toggle 'nostr-writer'.
 
 ## ⚡️SATS
-lightning address:
+lightning address: 
+```
+magoo@getalby.com
+```
+
+lightning invoice: 
 ```
 lnbc200u1pjvu03dpp5x20p0q5tdwylg5hsqw3av6qxufah0y64efldazmgad2rsffgda8qdpdfehhxarjypthy6t5v4ezqnmzwd5kg6tpdcs9qmr4va5kucqzzsxqyz5vqsp5w55p4tzawyfz5fasflmsvdfnnappd6hqnw9p7y2p0nl974f0mtkq9qyyssqq6gvpnvvuftqsdqyxzn9wrre3qfkpefzz6kqwssa3pz8l9mzczyq4u7qdc09jpatw9ekln9gh47vxrvx6zg6vlsqw7pq4a7kvj4ku4qpdrflwj
 ```
