@@ -76,10 +76,10 @@ Therefore, it's important to ensure the overall security of your device and your
 > Remember, the security of your private key is your responsibility.
 
 ## Install
-<!-- Install from the Community Plugin list by searching "Nostr Writer" -->
+Install from the Community Plugin list by searching "Nostr Writer"
 
 ### Manually Installing the Plugin
--   Head over to [releases](https://github.com/jamesmagoo/nostr-writer/releases) and download a release (latest is recommended) or the pre-release for upcoming features.
+-   Head over to [releases](https://github.com/jamesmagoo/nostr-writer/releases) and download a release - latest is recommended - (or the pre-release for upcoming features.)
 -   Navigate to your plugin folder in your prefered vault: `VaultFolder/.obsidian/plugins/`
 -   Create a new folder called `nostr-writer`
 -   Copy and paste over `main.js`, `styles.css`, `manifest.json` into the newly created `/nostr-writer` folder.

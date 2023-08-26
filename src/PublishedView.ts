@@ -1,5 +1,5 @@
 import NostrWriterPlugin from "main";
-import { ButtonComponent, ItemView, Notice, WorkspaceLeaf } from "obsidian";
+import { ButtonComponent, ItemView, Notice, TFile, WorkspaceLeaf } from "obsidian";
 
 export const PUBLISHED_VIEW = "published-view";
 
@@ -135,10 +135,9 @@ export class PublishedView extends ItemView {
 
 	focusFile = (path: string, shouldSplit = false): void => {
 		const targetFile = this.app.vault
-		  .getFiles()
-		  .find((f) => f.path === path);
-		if (targetFile) {
-		  let leaf = this.app.workspace.getMostRecentLeaf();
+		  .getAbstractFileByPath(path)
+		if (targetFile && targetFile instanceof TFile) {
+		  let leaf = this.app.workspace.getLeaf();
 		  const createLeaf = shouldSplit || leaf?.getViewState().pinned;
 		  if (createLeaf) {
 			  leaf = this.app.workspace.getLeaf('tab');
