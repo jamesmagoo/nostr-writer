@@ -5,6 +5,7 @@ import {
 	TFile,
 	App,
 	TextAreaComponent,
+	TextComponent,
 } from "obsidian";
 import NostrService from "./nostr/NostrService";
 
@@ -23,20 +24,36 @@ export default class ConfirmPublishModal extends Modal {
 		let noteWordCount = (await this.app.vault.read(this.file)).split(
 			" "
 		).length;
-		// TODO REVAMP THIS
-		contentEl.createEl("h2", { text: `Publish: ${noteTitle}` });
-		let noteInfo = contentEl.createEl("p");
-		noteInfo.setText(`Title: ${noteTitle}, Words: ${noteWordCount}`);
 
+		contentEl.createEl("h2", { text: `Publish` });
+		const titleContainer = contentEl.createEl("div");
+		titleContainer.addClass("publish-title-container");
+
+		
+		titleContainer.createEl("p", { text: `${noteWordCount} words` });
+		titleContainer.createEl("p", {
+			text: `Tags (#tags) from your file will automatically be added as Nostr tags. Add some to help people discover your work.`,
+		});
+
+		contentEl.createEl("h6", { text: `Title` });
+		let titleText = new TextComponent(contentEl)
+			.setPlaceholder(`${noteTitle}`)
+			.setValue(`${noteTitle}`);
+
+		contentEl.createEl("h6", { text: `Summary & Image Link (optional)` });
 		let summaryText = new TextAreaComponent(contentEl)
 			.setPlaceholder("Enter a brief summary here...(optional)")
 			.setValue("");
-
 		let imageUrlText = new TextAreaComponent(contentEl)
 			.setPlaceholder(
 				"Enter an image URL here to accompany your article...(optional)"
 			)
 			.setValue("");
+
+		titleText.inputEl.setCssStyles({
+			width: "100%",
+			marginBottom: "10px",
+		});
 
 		imageUrlText.inputEl.setCssStyles({
 			width: "100%",
@@ -54,28 +71,27 @@ export default class ConfirmPublishModal extends Modal {
 		// Update Image Preview on URL change
 		imageUrlText.inputEl.addEventListener("input", () => {
 			let url = imageUrlText.getValue();
-			const imageUrl = imageUrlText.getValue();
-
 			if (url) {
 				if (!isValidURL(url)) {
 					new Notice(`Invalid image URL. Please enter a valid URL.`);
-					publishButton.setDisabled(true); 
+					publishButton.setDisabled(true);
 					publishButton.setButtonText("Invalid image url");
 					return;
 				} else {
 					imagePreview.src = url;
-					imagePreview.style.display = "block"; 
+					imagePreview.style.display = "block";
 				}
 			} else {
-				imagePreview.style.display = "none"; 
+				imagePreview.style.display = "none";
 			}
 			publishButton.setButtonText("Confirm and Publish");
 			publishButton.setDisabled(false);
 		});
 
-		contentEl.createEl("p", {
+		let info = contentEl.createEl("p", {
 			text: `Are you sure you want to publish this note to Nostr?`,
 		});
+		info.addClass("publish-modal-info")
 
 		let publishButton = new ButtonComponent(contentEl)
 			.setButtonText("Confirm and Publish")
@@ -89,18 +105,24 @@ export default class ConfirmPublishModal extends Modal {
 						const fileContent = await this.app.vault.read(
 							this.file
 						);
+						const title = titleText.getValue();
 						const summary = summaryText.getValue();
 						const imageUrl = imageUrlText.getValue();
 						let res = await this.nostrService.publishNote(
 							fileContent,
 							this.file,
 							summary,
-							imageUrl
+							imageUrl,
+							title
 						);
 						if (res.success) {
-							setTimeout(()=>{new Notice(`Successfully sent note to Nostr.`)},500)
-							for(let relay of res.publishedRelays){
-								setTimeout(()=>{new Notice(`✅ - Sent to ${relay}`)},500)
+							setTimeout(() => {
+								new Notice(`Successfully sent note to Nostr.`);
+							}, 500);
+							for (let relay of res.publishedRelays) {
+								setTimeout(() => {
+									new Notice(`✅ - Sent to ${relay}`);
+								}, 500);
 							}
 						} else {
 							new Notice(`❌ Failed to send note to Nostr.`);

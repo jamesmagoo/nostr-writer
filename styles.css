@@ -12,10 +12,7 @@
     width: 100%;
 }
 
-.publish-modal-content {
-    padding: 15px;
-  }
-  
+
   .publish-modal-button {
     display: block;
     margin: auto;
@@ -92,5 +89,21 @@
     color: #ffffff; 
     font-size: 16px; 
 }
+
+.publish-title-container {
+  margin-bottom: 20px;
+  width: 100%;
+  font-size: small;
+  color:#9f9e9e
+}
+
+.publish-modal-info {
+  margin-bottom: 20px;
+  text-align: center;
+  width: 100%;
+  font-size: small;
+}
+ 
+ 
   
   

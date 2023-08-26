@@ -203,7 +203,8 @@ export default class NostrService {
 		fileContent: string,
 		activeFile: TFile,
 		summary: string,
-		imageUrl: string
+		imageUrl: string,
+		title : string
 	): Promise<{ success: boolean; publishedRelays: string[] }> {
 		console.log(`Publishing your note to Nostr...`);
 		if (fileContent) {
@@ -232,8 +233,12 @@ export default class NostrService {
 				tags.push(["t", hashtag]);
 			}
 
-			const noteTitle = activeFile.basename;
-			tags.push(["title", noteTitle]);
+			if (title){
+				tags.push(["title", title]);
+			} else {
+				const noteTitle = activeFile.basename;
+				tags.push(["title", noteTitle]);
+			}
 			let eventTemplate: EventTemplate<Kind.Article> = {
 				kind: 30023,
 				created_at: timestamp,
