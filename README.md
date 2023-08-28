@@ -17,6 +17,9 @@ They seem to me to be a match made in heaven...
 2. Write in Obsidian
 3. Hit publish to Nostr, and that's it. 
 
+## Demo Video
+<div style="position: relative; padding-bottom: 64.86486486486486%; height: 0;"><iframe src="https://www.loom.com/embed/d1456e7335c049e19194df5bcba669a0?sid=6aa0d778-86b9-40ad-a312-e1704ea01526" frameborder="0" webkitallowfullscreen mozallowfullscreen allowfullscreen style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></iframe></div>
+
 ## A Quiet Place
 > Avoid the web browser and all it's distractions!
 
