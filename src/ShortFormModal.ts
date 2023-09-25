@@ -22,6 +22,13 @@ export default class ShortFormModal extends Modal {
 		contentEl.createEl("p", {
 			text: `Are you sure you want to send this message to Nostr?`,
 		});
+	
+		summaryText.inputEl.setCssStyles({
+			width: "100%",
+			height: "300px",
+			marginBottom: "10px",
+			marginTop: "10px",
+		});
 
 		let publishButton = new ButtonComponent(contentEl)
 			.setButtonText("Confirm and Send")
