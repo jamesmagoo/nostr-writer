@@ -33,7 +33,6 @@ export default class ConfirmPublishModal extends Modal {
 		const hashtags = matches.map((match: string) => match.slice(1));
 
 		for (const tag of hashtags) {
-			console.log(tag);
 			noteCategoryTags.push(tag);
 		}
 

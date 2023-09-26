@@ -105,11 +105,11 @@
 }
 
 /* Style for the pills container */
-#pills-container {
+.pills-container {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 2px;
 }
 
 .pill {
