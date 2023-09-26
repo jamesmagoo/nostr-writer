@@ -192,7 +192,7 @@ export default class NostrService {
 				id: eventHash,
 				sig: getSignature(event, this.privateKey),
 			};
-			return this.publishToRelays<Kind.Text>(finalEvent,"");
+			return this.publishToRelays<Kind.Text>(finalEvent, "");
 		} else {
 			console.error("No message to publish");
 			return { success: false, publishedRelays: [] };
@@ -204,7 +204,8 @@ export default class NostrService {
 		activeFile: TFile,
 		summary: string,
 		imageUrl: string,
-		title : string
+		title: string,
+		userSelectedTags: string[]
 	): Promise<{ success: boolean; publishedRelays: string[] }> {
 		console.log(`Publishing your note to Nostr...`);
 		if (fileContent) {
@@ -225,15 +226,13 @@ export default class NostrService {
 			let timestamp = Math.floor(Date.now() / 1000);
 			tags.push(["published_at", timestamp.toString()]);
 
-			const regex = /#\w+/g;
-			const matches = fileContent.match(regex) || [];
-			const hashtags = matches.map((match) => match.slice(1));
-
-			for (const hashtag of hashtags) {
-				tags.push(["t", hashtag]);
+			if (userSelectedTags.length > 0) {
+				for (const tag of userSelectedTags) {
+					tags.push(["t", tag]);
+				}
 			}
 
-			if (title){
+			if (title) {
 				tags.push(["title", title]);
 			} else {
 				const noteTitle = activeFile.basename;
@@ -259,7 +258,10 @@ export default class NostrService {
 				sig: getSignature(event, this.privateKey),
 			};
 
-			return this.publishToRelays<Kind.Article>(finalEvent, activeFile.path);
+			return this.publishToRelays<Kind.Article>(
+				finalEvent,
+				activeFile.path
+			);
 		} else {
 			console.error("No message to publish");
 			return { success: false, publishedRelays: [] };
@@ -333,7 +335,7 @@ export default class NostrService {
 					this.savePublishedEvent(
 						finalEvent,
 						filePath,
-						publishedRelays,
+						publishedRelays
 					);
 				}
 				return { success: true, publishedRelays };
@@ -376,16 +378,18 @@ export default class NostrService {
 		const publishedDataPath = `${this.plugin.manifest.dir}/published.json`;
 		let publishedEvents;
 		try {
-			const fileContent = await this.app.vault.adapter.read(publishedDataPath);
+			const fileContent = await this.app.vault.adapter.read(
+				publishedDataPath
+			);
 			publishedEvents = JSON.parse(fileContent);
 		} catch (e) {
 			publishedEvents = [];
 		}
-		
+
 		const eventWithMetaData = {
 			...finalEvent,
 			filepath: publishedFilePath,
-			publishedToRelays: relays
+			publishedToRelays: relays,
 		};
 		publishedEvents.push(eventWithMetaData);
 		await this.app.vault.adapter.write(

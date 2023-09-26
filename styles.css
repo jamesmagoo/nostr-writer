@@ -91,7 +91,7 @@
 }
 
 .publish-title-container {
-  margin-bottom: 20px;
+  margin-bottom: 10px;
   width: 100%;
   font-size: small;
   color:#9f9e9e
@@ -103,7 +103,43 @@
   width: 100%;
   font-size: small;
 }
- 
+
+/* Style for the pills container */
+#pills-container {
+  display: flex;
+  flex-direction: column;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.pill {
+  background-color: #7d5bed; 
+  width: min-content;
+  font-size: small;
+  color: #fff; 
+  border-radius: 16px; 
+  padding: 4px 12px;
+  margin: 4px;
+  display: flex;
+  align-items: center;
+}
+
+.delete-button {
+  background-color: transparent;
+  color: black; 
+  border: none;
+  cursor: pointer;
+  margin-left: 4px;
+  font-weight: bold;
+  font-size: 14px;
+  line-height: 1;
+  outline: none;
+}
+
+.delete-button:hover {
+  color: #ff0000;
+}
+
  
   
   

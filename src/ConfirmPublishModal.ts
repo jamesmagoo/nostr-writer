@@ -25,25 +25,64 @@ export default class ConfirmPublishModal extends Modal {
 			" "
 		).length;
 
+		let noteCategoryTags: string[] = [];
+		let content = await this.app.vault.read(this.file);
+
+		const regex = /#\w+/g;
+		const matches = content.match(regex) || [];
+		const hashtags = matches.map((match: string) => match.slice(1));
+
+		for (const tag of hashtags) {
+			console.log(tag);
+			noteCategoryTags.push(tag);
+		}
+
 		contentEl.createEl("h2", { text: `Publish` });
 		const titleContainer = contentEl.createEl("div");
 		titleContainer.addClass("publish-title-container");
 
-		
 		titleContainer.createEl("p", { text: `${noteWordCount} words` });
-		titleContainer.createEl("p", {
-			text: `Tags (#tags) from your file will automatically be added as Nostr tags. Add some to help people discover your work.`,
-		});
 
 		contentEl.createEl("h6", { text: `Title` });
 		let titleText = new TextComponent(contentEl)
 			.setPlaceholder(`${noteTitle}`)
 			.setValue(`${noteTitle}`);
 
+		contentEl.createEl("h6", { text: `Tags` });
+		const tagContainer = contentEl.createEl("div");
+		tagContainer.addClass("publish-title-container");
+
+		tagContainer.createEl("p", {
+			text: `Tags (#tags) from your file are automatically added below. Add more to help people discover your work. Remove any by clicking the X. `,
+		});
+
+		let tagsText = new TextComponent(contentEl).setPlaceholder(
+			`Add a tag here and press enter`
+		);
+
+		tagsText.inputEl.addEventListener("keydown", (event) => {
+			if (event.key === "Enter") {
+				addTagAsPill(tagsText.getValue());
+			}
+		});
+
+		tagsText.inputEl.setCssStyles({
+			width: "100%",
+			marginBottom: "10px",
+		});
+
+		const pillsContainer = contentEl.createEl("div");
+		pillsContainer.addClass("pills-container");
+		noteCategoryTags.forEach((tag) => {
+			const pillElement = createPillElement(tag);
+			pillsContainer.appendChild(pillElement);
+		});
+
 		contentEl.createEl("h6", { text: `Summary & Image Link (optional)` });
 		let summaryText = new TextAreaComponent(contentEl)
 			.setPlaceholder("Enter a brief summary here...(optional)")
 			.setValue("");
+
 		let imageUrlText = new TextAreaComponent(contentEl)
 			.setPlaceholder(
 				"Enter an image URL here to accompany your article...(optional)"
@@ -54,6 +93,18 @@ export default class ConfirmPublishModal extends Modal {
 			width: "100%",
 			marginBottom: "10px",
 		});
+
+		summaryText.inputEl.setCssStyles({
+			width: "100%",
+			height: "75px",
+			marginBottom: "10px",
+		});
+
+		tagsText.inputEl.setCssStyles({
+			width: "100%",
+		});
+
+		tagsText.inputEl.addClass("features");
 
 		imageUrlText.inputEl.setCssStyles({
 			width: "100%",
@@ -91,7 +142,7 @@ export default class ConfirmPublishModal extends Modal {
 		let info = contentEl.createEl("p", {
 			text: `Are you sure you want to publish this note to Nostr?`,
 		});
-		info.addClass("publish-modal-info")
+		info.addClass("publish-modal-info");
 
 		let publishButton = new ButtonComponent(contentEl)
 			.setButtonText("Confirm and Publish")
@@ -113,7 +164,8 @@ export default class ConfirmPublishModal extends Modal {
 							this.file,
 							summary,
 							imageUrl,
-							title
+							title,
+							noteCategoryTags
 						);
 						if (res.success) {
 							setTimeout(() => {
@@ -140,6 +192,32 @@ export default class ConfirmPublishModal extends Modal {
 		contentEl.classList.add("publish-modal-content");
 		publishButton.buttonEl.classList.add("publish-modal-button");
 		summaryText.inputEl.classList.add("publish-modal-input");
+
+		function createPillElement(tag: string) {
+			const pillElement = document.createElement("div");
+			pillElement.className = "pill";
+			pillElement.textContent = tag;
+
+			const deleteButton = document.createElement("div");
+			deleteButton.className = "delete-button";
+			deleteButton.textContent = "x";
+
+			deleteButton.addEventListener("click", () => {
+				noteCategoryTags = noteCategoryTags.filter((t) => t !== tag);
+				pillElement.remove();
+			});
+
+			pillElement.appendChild(deleteButton);
+			return pillElement;
+		}
+
+		function addTagAsPill(tag: string) {
+			if (tag.trim() === "") return; // Ignore empty tags
+			noteCategoryTags.push(tag);
+			const pillElement = createPillElement(tag);
+			pillsContainer.appendChild(pillElement);
+			tagsText.setValue(""); // Clear the input field
+		}
 	}
 }
 
