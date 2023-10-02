@@ -21,6 +21,10 @@ They seem to me to be a match made in heaven...
     </a>
   </div>
 
+## User Guide
+Big thank you to Tony for making this user guide! 
+[User Guide](https://habla.news/tony/87412fcb)
+
 ## For Writers
 > This tool is low-friction..
 1. Add your Nostr private key (once on set-up).

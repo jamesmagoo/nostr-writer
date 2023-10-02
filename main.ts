@@ -16,7 +16,6 @@ export default class NostrWriterPlugin extends Plugin {
 
 	async onload() {
 		await this.loadSettings();
-		// Initialize or load your plugin here
 		this.updateStatusBar();
 		this.startupNostrService();
 		this.addSettingTab(new NostrWriterSettingTab(this.app, this));
@@ -61,6 +60,7 @@ export default class NostrWriterPlugin extends Plugin {
 			name: "See your public key",
 			callback: async () => {
 				let pubKey = this.nostrService.getPublicKey();
+				// TODO make this an npub
 				new Notice(`Public Key: ${pubKey}`);
 			},
 		});
@@ -69,7 +69,7 @@ export default class NostrWriterPlugin extends Plugin {
 			id: "re-connect",
 			name: "Re-connect to relays",
 			callback: async () => {
-				let pubKey = this.nostrService.connectToRelays();
+				this.nostrService.connectToRelays();
 				new Notice(`Attempting re-connect, see status bar.`);
 			},
 		});
@@ -78,6 +78,7 @@ export default class NostrWriterPlugin extends Plugin {
 			id: "get-pub-clipboard",
 			name: "Copy public key to clipboard",
 			callback: async () => {
+				// TODO make this an npub
 				let pubKey = this.nostrService.getPublicKey();
 				navigator.clipboard
 					.writeText(pubKey)

@@ -56,7 +56,7 @@ export class NostrWriterSettingTab extends PluginSettingTab {
 				// Store the reference to the input field and change its type to 'password'
 				privateKeyField = text.inputEl;
 				privateKeyField.type = "password";
-				privateKeyField.style.width = "400px"; // Change the width here
+				privateKeyField.style.width = "400px"; 
 			})
 			.addButton((button) =>
 				button

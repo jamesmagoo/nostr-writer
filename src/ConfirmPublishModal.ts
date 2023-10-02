@@ -211,11 +211,11 @@ export default class ConfirmPublishModal extends Modal {
 		}
 
 		function addTagAsPill(tag: string) {
-			if (tag.trim() === "") return; // Ignore empty tags
+			if (tag.trim() === "") return; 
 			noteCategoryTags.push(tag);
 			const pillElement = createPillElement(tag);
 			pillsContainer.appendChild(pillElement);
-			tagsText.setValue(""); // Clear the input field
+			tagsText.setValue(""); 
 		}
 	}
 }
