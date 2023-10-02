@@ -32,7 +32,7 @@ Big thank you to Tony for making this user guide!
 3. Hit publish to Nostr, and that's it. 
 
 ## A Quiet Place
-> Avoid the web browser and all it's distractions!
+> Avoid the web browser and all its distractions!
 
 This tool is completely abstracted from Nostr, allowing you to stay focused - the plugin does not read Nostr messages or give you any view into the public space. It just publishes what you've written. Stay focused on your work and disconnected from the noise. 
 
