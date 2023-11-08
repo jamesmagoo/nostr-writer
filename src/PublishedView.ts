@@ -1,5 +1,6 @@
 import NostrWriterPlugin from "main";
 import { ButtonComponent, ItemView, Notice, TFile, WorkspaceLeaf } from "obsidian";
+import { nip19 } from "nostr-tools";
 
 export const PUBLISHED_VIEW = "published-view";
 
@@ -78,7 +79,6 @@ export class PublishedView extends ItemView {
 						cls: "published-card",
 					});
 					cardDiv.createEl("span", { text: `📜 ${title}` });
-					//cardDiv.createEl("p", { text: `${summary}` });
 					let detailsDiv = cardDiv.createEl("div", {
 						cls: "published-details-div",
 					});
@@ -90,26 +90,22 @@ export class PublishedView extends ItemView {
 						cls: "published-id",
 					});
 
+					let target : nip19.EventPointer = {
+						id: note.id,
+					}
+					let nevent = nip19.neventEncode(target)
+
 					new ButtonComponent(detailsDiv)
-						.setIcon("copy")
+						.setIcon("popup-open")
 						.setCta()
-						.setTooltip("Copy Nostr event ID")
+						.setTooltip("View Online")
 						.onClick(() => {
-							// Copy the note ID to the clipboard
-							navigator.clipboard
-								.writeText(note.id)
-								.then(() => {
-									new Notice("ID copied to clipboard.");
-								})
-								.catch(() => {
-									new Notice(
-										"Failed to copy ID to clipboard."
-									);
-								});
+							const url = `https://njump.me/${nevent}`;
+							window.open(url, '_blank');
 						});
 					
 						new ButtonComponent(detailsDiv)
-						.setIcon("file-text")
+						.setIcon("go-to-file")
 						.setCta()
 						.setTooltip("Go to file in Obsidian")
 						.onClick(() => {
