@@ -56,7 +56,7 @@ export class NostrWriterSettingTab extends PluginSettingTab {
 				// Store the reference to the input field and change its type to 'password'
 				privateKeyField = text.inputEl;
 				privateKeyField.type = "password";
-				privateKeyField.style.width = "400px"; 
+				privateKeyField.style.width = "400px";
 			})
 			.addButton((button) =>
 				button
@@ -139,24 +139,24 @@ export class NostrWriterSettingTab extends PluginSettingTab {
 					})
 			);
 
-		new Setting(containerEl)
-			.setName("Show status bar")
-			.setDesc("Show/hide Nostr connection status.")
-			.addToggle((toggle) =>
-				toggle
-					.setValue(this.plugin.settings.statusBarEnabled)
-					.onChange(async (value) => {
-						this.plugin.settings.statusBarEnabled = value;
-						await this.plugin.saveSettings();
-						this.plugin.updateStatusBar();
-						new Notice(
-							`Nostr status bar ${value ? "enabled" : "disabled"}`
-						);
-						new Notice(
-							`Reopen the vault for updates to take effect.`
-						);
-					})
-			);
+		// new Setting(containerEl)
+		// 	.setName("Show status bar")
+		// 	.setDesc("Show/hide Nostr connection status.")
+		// 	.addToggle((toggle) =>
+		// 		toggle
+		// 			.setValue(this.plugin.settings.statusBarEnabled)
+		// 			.onChange(async (value) => {
+		// 				this.plugin.settings.statusBarEnabled = value;
+		// 				await this.plugin.saveSettings();
+		// 				this.plugin.updateStatusBar();
+		// 				new Notice(
+		// 					`Nostr status bar ${value ? "enabled" : "disabled"}`
+		// 				);
+		// 				new Notice(
+		// 					`Reopen the vault for updates to take effect.`
+		// 				);
+		// 			})
+		// 	);
 
 		new Setting(containerEl)
 			.setName("Configure relays")
@@ -170,6 +170,20 @@ export class NostrWriterSettingTab extends PluginSettingTab {
 						this.refreshDisplay();
 					})
 			);
+
+		new Setting(containerEl)
+			.setName("Reconnect to relays ")
+			.setDesc("Refresh connection to relays - check status bar for details.")
+			.addButton((btn) => {
+				btn.setIcon("reset");
+				btn.setCta();
+				btn.setTooltip("Add this relay");
+				btn.onClick(async () => {
+					new Notice(`Re-connecting to Nostr...`);
+					this.refreshDisplay();
+					await this.plugin.nostrService.connectToRelays();
+				});
+			});
 
 		if (this.plugin.settings.relayConfigEnabled) {
 			containerEl.createEl("h5", { text: "Relay Configuration" });
