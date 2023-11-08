@@ -47,7 +47,9 @@ This tool is completely abstracted from Nostr, allowing you to stay focused - th
 - Relays Configuration: Configure to send to whatever relays you like.
 
 ### Coming Soon...
-- After publishing get a link to the published note on focal.ink
+- Published view will have a link to the published note/event on njump.me
+- Multiple user profiles (nsecs) - so you can publish as different nostr accounts
+- Improved UI
 
 ### Ideas..
 - Plugin User Relay: A relay specific to this plugin - see what everyone else is writing.
