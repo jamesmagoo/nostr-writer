@@ -49,8 +49,8 @@ export default class NostrWriterPlugin extends Plugin {
 			id: "test-print",
 			name: "Show connected relays",
 			callback: async () => {
-				for(let r of this.nostrService.connectedRelays){
-					new Notice(`Connected to ${r.url}`)
+				for (let r of this.nostrService.connectedRelays) {
+					new Notice(`Connected to ${r.url}`);
 				}
 			},
 		});
@@ -117,11 +117,7 @@ export default class NostrWriterPlugin extends Plugin {
 	}
 
 	startupNostrService() {
-		this.nostrService = new NostrService(
-			this,
-			this.app,
-			this.settings
-		);
+		this.nostrService = new NostrService(this, this.app, this.settings);
 	}
 
 	async loadSettings() {
@@ -139,6 +135,21 @@ export default class NostrWriterPlugin extends Plugin {
 					"wss://relayable.org",
 					"wss://nostr.rocks",
 					"wss://nostr.fmt.wiz.biz",
+				],
+				multipleProfilesEnabled: false,
+				profiles: [
+					{
+						profileNickname: "dummyProfile1",
+						profilePrivateKey: "dummyPrivateKey1",
+					},
+					{
+						profileNickname: "dummyProfile2",
+						profilePrivateKey: "dummyPrivateKey2",
+					},
+					{
+						profileNickname: "dummyProfile3",
+						profilePrivateKey: "dummyPrivateKey3",
+					},
 				],
 			},
 			await this.loadData()
@@ -200,7 +211,7 @@ export default class NostrWriterPlugin extends Plugin {
 								this.app,
 								this.nostrService
 							).open();
-							return; 
+							return;
 						} else {
 							new Notice(
 								`Please connect to Nostr before publishing.`
@@ -221,12 +232,12 @@ export default class NostrWriterPlugin extends Plugin {
 				this.statusBar = this.addStatusBarItem();
 				this.statusBar.addClass("mod-clickable");
 				setAttributes(this.statusBar, {
-				"aria-label": "Re-connect to Nostr",
-				"aria-label-position": "top",
+					"aria-label": "Re-connect to Nostr",
+					"aria-label-position": "top",
 				});
 				this.statusBar.addEventListener("click", () => {
 					this.nostrService.connectToRelays();
-					new Notice("Re-connecting to Nostr..")
+					new Notice("Re-connecting to Nostr..");
 				});
 			}
 		} else if (this.statusBar) {
@@ -238,6 +249,6 @@ export default class NostrWriterPlugin extends Plugin {
 
 export function setAttributes(element: any, attributes: any) {
 	for (let key in attributes) {
-	  element.setAttribute(key, attributes[key]);
+		element.setAttribute(key, attributes[key]);
 	}
-  }
+}

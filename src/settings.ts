@@ -13,12 +13,16 @@ export interface NostrWriterPluginSettings {
 	statusBarEnabled: boolean;
 	relayConfigEnabled: boolean;
 	relayURLs: string[];
+	multipleProfilesEnabled: boolean;
+	profiles: Object[];
 }
 
 export class NostrWriterSettingTab extends PluginSettingTab {
 	plugin: NostrWriterPlugin;
 	private refreshDisplay: () => void;
 	private relayUrlInput: TextComponent;
+	private newAccountNsecInput : TextComponent;
+	private newAccountNicknameInput : TextComponent;
 
 	constructor(app: App, plugin: NostrWriterPlugin) {
 		super(app, plugin);
@@ -90,6 +94,137 @@ export class NostrWriterSettingTab extends PluginSettingTab {
 						}
 					})
 			);
+
+		new Setting(containerEl)
+			.setName("Add multiple Nostr profiles")
+			.setDesc("Add multiple nsecs and publish under a different Nostr profile.")
+			.addToggle((toggle) =>
+				toggle
+					.setValue(this.plugin.settings.multipleProfilesEnabled)
+					.onChange(async (value) => {
+						this.plugin.settings.multipleProfilesEnabled = value;
+						await this.plugin.saveSettings();
+						this.refreshDisplay();
+					})
+			)
+
+
+		if (this.plugin.settings.multipleProfilesEnabled) {
+
+
+			let newProfilePrivateKeyField: string;
+			let newProfileNicknameField: string;
+
+			containerEl.createEl("h5", { text: "Nostr Profiles" });
+			new Setting(this.containerEl)
+				.setDesc("Add a new Nostr profile to publish from.")
+				.setName("Add Profile")
+				.addText((newAccountNicknameInput) => {
+					newAccountNicknameInput.setPlaceholder("Profile Nickname");
+					newAccountNicknameInput.onChange((value) => {
+						newProfileNicknameField = value;
+					});
+				})
+				.addText((newAccountNsecInput) => {
+					newAccountNsecInput.setPlaceholder("nsec");
+					newAccountNsecInput.onChange(async (value) => {
+						if (isValidPrivateKey(value)) {
+							console.log("legist pk")
+							newProfilePrivateKeyField = value;
+							new Notice("Private key OK!");
+						} else {
+							// Invalid private key
+							new Notice("Invalid private key", 5000);
+						}
+					});
+					// Store the reference to the input field and change its type to 'password'
+					// newProfilePrivateKeyField.type = "password";
+					// newProfilePrivateKeyField.style.width = "200px";
+				})
+				.addButton((btn) => {
+					btn.setIcon("plus");
+					btn.setCta();
+					btn.setTooltip("Add this profile");
+					btn.onClick(async () => {
+						if(newProfilePrivateKeyField && newProfileNicknameField ) {
+							new Notice("Yuppp");
+							this.plugin.settings.profiles.push({
+								profileNickname: newProfilePrivateKeyField,
+								profilePrivateKey: newProfileNicknameField,
+							});
+							await this.plugin.saveSettings();
+
+
+						} else {
+							new Notice("Add a profile nickname & a valid nsec");
+						}
+						console.log("nickname" + newProfileNicknameField)
+						console.log("sec" + newProfilePrivateKeyField)
+
+						try {
+							//let addedProfileNickname= this.newAccountNicknameInput.getValue();
+							// if (this.isValidProfile(addedRelayUrl)) {
+							// 	this.plugin.settings.relayURLs.push(
+							// 		addedRelayUrl
+							// 	);
+							// 	await this.plugin.saveSettings();
+							// 	new Notice(
+							// 		`Added ${addedProfileNickname} to profiles.`
+							// 	);
+							// 	new Notice(
+							// 		`Use the dropdown before publsihing to select.`
+							// 	);
+							// 	this.refreshDisplay();
+							// 	this.newAccountNicknameInput.setValue("")
+							// 	this.newAccountNsecInput.setValue("")
+							// } else {
+							// 	new Notice("Invalid URL added");
+							// }
+						} catch {
+							new Notice("No URL added");
+						}
+					});
+				});
+			for (const [i, url] of this.plugin.settings.relayURLs.entries()) {
+				new Setting(this.containerEl)
+					.setDesc(
+						`${url} is ${
+							this.plugin.nostrService.getRelayInfo(url)
+								? "connected"
+								: "disconnected"
+						}`
+					)
+					.setName(
+						`Relay ${i + 1} - ${
+							this.plugin.nostrService.getRelayInfo(url)
+								? "🟢"
+								: "💀"
+						}`
+					)
+					.addButton((btn) => {
+						btn.setIcon("trash");
+						btn.setTooltip("Remove this profile");
+						btn.onClick(async () => {
+							if (
+								confirm(
+									"Are you sure you want to delete this profile? This cannot be undone."
+								)
+							) {
+								// TODO delete profile here.. remove from map..
+								this.plugin.settings.relayURLs.splice(i, 1);
+								await this.plugin.saveSettings();
+								this.refreshDisplay();
+								new Notice("Profile successfully deleted.");
+								
+							}
+						});
+					});
+			}
+			containerEl.createEl("br");
+			containerEl.createEl("br");
+			containerEl.createEl("br");
+			containerEl.createEl("br");
+		}
 
 		new Setting(containerEl)
 			.setName("Show private key")
@@ -173,11 +308,13 @@ export class NostrWriterSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName("Reconnect to relays ")
-			.setDesc("Refresh connection to relays - check status bar for details.")
+			.setDesc(
+				"Refresh connection to relays - check status bar for details."
+			)
 			.addButton((btn) => {
 				btn.setIcon("reset");
 				btn.setCta();
-				btn.setTooltip("Add this relay");
+				btn.setTooltip("Re-connect");
 				btn.onClick(async () => {
 					new Notice(`Re-connecting to Nostr...`);
 					this.refreshDisplay();
