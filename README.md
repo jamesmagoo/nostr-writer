@@ -50,6 +50,7 @@ This tool is completely abstracted from Nostr, allowing you to stay focused - th
 - Published view will have a link to the published note/event on njump.me
 - Multiple user profiles (nsecs) - so you can publish as different nostr accounts
 - Improved UI
+- Publish as a draft (kind 30024) option
 
 ### Ideas..
 - Plugin User Relay: A relay specific to this plugin - see what everyone else is writing.

@@ -3,9 +3,14 @@ import {
 	Notice,
 	PluginSettingTab,
 	Setting,
-	TextComponent,
+	TextComponent
 } from "obsidian";
 import NostrWriterPlugin from "../main";
+
+interface Profile {
+	profileNickname: string;
+	profilePrivateKey: string;
+}
 
 export interface NostrWriterPluginSettings {
 	privateKey: string;
@@ -14,15 +19,13 @@ export interface NostrWriterPluginSettings {
 	relayConfigEnabled: boolean;
 	relayURLs: string[];
 	multipleProfilesEnabled: boolean;
-	profiles: Object[];
+	profiles: Profile[];
 }
 
 export class NostrWriterSettingTab extends PluginSettingTab {
 	plugin: NostrWriterPlugin;
 	private refreshDisplay: () => void;
 	private relayUrlInput: TextComponent;
-	private newAccountNsecInput : TextComponent;
-	private newAccountNicknameInput : TextComponent;
 
 	constructor(app: App, plugin: NostrWriterPlugin) {
 		super(app, plugin);
@@ -40,7 +43,7 @@ export class NostrWriterSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName("Nostr private key")
-			.setDesc("It's a secret!")
+			.setDesc("Default profile to publish from.")
 			.addText((text) => {
 				privateKeyInput = text;
 				text.setPlaceholder("nsec...")
@@ -96,137 +99,6 @@ export class NostrWriterSettingTab extends PluginSettingTab {
 			);
 
 		new Setting(containerEl)
-			.setName("Add multiple Nostr profiles")
-			.setDesc("Add multiple nsecs and publish under a different Nostr profile.")
-			.addToggle((toggle) =>
-				toggle
-					.setValue(this.plugin.settings.multipleProfilesEnabled)
-					.onChange(async (value) => {
-						this.plugin.settings.multipleProfilesEnabled = value;
-						await this.plugin.saveSettings();
-						this.refreshDisplay();
-					})
-			)
-
-
-		if (this.plugin.settings.multipleProfilesEnabled) {
-
-
-			let newProfilePrivateKeyField: string;
-			let newProfileNicknameField: string;
-
-			containerEl.createEl("h5", { text: "Nostr Profiles" });
-			new Setting(this.containerEl)
-				.setDesc("Add a new Nostr profile to publish from.")
-				.setName("Add Profile")
-				.addText((newAccountNicknameInput) => {
-					newAccountNicknameInput.setPlaceholder("Profile Nickname");
-					newAccountNicknameInput.onChange((value) => {
-						newProfileNicknameField = value;
-					});
-				})
-				.addText((newAccountNsecInput) => {
-					newAccountNsecInput.setPlaceholder("nsec");
-					newAccountNsecInput.onChange(async (value) => {
-						if (isValidPrivateKey(value)) {
-							console.log("legist pk")
-							newProfilePrivateKeyField = value;
-							new Notice("Private key OK!");
-						} else {
-							// Invalid private key
-							new Notice("Invalid private key", 5000);
-						}
-					});
-					// Store the reference to the input field and change its type to 'password'
-					// newProfilePrivateKeyField.type = "password";
-					// newProfilePrivateKeyField.style.width = "200px";
-				})
-				.addButton((btn) => {
-					btn.setIcon("plus");
-					btn.setCta();
-					btn.setTooltip("Add this profile");
-					btn.onClick(async () => {
-						if(newProfilePrivateKeyField && newProfileNicknameField ) {
-							new Notice("Yuppp");
-							this.plugin.settings.profiles.push({
-								profileNickname: newProfilePrivateKeyField,
-								profilePrivateKey: newProfileNicknameField,
-							});
-							await this.plugin.saveSettings();
-
-
-						} else {
-							new Notice("Add a profile nickname & a valid nsec");
-						}
-						console.log("nickname" + newProfileNicknameField)
-						console.log("sec" + newProfilePrivateKeyField)
-
-						try {
-							//let addedProfileNickname= this.newAccountNicknameInput.getValue();
-							// if (this.isValidProfile(addedRelayUrl)) {
-							// 	this.plugin.settings.relayURLs.push(
-							// 		addedRelayUrl
-							// 	);
-							// 	await this.plugin.saveSettings();
-							// 	new Notice(
-							// 		`Added ${addedProfileNickname} to profiles.`
-							// 	);
-							// 	new Notice(
-							// 		`Use the dropdown before publsihing to select.`
-							// 	);
-							// 	this.refreshDisplay();
-							// 	this.newAccountNicknameInput.setValue("")
-							// 	this.newAccountNsecInput.setValue("")
-							// } else {
-							// 	new Notice("Invalid URL added");
-							// }
-						} catch {
-							new Notice("No URL added");
-						}
-					});
-				});
-			for (const [i, url] of this.plugin.settings.relayURLs.entries()) {
-				new Setting(this.containerEl)
-					.setDesc(
-						`${url} is ${
-							this.plugin.nostrService.getRelayInfo(url)
-								? "connected"
-								: "disconnected"
-						}`
-					)
-					.setName(
-						`Relay ${i + 1} - ${
-							this.plugin.nostrService.getRelayInfo(url)
-								? "🟢"
-								: "💀"
-						}`
-					)
-					.addButton((btn) => {
-						btn.setIcon("trash");
-						btn.setTooltip("Remove this profile");
-						btn.onClick(async () => {
-							if (
-								confirm(
-									"Are you sure you want to delete this profile? This cannot be undone."
-								)
-							) {
-								// TODO delete profile here.. remove from map..
-								this.plugin.settings.relayURLs.splice(i, 1);
-								await this.plugin.saveSettings();
-								this.refreshDisplay();
-								new Notice("Profile successfully deleted.");
-								
-							}
-						});
-					});
-			}
-			containerEl.createEl("br");
-			containerEl.createEl("br");
-			containerEl.createEl("br");
-			containerEl.createEl("br");
-		}
-
-		new Setting(containerEl)
 			.setName("Show private key")
 			.setDesc("Toggle to show/hide the private key.")
 			.addToggle((toggle) =>
@@ -237,6 +109,105 @@ export class NostrWriterSettingTab extends PluginSettingTab {
 					}
 				})
 			);
+
+		new Setting(containerEl)
+			.setName("Enable multiple Nostr profiles")
+			.setDesc(
+				"Enable multiple nsecs to publish under different Nostr profiles."
+			)
+			.addToggle((toggle) =>
+				toggle
+					.setValue(this.plugin.settings.multipleProfilesEnabled)
+					.onChange(async (value) => {
+						this.plugin.settings.multipleProfilesEnabled = value;
+						await this.plugin.saveSettings();
+						this.refreshDisplay();
+					})
+			);
+
+		if (this.plugin.settings.multipleProfilesEnabled) {
+			let newProfilePrivateKeyField: string;
+			let newProfileNicknameField: string;
+
+			let multiplePrivateKeyField: HTMLInputElement;
+
+			containerEl.createEl("h5", { text: "Additional Nostr Profiles" });
+			new Setting(this.containerEl)
+				.setDesc("Add a new Nostr profile to publish from.")
+				.setName("Add Profile")
+				.addText((newAccountNicknameInput) => {
+					newAccountNicknameInput.setPlaceholder("Profile Nickname");
+					newAccountNicknameInput.onChange((value) => {
+						if (value.toLowerCase() !== "default") {
+							newProfileNicknameField = value;
+						} else {
+							new Notice("Can't call an additional profile default");
+						}
+					});
+
+				})
+				.addText((newAccountNsecInput) => {
+					newAccountNsecInput.setPlaceholder("nsec");
+					newAccountNsecInput.onChange(async (value) => {
+						if (isValidPrivateKey(value)) {
+							newProfilePrivateKeyField = value;
+							new Notice("Private key OK!");
+						} else {
+							new Notice("Invalid private key", 5000);
+						}
+					});
+					multiplePrivateKeyField = newAccountNsecInput.inputEl;
+					multiplePrivateKeyField.type = "password";
+					multiplePrivateKeyField.style.width = "200px";
+				})
+				.addButton((btn) => {
+					btn.setIcon("plus");
+					btn.setCta();
+					btn.setTooltip("Add this profile");
+					btn.onClick(async () => {
+						if (
+							newProfilePrivateKeyField &&
+							newProfileNicknameField &&
+							this.isValidNickname(newProfileNicknameField)
+						) {
+							new Notice("Yuppp");
+							this.plugin.settings.profiles.push({
+								profileNickname: newProfileNicknameField,
+								profilePrivateKey: newProfilePrivateKeyField,
+							});
+							await this.plugin.saveSettings();
+							this.refreshDisplay();
+						} else {
+							new Notice("Add a profile nickname & a valid nsec");
+							if (!this.isValidNickname(newProfileNicknameField)) {
+								new Notice("Invalid nickname - already in use");
+							}
+						}
+					});
+				});
+			for (const [i, { profileNickname }] of this.plugin.settings.profiles.entries()) {
+				new Setting(this.containerEl)
+					.setName(`👤 - ${profileNickname}`)
+					.addButton((btn) => {
+						btn.setIcon("trash");
+						btn.setWarning();
+						btn.setTooltip("Remove this profile");
+						btn.onClick(async () => {
+							if (
+								confirm(
+									"Are you sure you want to delete this profile? This cannot be undone."
+								)
+							) {
+								this.plugin.settings.profiles.splice(i, 1);
+								await this.plugin.saveSettings();
+								this.refreshDisplay();
+								new Notice("Profile successfully deleted.");
+							}
+						});
+					});
+			}
+			containerEl.createEl("br");
+		}
 
 		new Setting(containerEl)
 			.setName("Clear local published history")
@@ -273,25 +244,6 @@ export class NostrWriterSettingTab extends PluginSettingTab {
 						);
 					})
 			);
-
-		// new Setting(containerEl)
-		// 	.setName("Show status bar")
-		// 	.setDesc("Show/hide Nostr connection status.")
-		// 	.addToggle((toggle) =>
-		// 		toggle
-		// 			.setValue(this.plugin.settings.statusBarEnabled)
-		// 			.onChange(async (value) => {
-		// 				this.plugin.settings.statusBarEnabled = value;
-		// 				await this.plugin.saveSettings();
-		// 				this.plugin.updateStatusBar();
-		// 				new Notice(
-		// 					`Nostr status bar ${value ? "enabled" : "disabled"}`
-		// 				);
-		// 				new Notice(
-		// 					`Reopen the vault for updates to take effect.`
-		// 				);
-		// 			})
-		// 	);
 
 		new Setting(containerEl)
 			.setName("Configure relays")
@@ -370,11 +322,11 @@ export class NostrWriterSettingTab extends PluginSettingTab {
 						}`
 					)
 					.setName(
-						`Relay ${i + 1} - ${
+						`${
 							this.plugin.nostrService.getRelayInfo(url)
 								? "🟢"
 								: "💀"
-						}`
+						} - Relay ${i + 1} `
 					)
 					.addButton((btn) => {
 						btn.setIcon("trash");
@@ -459,6 +411,21 @@ export class NostrWriterSettingTab extends PluginSettingTab {
 			console.log(error);
 			return false;
 		}
+	}
+
+	isValidNickname(nickname: string): boolean {
+		let isValid: boolean = true;
+		// get the array of profiles
+		let profilesToCheck = this.plugin.settings.profiles;
+		if (profilesToCheck && profilesToCheck.length > 0) {
+			for (const profile of profilesToCheck) {
+				if (profile.profileNickname == nickname) {
+					console.log("found a match");
+					isValid = false;
+				}
+			}
+		}
+		return isValid;
 	}
 }
 

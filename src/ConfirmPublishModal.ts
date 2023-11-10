@@ -4,6 +4,7 @@ import {
 	Notice,
 	TFile,
 	App,
+	Setting,
 	TextAreaComponent,
 	TextComponent,
 } from "obsidian";
@@ -138,6 +139,16 @@ export default class ConfirmPublishModal extends Modal {
 			publishButton.setDisabled(false);
 		});
 
+		let x = new Setting(contentEl)
+			.setName("Publish as a draft")
+			.setDesc("Nostr clients allow you to edit your drafts later.")
+			.addToggle((toggle) =>
+				toggle.setValue(false).onChange(async (value) => {
+					console.log("Toggled", value);
+				})
+			);
+
+
 		let info = contentEl.createEl("p", {
 			text: `Are you sure you want to publish this note to Nostr?`,
 		});
@@ -211,11 +222,11 @@ export default class ConfirmPublishModal extends Modal {
 		}
 
 		function addTagAsPill(tag: string) {
-			if (tag.trim() === "") return; 
+			if (tag.trim() === "") return;
 			noteCategoryTags.push(tag);
 			const pillElement = createPillElement(tag);
 			pillsContainer.appendChild(pillElement);
-			tagsText.setValue(""); 
+			tagsText.setValue("");
 		}
 	}
 }

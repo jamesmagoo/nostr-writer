@@ -15,8 +15,14 @@ import { NostrWriterPluginSettings } from "src/settings";
 import { v4 as uuidv4 } from "uuid";
 import NostrWriterPlugin from "main";
 
+interface Profile {
+	profileNickname: string;
+	profilePrivateKey: string;
+}
+
 export default class NostrService {
 	private privateKey: string;
+	private profiles : Profile[];
 	private publicKey: string;
 	private plugin: NostrWriterPlugin;
 	private app: App;
@@ -34,6 +40,12 @@ export default class NostrService {
 				"YourPlugin requires a private key to be set in the settings."
 			);
 			return;
+		}
+
+		if(settings.multipleProfilesEnabled){
+			console.log("nultiple profiles enabled")
+			this.profiles = settings.profiles;
+
 		}
 		this.plugin = plugin;
 		this.app = app;
@@ -166,10 +178,19 @@ export default class NostrService {
 		return this.publicKey;
 	}
 
-	async publishShortFormNote(
-		message: string
-	): Promise<{ success: boolean; publishedRelays: string[] }> {
+	async publishShortFormNote(message: string, profileNickname: string): Promise<{ success: boolean; publishedRelays: string[] }> {
 		console.log(`Sending a short form note to Nostr...`);
+		let profilePrivateKey = this.privateKey;
+		let profilePublicKey = this.publicKey;
+		if (profileNickname !== "default") {
+			console.log("recieved non-default profile: " + profileNickname);
+			for (const { profileNickname: nickname, profilePrivateKey: key } of this.profiles) {
+				if (profileNickname === nickname) {
+					profilePrivateKey = this.convertKeyToHex(key);
+					profilePublicKey = getPublicKey(profilePrivateKey);
+				}
+			}
+		}
 		if (message) {
 			let uuid: any = uuidv4().substr(0, 8);
 			let tags: any = [["d", uuid]];
@@ -182,7 +203,7 @@ export default class NostrService {
 			console.log(eventTemplate);
 			let event: UnsignedEvent<Kind.Text> = {
 				...eventTemplate,
-				pubkey: this.publicKey,
+				pubkey: profilePublicKey,
 			};
 
 			let eventHash = getEventHash(event);
@@ -190,7 +211,7 @@ export default class NostrService {
 			let finalEvent: Event<Kind.Text> = {
 				...event,
 				id: eventHash,
-				sig: getSignature(event, this.privateKey),
+				sig: getSignature(event, profilePrivateKey),
 			};
 			return this.publishToRelays<Kind.Text>(finalEvent, "");
 		} else {

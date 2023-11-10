@@ -137,20 +137,7 @@ export default class NostrWriterPlugin extends Plugin {
 					"wss://nostr.fmt.wiz.biz",
 				],
 				multipleProfilesEnabled: false,
-				profiles: [
-					{
-						profileNickname: "dummyProfile1",
-						profilePrivateKey: "dummyPrivateKey1",
-					},
-					{
-						profileNickname: "dummyProfile2",
-						profilePrivateKey: "dummyPrivateKey2",
-					},
-					{
-						profileNickname: "dummyProfile3",
-						profilePrivateKey: "dummyPrivateKey3",
-					},
-				],
+				profiles: [],
 			},
 			await this.loadData()
 		);
@@ -209,7 +196,8 @@ export default class NostrWriterPlugin extends Plugin {
 						if (this.nostrService.getConnectionStatus()) {
 							new ShortFormModal(
 								this.app,
-								this.nostrService
+								this.nostrService,
+								this
 							).open();
 							return;
 						} else {
