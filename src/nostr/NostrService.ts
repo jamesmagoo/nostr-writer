@@ -213,7 +213,7 @@ export default class NostrService {
 				id: eventHash,
 				sig: getSignature(event, profilePrivateKey),
 			};
-			return this.publishToRelays<Kind.Text>(finalEvent, "");
+			return this.publishToRelays<Kind.Text>(finalEvent, "","");
 		} else {
 			console.error("No message to publish");
 			return { success: false, publishedRelays: [] };
@@ -291,7 +291,8 @@ export default class NostrService {
 
 			return this.publishToRelays<Kind.Article>(
 				finalEvent,
-				activeFile.path
+				activeFile.path,
+				profileNickname
 			);
 		} else {
 			console.error("No message to publish");
@@ -301,7 +302,8 @@ export default class NostrService {
 
 	async publishToRelays<T extends Kind>(
 		finalEvent: Event<T>,
-		filePath: string
+		filePath: string,
+		profileNickname: string
 	): Promise<{ success: boolean; publishedRelays: string[] }> {
 		try {
 			let publishingPromises = this.connectedRelays.map((relay) => {
@@ -366,7 +368,9 @@ export default class NostrService {
 					this.savePublishedEvent(
 						finalEvent,
 						filePath,
-						publishedRelays
+						publishedRelays,
+						profileNickname
+
 					);
 				}
 				return { success: true, publishedRelays };
@@ -404,7 +408,8 @@ export default class NostrService {
 	async savePublishedEvent<T extends Kind>(
 		finalEvent: Event<T>,
 		publishedFilePath: string,
-		relays: string[]
+		relays: string[],
+		profileNickname: string
 	) {
 		const publishedDataPath = `${this.plugin.manifest.dir}/published.json`;
 		let publishedEvents;
@@ -421,6 +426,7 @@ export default class NostrService {
 			...finalEvent,
 			filepath: publishedFilePath,
 			publishedToRelays: relays,
+			profileNickname: profileNickname,
 		};
 		publishedEvents.push(eventWithMetaData);
 		await this.app.vault.adapter.write(

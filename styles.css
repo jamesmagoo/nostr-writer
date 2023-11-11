@@ -70,6 +70,14 @@
     margin: 0; 
 }
 
+.published-profile{
+    display: flex;
+    align-items: center;
+    padding: 5px 0;
+    font-size: 14px;
+    color: #9f9e9e;
+}
+
 .published-details-div button {
     background: none;
     border: none; 

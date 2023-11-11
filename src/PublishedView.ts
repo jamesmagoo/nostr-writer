@@ -52,7 +52,7 @@ export class PublishedView extends ItemView {
 			container.createEl("p", {text: `Total: ${publishedNotes.length} ✅` })
 			publishedNotes
 				.reverse()
-				.forEach((note: { tags: any[]; created_at: number , id : string, filepath: string}) => {
+				.forEach((note: { tags: any[]; created_at: number , id : string, filepath: string, profileNickname: string}) => {
 					const titleTag = note.tags.find(
 						(tag: any[]) => tag[0] === "title"
 					);
@@ -62,10 +62,7 @@ export class PublishedView extends ItemView {
 
 					const title = titleTag ? titleTag[1] : "No Title";
 					// const summary = summaryTag ? summaryTag[1] : "No Summary";
-					const publishedDate = publishedAtTag
-						? new Date(
-								Number(publishedAtTag[1]) * 1000
-						  ).toLocaleString('en-US', {
+					const publishedDate = publishedAtTag? new Date(Number(publishedAtTag[1]) * 1000).toLocaleString('en-US', {
 							year: 'numeric',
 							month: 'long',
 							day: 'numeric',
@@ -78,10 +75,27 @@ export class PublishedView extends ItemView {
 					const cardDiv = container.createEl("div", {
 						cls: "published-card",
 					});
+
 					cardDiv.createEl("span", { text: `📜 ${title}` });
+
+					if(this.plugin.settings.multipleProfilesEnabled){
+						if(note.profileNickname){
+							let displayNickname = note.profileNickname
+							if(note.profileNickname == "default"){
+								displayNickname = "Default Profile"
+							}
+
+							cardDiv.createEl("div", {
+								text: `👤 - ${displayNickname}`,
+								cls: "published-profile",
+							});
+						}
+					}
+
 					let detailsDiv = cardDiv.createEl("div", {
 						cls: "published-details-div",
 					});
+
 					detailsDiv.createEl("p", {
 						text: `${publishedDate}.`,
 					});
@@ -145,6 +159,5 @@ export class PublishedView extends ItemView {
 	};
 
 }
-
 
 
