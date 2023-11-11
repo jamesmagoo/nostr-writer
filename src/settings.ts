@@ -3,9 +3,14 @@ import {
 	Notice,
 	PluginSettingTab,
 	Setting,
-	TextComponent,
+	TextComponent
 } from "obsidian";
 import NostrWriterPlugin from "../main";
+
+interface Profile {
+	profileNickname: string;
+	profilePrivateKey: string;
+}
 
 export interface NostrWriterPluginSettings {
 	privateKey: string;
@@ -13,6 +18,8 @@ export interface NostrWriterPluginSettings {
 	statusBarEnabled: boolean;
 	relayConfigEnabled: boolean;
 	relayURLs: string[];
+	multipleProfilesEnabled: boolean;
+	profiles: Profile[];
 }
 
 export class NostrWriterSettingTab extends PluginSettingTab {
@@ -36,7 +43,7 @@ export class NostrWriterSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName("Nostr private key")
-			.setDesc("It's a secret!")
+			.setDesc("Default profile to publish from.")
 			.addText((text) => {
 				privateKeyInput = text;
 				text.setPlaceholder("nsec...")
@@ -104,6 +111,105 @@ export class NostrWriterSettingTab extends PluginSettingTab {
 			);
 
 		new Setting(containerEl)
+			.setName("Enable multiple Nostr profiles")
+			.setDesc(
+				"Enable & add multiple Nostr profiles to publish from."
+			)
+			.addToggle((toggle) =>
+				toggle
+					.setValue(this.plugin.settings.multipleProfilesEnabled)
+					.onChange(async (value) => {
+						this.plugin.settings.multipleProfilesEnabled = value;
+						await this.plugin.saveSettings();
+						this.refreshDisplay();
+					})
+			);
+
+		if (this.plugin.settings.multipleProfilesEnabled) {
+			let newProfilePrivateKeyField: string;
+			let newProfileNicknameField: string;
+
+			let multiplePrivateKeyField: HTMLInputElement;
+
+			containerEl.createEl("h5", { text: "Additional Nostr Profiles" });
+			new Setting(this.containerEl)
+				.setDesc("Add a new Nostr profile to publish from.")
+				.setName("Add Profile")
+				.addText((newAccountNicknameInput) => {
+					newAccountNicknameInput.setPlaceholder("Profile Nickname");
+					newAccountNicknameInput.onChange((value) => {
+						if (value.toLowerCase() !== "default") {
+							newProfileNicknameField = value;
+						} else {
+							new Notice("Can't call an additional profile default");
+						}
+					});
+
+				})
+				.addText((newAccountNsecInput) => {
+					newAccountNsecInput.setPlaceholder("nsec");
+					newAccountNsecInput.onChange(async (value) => {
+						if (isValidPrivateKey(value)) {
+							newProfilePrivateKeyField = value;
+							new Notice("Private key OK!");
+						} else {
+							new Notice("Invalid private key", 5000);
+						}
+					});
+					multiplePrivateKeyField = newAccountNsecInput.inputEl;
+					multiplePrivateKeyField.type = "password";
+					multiplePrivateKeyField.style.width = "200px";
+				})
+				.addButton((btn) => {
+					btn.setIcon("plus");
+					btn.setCta();
+					btn.setTooltip("Add this profile");
+					btn.onClick(async () => {
+						if (
+							newProfilePrivateKeyField &&
+							newProfileNicknameField &&
+							this.isValidNickname(newProfileNicknameField)
+						) {
+							new Notice("Yuppp");
+							this.plugin.settings.profiles.push({
+								profileNickname: newProfileNicknameField,
+								profilePrivateKey: newProfilePrivateKeyField,
+							});
+							await this.plugin.saveSettings();
+							this.refreshDisplay();
+						} else {
+							new Notice("Add a profile nickname & a valid nsec");
+							if (!this.isValidNickname(newProfileNicknameField)) {
+								new Notice("Invalid nickname - already in use");
+							}
+						}
+					});
+				});
+			for (const [i, { profileNickname }] of this.plugin.settings.profiles.entries()) {
+				new Setting(this.containerEl)
+					.setName(`👤 - ${profileNickname}`)
+					.addButton((btn) => {
+						btn.setIcon("trash");
+						btn.setWarning();
+						btn.setTooltip("Remove this profile");
+						btn.onClick(async () => {
+							if (
+								confirm(
+									"Are you sure you want to delete this profile? This cannot be undone."
+								)
+							) {
+								this.plugin.settings.profiles.splice(i, 1);
+								await this.plugin.saveSettings();
+								this.refreshDisplay();
+								new Notice("Profile successfully deleted.");
+							}
+						});
+					});
+			}
+			containerEl.createEl("br");
+		}
+
+		new Setting(containerEl)
 			.setName("Clear local published history")
 			.setDesc("This does not delete your notes from the Nostr network.")
 			.addButton((button) =>
@@ -139,25 +245,6 @@ export class NostrWriterSettingTab extends PluginSettingTab {
 					})
 			);
 
-		// new Setting(containerEl)
-		// 	.setName("Show status bar")
-		// 	.setDesc("Show/hide Nostr connection status.")
-		// 	.addToggle((toggle) =>
-		// 		toggle
-		// 			.setValue(this.plugin.settings.statusBarEnabled)
-		// 			.onChange(async (value) => {
-		// 				this.plugin.settings.statusBarEnabled = value;
-		// 				await this.plugin.saveSettings();
-		// 				this.plugin.updateStatusBar();
-		// 				new Notice(
-		// 					`Nostr status bar ${value ? "enabled" : "disabled"}`
-		// 				);
-		// 				new Notice(
-		// 					`Reopen the vault for updates to take effect.`
-		// 				);
-		// 			})
-		// 	);
-
 		new Setting(containerEl)
 			.setName("Configure relays")
 			.setDesc("Edit the default configuration & see details.")
@@ -173,11 +260,13 @@ export class NostrWriterSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName("Reconnect to relays ")
-			.setDesc("Refresh connection to relays - check status bar for details.")
+			.setDesc(
+				"Refresh connection to relays - check status bar for details."
+			)
 			.addButton((btn) => {
 				btn.setIcon("reset");
 				btn.setCta();
-				btn.setTooltip("Add this relay");
+				btn.setTooltip("Re-connect");
 				btn.onClick(async () => {
 					new Notice(`Re-connecting to Nostr...`);
 					this.refreshDisplay();
@@ -233,11 +322,11 @@ export class NostrWriterSettingTab extends PluginSettingTab {
 						}`
 					)
 					.setName(
-						`Relay ${i + 1} - ${
+						`${
 							this.plugin.nostrService.getRelayInfo(url)
 								? "🟢"
 								: "💀"
-						}`
+						} - Relay ${i + 1} `
 					)
 					.addButton((btn) => {
 						btn.setIcon("trash");
@@ -322,6 +411,21 @@ export class NostrWriterSettingTab extends PluginSettingTab {
 			console.log(error);
 			return false;
 		}
+	}
+
+	isValidNickname(nickname: string): boolean {
+		let isValid: boolean = true;
+		// get the array of profiles
+		let profilesToCheck = this.plugin.settings.profiles;
+		if (profilesToCheck && profilesToCheck.length > 0) {
+			for (const profile of profilesToCheck) {
+				if (profile.profileNickname == nickname) {
+					console.log("found a match");
+					isValid = false;
+				}
+			}
+		}
+		return isValid;
 	}
 }
 

@@ -15,8 +15,15 @@ import { NostrWriterPluginSettings } from "src/settings";
 import { v4 as uuidv4 } from "uuid";
 import NostrWriterPlugin from "main";
 
+interface Profile {
+	profileNickname: string;
+	profilePrivateKey: string;
+}
+
 export default class NostrService {
 	private privateKey: string;
+	private profiles : Profile[];
+	private multipleProfilesEnabled : boolean;
 	private publicKey: string;
 	private plugin: NostrWriterPlugin;
 	private app: App;
@@ -34,6 +41,12 @@ export default class NostrService {
 				"YourPlugin requires a private key to be set in the settings."
 			);
 			return;
+		}
+
+		if(settings.multipleProfilesEnabled){
+			console.log("multiple profiles enabled")
+			this.profiles = settings.profiles;
+			this.multipleProfilesEnabled = true;
 		}
 		this.plugin = plugin;
 		this.app = app;
@@ -131,7 +144,6 @@ export default class NostrService {
 			console.error(
 				"YourPlugin requires a list of relay urls to be set in the settings, defaulting to Damus."
 			);
-			// TODO make a relay for this plugins users & add it here
 			this.relayURLs = [
 				"wss://nos.lol ",
 				"wss://relay.damus.io",
@@ -166,10 +178,19 @@ export default class NostrService {
 		return this.publicKey;
 	}
 
-	async publishShortFormNote(
-		message: string
-	): Promise<{ success: boolean; publishedRelays: string[] }> {
+	async publishShortFormNote(message: string, profileNickname: string): Promise<{ success: boolean; publishedRelays: string[] }> {
 		console.log(`Sending a short form note to Nostr...`);
+		let profilePrivateKey = this.privateKey;
+		let profilePublicKey = this.publicKey;
+		if (profileNickname !== "default" && this.multipleProfilesEnabled) {
+			console.log("recieved non-default profile: " + profileNickname);
+			for (const { profileNickname: nickname, profilePrivateKey: key } of this.profiles) {
+				if (profileNickname === nickname) {
+					profilePrivateKey = this.convertKeyToHex(key);
+					profilePublicKey = getPublicKey(profilePrivateKey);
+				}
+			}
+		}
 		if (message) {
 			let uuid: any = uuidv4().substr(0, 8);
 			let tags: any = [["d", uuid]];
@@ -182,7 +203,7 @@ export default class NostrService {
 			console.log(eventTemplate);
 			let event: UnsignedEvent<Kind.Text> = {
 				...eventTemplate,
-				pubkey: this.publicKey,
+				pubkey: profilePublicKey,
 			};
 
 			let eventHash = getEventHash(event);
@@ -190,7 +211,7 @@ export default class NostrService {
 			let finalEvent: Event<Kind.Text> = {
 				...event,
 				id: eventHash,
-				sig: getSignature(event, this.privateKey),
+				sig: getSignature(event, profilePrivateKey),
 			};
 			return this.publishToRelays<Kind.Text>(finalEvent, "");
 		} else {
@@ -205,13 +226,23 @@ export default class NostrService {
 		summary: string,
 		imageUrl: string,
 		title: string,
-		userSelectedTags: string[]
+		userSelectedTags: string[],
+		profileNickname: string
 	): Promise<{ success: boolean; publishedRelays: string[] }> {
 		console.log(`Publishing your note to Nostr...`);
+
+		let profilePrivateKey = this.privateKey;
+		let profilePublicKey = this.publicKey;
+		if (profileNickname !== "default" && this.multipleProfilesEnabled) {
+			console.log("recieved non-default profile: " + profileNickname);
+			for (const { profileNickname: nickname, profilePrivateKey: key } of this.profiles) {
+				if (profileNickname === nickname) {
+					profilePrivateKey = this.convertKeyToHex(key);
+					profilePublicKey = getPublicKey(profilePrivateKey);
+				}
+			}
+		}
 		if (fileContent) {
-			/**
-			 * Generate id for d tag, allows editing later
-			 */
 			let uuid: any = uuidv4().substr(0, 8);
 			let tags: any = [["d", uuid]];
 
@@ -247,7 +278,7 @@ export default class NostrService {
 
 			let event: UnsignedEvent<Kind.Article> = {
 				...eventTemplate,
-				pubkey: this.publicKey,
+				pubkey: profilePublicKey,
 			};
 
 			let eventHash = getEventHash(event);
@@ -255,7 +286,7 @@ export default class NostrService {
 			let finalEvent: Event<Kind.Article> = {
 				...event,
 				id: eventHash,
-				sig: getSignature(event, this.privateKey),
+				sig: getSignature(event, profilePrivateKey),
 			};
 
 			return this.publishToRelays<Kind.Article>(

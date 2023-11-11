@@ -4,18 +4,25 @@ import {
 	Notice,
 	TFile,
 	App,
+	Setting,
 	TextAreaComponent,
 	TextComponent,
 } from "obsidian";
 import NostrService from "./nostr/NostrService";
+import NostrWriterPlugin from "../main";
 
 export default class ConfirmPublishModal extends Modal {
+
+	plugin: NostrWriterPlugin;
+
 	constructor(
 		app: App,
 		private nostrService: NostrService,
-		private file: TFile
+		private file: TFile,
+		plugin: NostrWriterPlugin
 	) {
 		super(app);
+		this.plugin = plugin;
 	}
 
 	async onOpen() {
@@ -138,6 +145,37 @@ export default class ConfirmPublishModal extends Modal {
 			publishButton.setDisabled(false);
 		});
 
+		let selectedProfileKey = "default";
+		if(this.plugin.settings.profiles.length > 0 && this.plugin.settings.multipleProfilesEnabled){
+			let x =new Setting(contentEl)
+			.setName("Select Profile")
+			.setDesc("Select a profile to send this note from.")
+			.addDropdown((dropdown) => {
+				dropdown.addOption("default", "Default");
+				for (const { profileNickname } of this.plugin.settings.profiles) {
+					dropdown.addOption(profileNickname, profileNickname);
+				}
+				dropdown.setValue("default");
+				dropdown.onChange(async (value) => {
+					selectedProfileKey = value;
+					new Notice(`${selectedProfileKey} selected`);
+					console.log(selectedProfileKey)
+				});
+			});
+		}
+
+		// TODO is this a featue I want to add? Why publish as a draft? Obsidian is the draft location.
+		// let x = new Setting(contentEl)
+		// 	.setName("Publish as a draft")
+		// 	.setDesc("Nostr clients allow you to edit your drafts later.")
+		// 	.addToggle((toggle) =>
+		// 		toggle.setValue(false).onChange(async (value) => {
+		// 			console.log("Toggled", value);
+		// 		})
+		// 	);
+
+		contentEl.createEl("hr");
+
 		let info = contentEl.createEl("p", {
 			text: `Are you sure you want to publish this note to Nostr?`,
 		});
@@ -147,9 +185,9 @@ export default class ConfirmPublishModal extends Modal {
 			.setButtonText("Confirm and Publish")
 			.setCta()
 			.onClick(async () => {
+				if(confirm("Are you sure you want to publish this note to Nostr?")){
 				// Disable the button and change the text to show a loading state
 				publishButton.setButtonText("Publishing...").setDisabled(true);
-
 				setTimeout(async () => {
 					try {
 						const fileContent = await this.app.vault.read(
@@ -164,7 +202,8 @@ export default class ConfirmPublishModal extends Modal {
 							summary,
 							imageUrl,
 							title,
-							noteCategoryTags
+							noteCategoryTags,
+							selectedProfileKey
 						);
 						if (res.success) {
 							setTimeout(() => {
@@ -185,7 +224,7 @@ export default class ConfirmPublishModal extends Modal {
 						.setButtonText("Confirm and Publish")
 						.setDisabled(false);
 					this.close();
-				}, 3000);
+				}, 3000);}
 			});
 
 		contentEl.classList.add("publish-modal-content");
@@ -211,11 +250,11 @@ export default class ConfirmPublishModal extends Modal {
 		}
 
 		function addTagAsPill(tag: string) {
-			if (tag.trim() === "") return; 
+			if (tag.trim() === "") return;
 			noteCategoryTags.push(tag);
 			const pillElement = createPillElement(tag);
 			pillsContainer.appendChild(pillElement);
-			tagsText.setValue(""); 
+			tagsText.setValue("");
 		}
 	}
 }
