@@ -113,7 +113,7 @@ export class NostrWriterSettingTab extends PluginSettingTab {
 		new Setting(containerEl)
 			.setName("Enable multiple Nostr profiles")
 			.setDesc(
-				"Enable multiple nsecs to publish under different Nostr profiles."
+				"Enable & add multiple Nostr profiles to publish from."
 			)
 			.addToggle((toggle) =>
 				toggle

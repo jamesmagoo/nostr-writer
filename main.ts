@@ -165,12 +165,12 @@ export default class NostrWriterPlugin extends Plugin {
 				new Notice("The note is empty and cannot be published.");
 				return;
 			}
-			// TODO update this connection check for multiple relays
 			if (this.nostrService.getConnectionStatus()) {
 				new ConfirmPublishModal(
 					this.app,
 					this.nostrService,
-					activeFile
+					activeFile,
+					this
 				).open();
 			} else {
 				new Notice(`Please connect to Nostr before publishing.`);
