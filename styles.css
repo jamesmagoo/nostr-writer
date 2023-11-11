@@ -140,6 +140,16 @@
   color: #ff0000;
 }
 
- 
+.row-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.setting-label {
+  margin-right: 10px; 
+}
+
   
   
