@@ -50,12 +50,12 @@ This tool is completely abstracted from Nostr, allowing you to stay focused - th
 - Published view will have a link to the published note/event on njump.me
 - Multiple user profiles (nsecs) - so you can publish as different nostr accounts
 - Improved UI
-- Publish as a draft (kind 30024) option
 
 ### Ideas..
 - Plugin User Relay: A relay specific to this plugin - see what everyone else is writing.
 - Image CDN : Images in your file will be uploaded to a CDN & plugged into your nostr message
 - Frontmatter : after publishing it would be cool if this also creates a "front matter" in the published .md file
+- Publish as a draft (kind 30024) option
 
 ## Writing On Nostr
 It's time to start building your blog, speaking to your audience, and publishing your work freely outside of any walled garden. 
