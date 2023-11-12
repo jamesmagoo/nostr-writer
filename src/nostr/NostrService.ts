@@ -75,6 +75,12 @@ export default class NostrService {
 		this.connectToRelays();
 	}
 
+	reloadMultipleAccounts(){
+		console.log("reloading multiple accounts...")
+		this.profiles = this.plugin.settings.profiles;
+		this.multipleProfilesEnabled = true;
+	}
+
 	async connectToRelays() {
 		this.refreshRelayUrls();
 		this.connectedRelays = [];

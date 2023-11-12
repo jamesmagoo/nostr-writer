@@ -170,13 +170,13 @@ export class NostrWriterSettingTab extends PluginSettingTab {
 							newProfileNicknameField &&
 							this.isValidNickname(newProfileNicknameField)
 						) {
-							new Notice("Yuppp");
 							this.plugin.settings.profiles.push({
 								profileNickname: newProfileNicknameField,
 								profilePrivateKey: newProfilePrivateKeyField,
 							});
 							await this.plugin.saveSettings();
 							this.refreshDisplay();
+							this.plugin.nostrService.reloadMultipleAccounts();
 						} else {
 							new Notice("Add a profile nickname & a valid nsec");
 							if (!this.isValidNickname(newProfileNicknameField)) {
@@ -201,6 +201,7 @@ export class NostrWriterSettingTab extends PluginSettingTab {
 								this.plugin.settings.profiles.splice(i, 1);
 								await this.plugin.saveSettings();
 								this.refreshDisplay();
+								this.plugin.nostrService.reloadMultipleAccounts();
 								new Notice("Profile successfully deleted.");
 							}
 						});
