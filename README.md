@@ -37,19 +37,17 @@ Big thank you to Tony for making this user guide!
 This tool is completely abstracted from Nostr, allowing you to stay focused - the plugin does not read Nostr messages or give you any view into the public space. It just publishes what you've written. Stay focused on your work and disconnected from the noise. 
 
 ## Features
-- Publishing to Nostr: Directly publish your notes from Obsidian to Nostr with a single click.
+- Publishing to Nostr: Directly publish your notes from Obsidian to Nostr with a couple of clicks.
 - Private Key Integration: Securely set and store your private key within the plugin settings for authenticated publishing.
 - Summary and Image URL Support: Add an optional summary and image URL to accompany your note, with live preview functionality.
-- Public Key Retrieval: Easily retrieve and copy your public key to the clipboard.
-- Local Record Keeping: Keep a local record of published events in a JSON file for your reference and tracking.
+- Tags: Add tags to your work to make it more discoverable. 
+- Public Key Retrieval: easily retrieve and copy your public key to the clipboard.
+- Local Record Keeping: keep a local record of published events in a JSON file for your reference and tracking.
 - Published View : See all posts sent from Obsidian
-- Short Format Message Writer: Quickly compose and publish short form messages directly to Nostr from within Obsidian.
-- Relays Configuration: Configure to send to whatever relays you like.
-
-### Coming Soon...
-- Published view will have a link to the published note/event on njump.me
-- Multiple user profiles (nsecs) - so you can publish as different nostr accounts
-- Improved UI
+- Short Format Message Writer: quickly compose and publish short form messages directly to Nostr from within Obsidian.
+- Relay Configuration: configure to send to whatever relays you like.
+- Links to your published works on njump.me 
+- Multiple user profiles: publish under different nostr accounts, just add the nsecs. 
 
 ### Ideas..
 - Plugin User Relay: A relay specific to this plugin - see what everyone else is writing.

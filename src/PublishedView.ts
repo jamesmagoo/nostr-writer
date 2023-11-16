@@ -52,7 +52,7 @@ export class PublishedView extends ItemView {
 			container.createEl("p", {text: `Total: ${publishedNotes.length} ✅` })
 			publishedNotes
 				.reverse()
-				.forEach((note: { tags: any[]; created_at: number , id : string, filepath: string, profileNickname: string}) => {
+				.forEach((note: { tags: any[]; created_at: number , id : string, filepath: string, profileNickname: string, pubkey: string, publishedToRelays: string[], kind : number}) => {
 					const titleTag = note.tags.find(
 						(tag: any[]) => tag[0] === "title"
 					);
@@ -106,9 +106,12 @@ export class PublishedView extends ItemView {
 
 					let target : nip19.EventPointer = {
 						id: note.id,
+						author: note.pubkey,
+						relays: note.publishedToRelays
 					}
+					
 					let nevent = nip19.neventEncode(target)
-
+					
 					new ButtonComponent(detailsDiv)
 						.setIcon("popup-open")
 						.setCta()
