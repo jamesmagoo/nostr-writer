@@ -27,19 +27,28 @@ export default class ConfirmPublishModal extends Modal {
 
 	async onOpen() {
 		let { contentEl } = this;
-		let noteTitle = this.file.basename;
-		let noteWordCount = (await this.app.vault.read(this.file)).split(
-			" "
-		).length;
+		
+		const frontmatter = await this.app.metadataCache.getFileCache(this.file)?.frontmatter;
+        
+        const frontmatterRegex = /---\s*[\s\S]*?\s*---/g;
+        const content = (await this.app.vault.read(this.file)).replace(frontmatterRegex, "").trim();
+        
+        const noteWordCount = content.split(" ").length;
 
 		let noteCategoryTags: string[] = [];
-		let content = await this.app.vault.read(this.file);
-
+		
 		const regex = /#\w+/g;
 		const matches = content.match(regex) || [];
 		const hashtags = matches.map((match: string) => match.slice(1));
 
-		for (const tag of hashtags) {
+		const properties = {
+            title: frontmatter?.title || this.file.basename,
+            summary: frontmatter?.summary || "",
+            image: isValidURL(frontmatter?.image) ? frontmatter?.image : "",
+            tags: frontmatter?.tags || hashtags,
+        }
+		
+		for (const tag of properties.tags) {
 			noteCategoryTags.push(tag);
 		}
 
@@ -51,8 +60,8 @@ export default class ConfirmPublishModal extends Modal {
 
 		contentEl.createEl("h6", { text: `Title` });
 		let titleText = new TextComponent(contentEl)
-			.setPlaceholder(`${noteTitle}`)
-			.setValue(`${noteTitle}`);
+			.setPlaceholder(`${properties.title}`)
+			.setValue(`${properties.title}`);
 
 		contentEl.createEl("h6", { text: `Tags` });
 		const tagContainer = contentEl.createEl("div");
@@ -87,13 +96,13 @@ export default class ConfirmPublishModal extends Modal {
 		contentEl.createEl("h6", { text: `Summary & Image Link (optional)` });
 		let summaryText = new TextAreaComponent(contentEl)
 			.setPlaceholder("Enter a brief summary here...(optional)")
-			.setValue("");
+			.setValue(properties.summary);
 
 		let imageUrlText = new TextAreaComponent(contentEl)
 			.setPlaceholder(
 				"Enter an image URL here to accompany your article...(optional)"
 			)
-			.setValue("");
+			.setValue(properties.image);
 
 		titleText.inputEl.setCssStyles({
 			width: "100%",
@@ -190,9 +199,7 @@ export default class ConfirmPublishModal extends Modal {
 				publishButton.setButtonText("Publishing...").setDisabled(true);
 				setTimeout(async () => {
 					try {
-						const fileContent = await this.app.vault.read(
-							this.file
-						);
+						const fileContent = content;
 						const title = titleText.getValue();
 						const summary = summaryText.getValue();
 						const imageUrl = imageUrlText.getValue();
