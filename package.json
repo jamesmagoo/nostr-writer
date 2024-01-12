@@ -1,6 +1,6 @@
 {
 	"name": "nostr-writer",
-	"version": "1.5.3",
+	"version": "1.6.0",
 	"description": "Publish your writing directly to Nostr.",
 	"main": "main.js",
 	"scripts": {
