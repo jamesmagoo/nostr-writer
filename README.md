@@ -48,12 +48,13 @@ This tool is completely abstracted from Nostr, allowing you to stay focused - th
 - Relay Configuration: configure to send to whatever relays you like.
 - Links to your published works on njump.me 
 - Multiple user profiles: publish under different nostr accounts, just add the nsecs. 
+- Frontmatter Parsing:Utilizing the parsed data from the frontmatter, the plugin now automatically populates the article information fields. This feature streamlines the process of metadata handling and improves overall user experience.
+- Frontmatter Removal from Article Body: Post data extraction, the plugin now automatically removes the frontmatter from the body of the article. This ensures that the content displayed on Nostr is free from unnecessary metadata, providing a clean article body.
 
 ### Ideas..
 - Plugin User Relay: A relay specific to this plugin - see what everyone else is writing.
 - Image CDN : Images in your file will be uploaded to a CDN & plugged into your nostr message
 - Frontmatter : after publishing it would be cool if this also creates a "front matter" in the published .md file
-- Publish as a draft (kind 30024) option
 
 ## Writing On Nostr
 It's time to start building your blog, speaking to your audience, and publishing your work freely outside of any walled garden. 
@@ -90,9 +91,10 @@ Therefore, it's important to ensure the overall security of your device and your
 
 > Remember, the security of your private key is your responsibility.
 
-## Install
-Install from the Community Plugin list by searching "Nostr Writer"
-
+## Install / Update
+### In Obsidian
+- Install: settings -> Community plugins -> search list typing "Nostr Writer"
+- Update: settings-> Community plugins -> current plugins -> check for updates
 ### Manually Installing the Plugin
 -   Head over to [releases](https://github.com/jamesmagoo/nostr-writer/releases) and download a release - latest is recommended - (or the pre-release for upcoming features.)
 -   Navigate to your plugin folder in your prefered vault: `VaultFolder/.obsidian/plugins/`
