@@ -8,6 +8,7 @@ import {
 	getPublicKey,
 	getSignature,
 	nip19,
+	SimplePool,
 	relayInit,
 } from "nostr-tools";
 import { TFile, App } from "obsidian";
@@ -22,8 +23,8 @@ interface Profile {
 
 export default class NostrService {
 	private privateKey: string;
-	private profiles : Profile[];
-	private multipleProfilesEnabled : boolean;
+	private profiles: Profile[];
+	private multipleProfilesEnabled: boolean;
 	private publicKey: string;
 	private plugin: NostrWriterPlugin;
 	private app: App;
@@ -43,7 +44,7 @@ export default class NostrService {
 			return;
 		}
 
-		if(settings.multipleProfilesEnabled){
+		if (settings.multipleProfilesEnabled) {
 			console.log("multiple profiles enabled")
 			this.profiles = settings.profiles;
 			this.multipleProfilesEnabled = true;
@@ -75,7 +76,7 @@ export default class NostrService {
 		this.connectToRelays();
 	}
 
-	reloadMultipleAccounts(){
+	reloadMultipleAccounts() {
 		console.log("reloading multiple accounts...")
 		this.profiles = this.plugin.settings.profiles;
 		this.multipleProfilesEnabled = true;
@@ -219,7 +220,7 @@ export default class NostrService {
 				id: eventHash,
 				sig: getSignature(event, profilePrivateKey),
 			};
-			return this.publishToRelays<Kind.Text>(finalEvent, "","");
+			return this.publishToRelays<Kind.Text>(finalEvent, "", "");
 		} else {
 			console.error("No message to publish");
 			return { success: false, publishedRelays: [] };
@@ -304,6 +305,28 @@ export default class NostrService {
 			console.error("No message to publish");
 			return { success: false, publishedRelays: [] };
 		}
+	}
+
+	async getUserBookmarks(): Promise<{ success: boolean; bookmarks: string[] }> {
+
+		// query the relay pool for the users bookmarks..
+		// use their pub key...
+		this.connectedRelays;
+		const pool = new SimplePool()
+
+		let relays = ['wss://relay.example.com', 'wss://relay.example2.com']
+
+		let h = pool.subscribeMany( [...relays, 'wss://relay.example3.com'], [ { authors: ['32e1827635450ebb3c5a7d12c1f8e7b2b514439ac10a67eef3d9fd9c5c68e245'], }, ],
+			{
+				onevent(event) {
+					// this will only be called once the first time the event is received
+					// ...
+				},
+				oneose() {
+					h.close()
+				}
+			}
+		)
 	}
 
 	async publishToRelays<T extends Kind>(
