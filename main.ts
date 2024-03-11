@@ -28,7 +28,7 @@ export default class NostrWriterPlugin extends Plugin {
 
 		this.registerView(
 			READER_VIEW,
-			(leaf) => new ReaderView(leaf, this)
+			(leaf) => new ReaderView(leaf, this, this.nostrService)
 		);
 
 		// icon candidates : 'checkmark', 'blocks', 'scroll', 'pin'

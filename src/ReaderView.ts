@@ -1,4 +1,5 @@
 import NostrWriterPlugin from "main";
+import NostrService from "./nostr/NostrService";
 import { ButtonComponent, ItemView, Notice, TFile, WorkspaceLeaf } from "obsidian";
 import { nip19 } from "nostr-tools";
 
@@ -6,12 +7,14 @@ export const READER_VIEW = "reader-view";
 
 export class ReaderView extends ItemView {
 	plugin: NostrWriterPlugin;
+	nostrService : NostrService;
 	private refreshDisplay: () => void;
 
 
-	constructor(leaf: WorkspaceLeaf, plugin: NostrWriterPlugin) {
+	constructor(leaf: WorkspaceLeaf, plugin: NostrWriterPlugin, nostrService : NostrService) {
 		super(leaf);
 		this.plugin = plugin;
+		this.nostrService = nostrService;
 		this.refreshDisplay = () => this.onOpen()
 	}
 
@@ -37,9 +40,10 @@ export class ReaderView extends ItemView {
 		new ButtonComponent(banner)
 						.setIcon("refresh-cw")
 						.setCta()
-						.setTooltip("Refresh view")
+						.setTooltip("Refresh bookmarks")
 						.onClick(() => {
 							this.refreshDisplay()		
+							this.nostrService.getUserBookmarks();
 							new Notice("View refreshed")					
 						});
 		

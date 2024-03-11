@@ -310,13 +310,11 @@ export default class NostrService {
 	async getUserBookmarks(): Promise<{ success: boolean; bookmarks: string[] }> {
 
 		// query the relay pool for the users bookmarks..
+		
 		// use their pub key...
-		this.connectedRelays;
 		const pool = new SimplePool()
 
-		let relays = ['wss://relay.example.com', 'wss://relay.example2.com']
-
-		let h = pool.subscribeMany( [...relays, 'wss://relay.example3.com'], [ { authors: ['32e1827635450ebb3c5a7d12c1f8e7b2b514439ac10a67eef3d9fd9c5c68e245'], }, ],
+		let h = pool.subscribeMany( ['wss://relay.damus.io'], [ { authors: ['32e1827635450ebb3c5a7d12c1f8e7b2b514439ac10a67eef3d9fd9c5c68e245'], }, ],
 			{
 				onevent(event) {
 					// this will only be called once the first time the event is received
