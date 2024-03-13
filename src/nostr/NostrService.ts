@@ -1,6 +1,7 @@
 import NostrWriterPlugin from "main";
 import { nip19 } from "nostr-tools";
 import { SimplePool } from 'nostr-tools/pool';
+import { Event } from "nostr-tools/core"
 import { finalizeEvent, getPublicKey } from "nostr-tools/pure";
 import { Relay } from "nostr-tools/relay";
 import { App, TFile } from "obsidian";
@@ -77,12 +78,24 @@ export default class NostrService {
 	async connectToRelays() {
 		this.refreshRelayUrls();
 		this.connectedRelays = [];
-	
+
 		let connectionPromises = this.relayURLs.map((url) => {
 			return new Promise<Relay | null>(async (resolve) => {
 				console.log(`Initializing NostrService with relay: ${url}`);
 				try {
 					const relayAttempt = await Relay.connect(url);
+
+					relayAttempt.onclose = () => {
+						handleFailure();
+					}
+
+					const handleFailure = () => {
+						console.log(`failed to connect to ${url}`);
+						this.connectedRelays.remove(relayAttempt);
+						this.updateStatusBar();
+						resolve(null);
+					};
+
 					console.log(`Connected to ${relayAttempt.url}`);
 					this.connectedRelays.push(relayAttempt);
 					resolve(relayAttempt);
@@ -92,7 +105,7 @@ export default class NostrService {
 				}
 			});
 		});
-	
+
 		Promise.all(connectionPromises).then(() => {
 			console.log(
 				`Connected to ${this.connectedRelays.length} / ${this.relayURLs.length} relays`
@@ -140,8 +153,9 @@ export default class NostrService {
 	getRelayInfo(relayUrl: string): boolean {
 		let connected: boolean = false;
 		for (let r of this.connectedRelays) {
-			if (r.url == relayUrl +"/") {
-				return r._connected;
+			console.log("Relay Connected: {}", r)
+			if (r.url == relayUrl + "/") {
+				return r.connected;
 			}
 		}
 		return connected;
@@ -180,7 +194,7 @@ export default class NostrService {
 			};
 
 			// this assigns the pubkey, calculates the event id and signs the event in a single step
-			const signedEvent = finalizeEvent(eventTemplate, profilePrivateKey)
+			const signedEvent = finalizeEvent(eventTemplate, Buffer.from(profilePrivateKey))
 			return this.publishToRelays(signedEvent, "", "");
 		} else {
 			console.error("No message to publish");
@@ -206,7 +220,7 @@ export default class NostrService {
 			for (const { profileNickname: nickname, profilePrivateKey: key } of this.profiles) {
 				if (profileNickname === nickname) {
 					profilePrivateKey = this.convertKeyToHex(key);
-					profilePublicKey = getPublicKey(profilePrivateKey);
+					profilePublicKey = getPublicKey(Buffer.from(profilePrivateKey));
 				}
 			}
 		}
@@ -244,7 +258,7 @@ export default class NostrService {
 				content: fileContent,
 			};
 
-			const finalEvent = finalizeEvent(eventTemplate, profilePrivateKey)
+			const finalEvent = finalizeEvent(eventTemplate, Buffer.from(profilePrivateKey))
 
 			return this.publishToRelays(
 				finalEvent,
@@ -257,29 +271,46 @@ export default class NostrService {
 		}
 	}
 
+
 	async getUserBookmarks(): Promise<{ success: boolean; bookmarks: string[] }> {
+		try {
+			const bookmarks: string[] = [];
 
-		// query the relay pool for the users bookmarks..
-
-		// use their pub key...
-		const pool = new SimplePool()
-
-		let h = pool.subscribeMany(['wss://relay.damus.io'], [{ kinds: [30023], authors: ['32e1827635450ebb3c5a7d12c1f8e7b2b514439ac10a67eef3d9fd9c5c68e245'], },],
-			{
-				onevent(event) {
-					// this will only be called once the first time the event is received
-					// ...
-					console.log(`Winner.... ${event}`)
-				},
-				oneose() {
-					h.close()
-				}
+			for (const relay of this.connectedRelays) {
+				const subscription = relay.subscribe([
+					{
+						authors: [this.publicKey],
+						kinds: [10003, 30001],
+					},
+				], {
+					onevent(event: Event) {
+						console.log('Received event:', event);
+						const bookmark = event.content;
+						if (bookmark) {
+							bookmarks.push(bookmark);
+						}
+					},
+					oneose() {
+						// Close the subscription once the query is complete
+						console.log("Closing....")
+						subscription.close();
+					}
+				});
 			}
-		)
+
+			console.log(`Retrieved ${bookmarks.length} bookmarks from connected relays`);
+
+			// Return the success status along with the bookmarks
+			return { success: true, bookmarks };
+		} catch (error) {
+			console.error('Error occurred while fetching bookmarks:', error);
+			return { success: false, bookmarks: [] };
+		}
 	}
 
+
 	async publishToRelays(
-		finalEvent: any,
+		finalEvent: Event,
 		filePath: string,
 		profileNickname: string
 	): Promise<{ success: boolean; publishedRelays: string[] }> {
@@ -287,7 +318,7 @@ export default class NostrService {
 			let publishingPromises = this.connectedRelays.map(async (relay) => {
 				try {
 					console.log(`relay: ${relay}`)
-					if (relay._connected) {
+					if (relay.connected) {
 						console.log(`Publishing to ${relay.url}`);
 						await relay.publish(finalEvent);
 						console.log(`Event published successfully to ${relay.url}`);
@@ -301,16 +332,16 @@ export default class NostrService {
 					return { success: false };
 				}
 			});
-	
+
 			let results = await Promise.all(publishingPromises);
 			let publishedRelays = results
 				.filter((result) => result.success)
 				.map((result) => result.url!);
-	
+
 			console.log(
 				`Published to ${publishedRelays.length} / ${this.connectedRelays.length} relays.`
 			);
-	
+
 			if (publishedRelays.length === 0) {
 				console.log("Didn't send to any relays");
 				return { success: false, publishedRelays: [] };
@@ -330,7 +361,7 @@ export default class NostrService {
 			return { success: false, publishedRelays: [] };
 		}
 	}
-	
+
 
 	shutdownRelays() {
 		console.log("Shutting down Nostr service");
@@ -354,7 +385,7 @@ export default class NostrService {
 	}
 
 	async savePublishedEvent(
-		finalEvent: any,
+		finalEvent: Event,
 		publishedFilePath: string,
 		relays: string[],
 		profileNickname: string
