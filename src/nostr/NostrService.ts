@@ -90,7 +90,7 @@ export default class NostrService {
 					}
 
 					const handleFailure = () => {
-						console.log(`failed to connect to ${url}`);
+						console.log(`Disconnected from ${url}, updating status bar.`);
 						this.connectedRelays.remove(relayAttempt);
 						this.updateStatusBar();
 						resolve(null);
@@ -153,7 +153,6 @@ export default class NostrService {
 	getRelayInfo(relayUrl: string): boolean {
 		let connected: boolean = false;
 		for (let r of this.connectedRelays) {
-			console.log("Relay Connected: {}", r)
 			if (r.url == relayUrl + "/") {
 				return r.connected;
 			}
@@ -272,9 +271,9 @@ export default class NostrService {
 	}
 
 
-	async getUserBookmarks(): Promise<{ success: boolean; bookmarks: string[] }> {
+	async getUserBookmarks2(): Promise<{ success: boolean; bookmark_event_ids: string[] }> {
 		try {
-			const bookmarks: string[] = [];
+			const bookmark_event_ids: string[] = [];
 
 			for (const relay of this.connectedRelays) {
 				const subscription = relay.subscribe([
@@ -283,30 +282,85 @@ export default class NostrService {
 						kinds: [10003, 30001],
 					},
 				], {
-					onevent(event: Event) {
+					onevent: async function(event: Event) { // Regular function declaration here
 						console.log('Received event:', event);
-						const bookmark = event.content;
-						if (bookmark) {
-							bookmarks.push(bookmark);
+						for (const tag of event.tags) {
+							console.log(`e tags first {}`, tag[1]);
+							if (tag[0] === 'e') {
+								bookmark_event_ids.push(tag[1]);
+							}
 						}
+
+						console.log(bookmark_event_ids);
+						await this.saveUserBookmarksToFile(bookmark_event_ids); // `this` will refer to the class instance
 					},
 					oneose() {
 						// Close the subscription once the query is complete
-						console.log("Closing....")
+						console.log("Closing bookmark subscription....")
 						subscription.close();
 					}
 				});
 			}
 
-			console.log(`Retrieved ${bookmarks.length} bookmarks from connected relays`);
-
-			// Return the success status along with the bookmarks
-			return { success: true, bookmarks };
+			return { success: true, bookmark_event_ids };
 		} catch (error) {
 			console.error('Error occurred while fetching bookmarks:', error);
-			return { success: false, bookmarks: [] };
+			return { success: false, bookmark_event_ids: [] };
 		}
 	}
+
+	async getUserBookmarks(): Promise<{ success: boolean; bookmark_event_ids: string[] }> {
+		try {
+			const bookmark_event_ids: string[] = [];
+
+			const pool = new SimplePool();
+			console.log("Using these relayURLs {}", this.relayURLs);
+			const h = pool.subscribeMany(
+				[...this.relayURLs],
+				[
+					{
+						authors: [this.publicKey],
+						kinds: [10003, 30001],
+					},
+				],
+				{
+					async onevent(event: Event) {
+						console.log('Received event:', event);
+						for (const tag of event.tags) {
+							console.log(`e tags first {}`, tag[1]);
+							if (tag[0] === 'e') {
+								bookmark_event_ids.push(tag[1]);
+							}
+						}
+
+						console.log(bookmark_event_ids);
+
+						// Save user bookmarks to file
+						console.log("Saving user bookmarks to json file for use later...");
+						try {
+							let events = await pool.querySync(this.relayURLs, [{ ids: [bookmark_event_ids] }]);
+							let event = await pool.get(this.relayURLs, { ids: [bookmark_event_ids[0]] });
+							console.log(events)
+							console.log(event)
+						} catch (error) {
+							console.error('Error occurred while fetching bookmarks:', error);
+						}
+					},
+					oneose() {
+						// Close the subscription once the query is complete
+						console.log("Closing bookmark subscription....")
+						h.close();
+					}
+				}
+			);
+
+			return { success: true, bookmark_event_ids };
+		} catch (error) {
+			console.error('Error occurred while fetching bookmarks:', error);
+			return { success: false, bookmark_event_ids: [] };
+		}
+	}
+
 
 
 	async publishToRelays(
