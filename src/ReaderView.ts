@@ -43,7 +43,7 @@ export class ReaderView extends ItemView {
 						.setTooltip("Refresh bookmarks")
 						.onClick(() => {
 							this.refreshDisplay()		
-							this.nostrService.getUserBookmarks();
+							this.nostrService.loadUserBookmarks();
 							new Notice("View refreshed")					
 						});
 		

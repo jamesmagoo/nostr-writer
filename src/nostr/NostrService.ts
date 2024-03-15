@@ -271,7 +271,8 @@ export default class NostrService {
 	}
 
 
-	async getUserBookmarks2(): Promise<{ success: boolean; bookmark_event_ids: string[] }> {
+	async getUserBookmarkIDs(): Promise<{ success: boolean; bookmark_event_ids: string[] }> {
+		console.log("Fetching users bookmarks ids....")
 		try {
 			const bookmark_event_ids: string[] = [];
 
@@ -282,20 +283,14 @@ export default class NostrService {
 						kinds: [10003, 30001],
 					},
 				], {
-					onevent: async function(event: Event) { // Regular function declaration here
-						console.log('Received event:', event);
+					onevent: function(event: Event) {
 						for (const tag of event.tags) {
-							console.log(`e tags first {}`, tag[1]);
 							if (tag[0] === 'e') {
 								bookmark_event_ids.push(tag[1]);
 							}
 						}
-
-						console.log(bookmark_event_ids);
-						await this.saveUserBookmarksToFile(bookmark_event_ids); // `this` will refer to the class instance
 					},
 					oneose() {
-						// Close the subscription once the query is complete
 						console.log("Closing bookmark subscription....")
 						subscription.close();
 					}
@@ -304,60 +299,60 @@ export default class NostrService {
 
 			return { success: true, bookmark_event_ids };
 		} catch (error) {
-			console.error('Error occurred while fetching bookmarks:', error);
+			console.error('Error occurred while fetching bookmarks ids:', error);
 			return { success: false, bookmark_event_ids: [] };
 		}
 	}
 
-	async getUserBookmarks(): Promise<{ success: boolean; bookmark_event_ids: string[] }> {
+
+	async loadUserBookmarks() {
 		try {
-			const bookmark_event_ids: string[] = [];
+			let res = await this.getUserBookmarkIDs();
+			console.log(res)
+			if (res.success) {
+				console.log("Got the id's, now we're going to get the actual bookmarks");
+				const pool = new SimplePool()
+				console.log(pool)
+				console.log("URLS", this.relayURLs);
+				console.log("Conencted URLS", this.relayURLs);
+				let events = await pool.querySync(this.relayURLs, [{ ids: res.bookmark_event_ids }])
+				console.log("Got the events ...", events);
 
-			const pool = new SimplePool();
-			console.log("Using these relayURLs {}", this.relayURLs);
-			const h = pool.subscribeMany(
-				[...this.relayURLs],
-				[
-					{
-						authors: [this.publicKey],
-						kinds: [10003, 30001],
-					},
-				],
-				{
-					async onevent(event: Event) {
-						console.log('Received event:', event);
-						for (const tag of event.tags) {
-							console.log(`e tags first {}`, tag[1]);
-							if (tag[0] === 'e') {
-								bookmark_event_ids.push(tag[1]);
-							}
+				let event = await pool.querySync(this.relayURLs, {
+					ids: [res.bookmark_event_ids],
+				})
+
+				console.log("Got the goods ...", event);
+
+
+
+
+				for (const relay of this.connectedRelays) {
+					const subscription = relay.subscribe([
+						{
+							ids: res.bookmark_event_ids,
+						},
+					], {
+						onevent: function(event: Event) {
+							console.log("Aghhhhhhh", event);
+						},
+						oneose() {
+							console.log("Closing bookmark subscription....")
+							subscription.close();
 						}
-
-						console.log(bookmark_event_ids);
-
-						// Save user bookmarks to file
-						console.log("Saving user bookmarks to json file for use later...");
-						try {
-							let events = await pool.querySync(this.relayURLs, [{ ids: [bookmark_event_ids] }]);
-							let event = await pool.get(this.relayURLs, { ids: [bookmark_event_ids[0]] });
-							console.log(events)
-							console.log(event)
-						} catch (error) {
-							console.error('Error occurred while fetching bookmarks:', error);
-						}
-					},
-					oneose() {
-						// Close the subscription once the query is complete
-						console.log("Closing bookmark subscription....")
-						h.close();
-					}
+					});
 				}
-			);
 
-			return { success: true, bookmark_event_ids };
-		} catch (error) {
-			console.error('Error occurred while fetching bookmarks:', error);
-			return { success: false, bookmark_event_ids: [] };
+
+
+
+
+
+			}
+
+
+		} catch (err) {
+			console.error('Error occurred while fetching bookmarks:', err);
 		}
 	}
 
