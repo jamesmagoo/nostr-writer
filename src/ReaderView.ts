@@ -7,11 +7,11 @@ export const READER_VIEW = "reader-view";
 
 export class ReaderView extends ItemView {
 	plugin: NostrWriterPlugin;
-	nostrService : NostrService;
+	nostrService: NostrService;
 	private refreshDisplay: () => void;
 
 
-	constructor(leaf: WorkspaceLeaf, plugin: NostrWriterPlugin, nostrService : NostrService) {
+	constructor(leaf: WorkspaceLeaf, plugin: NostrWriterPlugin, nostrService: NostrService) {
 		super(leaf);
 		this.plugin = plugin;
 		this.nostrService = nostrService;
@@ -38,130 +38,61 @@ export class ReaderView extends ItemView {
 		});
 		banner.createEl("h4", { text: "Bookmarks" });
 		new ButtonComponent(banner)
-						.setIcon("refresh-cw")
-						.setCta()
-						.setTooltip("Refresh bookmarks")
-						.onClick(() => {
-							this.refreshDisplay()		
-							this.nostrService.loadUserBookmarks();
-							new Notice("View refreshed")					
-						});
-		
-		const publishedFilePath = `${this.plugin.manifest.dir}/published.json`;
+			.setIcon("refresh-cw")
+			.setCta()
+			.setTooltip("Refresh bookmarks")
+			.onClick(() => {
+				this.refreshDisplay()
+				this.nostrService.loadUserBookmarks();
+				new Notice("View refreshed")
+			});
+
+			await this.loadUserBookmarks();
+	}
+
+	async loadUserBookmarks() {
 		try {
-			const file = await this.app.vault.adapter.read(publishedFilePath);
-			const publishedNotes = JSON.parse(file);
-			
-			if(publishedNotes){				
-			container.createEl("p", {text: `Total: ${publishedNotes.length} ✅` })
-			publishedNotes
-				.reverse()
-				.forEach((note: { tags: any[]; created_at: number , id : string, filepath: string, profileNickname: string, pubkey: string, publishedToRelays: string[], kind : number}) => {
-					const titleTag = note.tags.find(
-						(tag: any[]) => tag[0] === "title"
-					);
-					const publishedAtTag = note.tags.find(
-						(tag: any[]) => tag[0] === "published_at"
-					);
+			let bookmarks = await this.nostrService.loadUserBookmarks();
+			console.log("reader view has the goods {}" , bookmarks);
 
-					const title = titleTag ? titleTag[1] : "No Title";
-					// const summary = summaryTag ? summaryTag[1] : "No Summary";
-					const publishedDate = publishedAtTag? new Date(Number(publishedAtTag[1]) * 1000).toLocaleString('en-US', {
-							year: 'numeric',
-							month: 'long',
-							day: 'numeric',
-							weekday: 'long',
-							hour: '2-digit',
-							minute: '2-digit',
-						  })
-						: "No Published Date";
+			const container = this.containerEl.children[1];
 
+			if (bookmarks.length > 0) {
+				container.createEl("p", { text: `Total: ${bookmarks.length} ✅` });
+				bookmarks.reverse().forEach((bookmark) => {
 					const cardDiv = container.createEl("div", {
 						cls: "published-card",
 					});
 
-					cardDiv.createEl("span", { text: `📜 ${title}` });
-
-					if(this.plugin.settings.multipleProfilesEnabled){
-						if(note.profileNickname){
-							let displayNickname = note.profileNickname
-							if(note.profileNickname == "default"){
-								displayNickname = "Default Profile"
-							}
-
-							cardDiv.createEl("div", {
-								text: `👤 - ${displayNickname}`,
-								cls: "published-profile",
-							});
-						}
-					}
-
-					let detailsDiv = cardDiv.createEl("div", {
-						cls: "published-details-div",
+					cardDiv.createEl("span", { text: `📜 ${bookmark.title}` });
+					cardDiv.createEl("div", {
+						text: `Description: ${bookmark.description}`,
+						cls: "published-description",
 					});
-
-					detailsDiv.createEl("p", {
-						text: `${publishedDate}.`,
-					});
-
-					let noteDiv = cardDiv.createEl("div", {
-						cls: "published-id",
-					});
-
-					let target : nip19.EventPointer = {
-						id: note.id,
-						author: note.pubkey,
-						relays: note.publishedToRelays
-					}
-					
-					let nevent = nip19.neventEncode(target)
-					
-					new ButtonComponent(detailsDiv)
-						.setIcon("popup-open")
-						.setCta()
-						.setTooltip("View Online")
-						.onClick(() => {
-							const url = `https://njump.me/${nevent}`;
-							window.open(url, '_blank');
-						});
-					
-						new ButtonComponent(detailsDiv)
-						.setIcon("go-to-file")
-						.setCta()
-						.setTooltip("Go to file in Obsidian")
-						.onClick(() => {
-							if(note.filepath == null){
-								const openFile = this.app.workspace.getActiveFile();
-								console.log(openFile?.path)
-								new Notice("File path not available")
-							} else {
-								this.focusFile(note.filepath)
-							}
-						});
 				});
 			} else {
-				const noPostsDiv = container.createEl("div", {cls: "published-card",});
-				noPostsDiv.createEl("h6", {text : "No Posts 📝" });
+				const noBookmarksDiv = container.createEl("div", { cls: "published-card" });
+				noBookmarksDiv.createEl("h6", { text: "No Bookmarks 📚" });
 			}
 		} catch (err) {
-			console.error("Error reading published.json:", err);
-			const noPostsDiv = container.createEl("div", {cls: "no-posts",});
-			noPostsDiv.createEl("h6", {text : "No Posts 📝" });
+			console.error("Error reading bookmarks:", err);
+			const noBookmarksDiv = container.createEl("div", { cls: "no-bookmarks" });
+			noBookmarksDiv.createEl("h6", { text: "Error loading bookmarks" });
 		}
 	}
 
 	focusFile = (path: string, shouldSplit = false): void => {
 		const targetFile = this.app.vault
-		  .getAbstractFileByPath(path)
+			.getAbstractFileByPath(path)
 		if (targetFile && targetFile instanceof TFile) {
-		  let leaf = this.app.workspace.getLeaf();
-		  const createLeaf = shouldSplit || leaf?.getViewState().pinned;
-		  if (createLeaf) {
-			  leaf = this.app.workspace.getLeaf('tab');
-		  }
-		  leaf?.openFile(targetFile);
+			let leaf = this.app.workspace.getLeaf();
+			const createLeaf = shouldSplit || leaf?.getViewState().pinned;
+			if (createLeaf) {
+				leaf = this.app.workspace.getLeaf('tab');
+			}
+			leaf?.openFile(targetFile);
 		} else {
-		  new Notice('Cannot find a file with that name');
+			new Notice('Cannot find a file with that name');
 		}
 	};
 
