@@ -149,5 +149,41 @@
 }
 
  
-  
-  
+.bookmark-card {
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    padding: 10px;
+    margin-bottom: 10px;
+}
+
+.bookmark-content {
+    font-size: 16px;
+    margin-bottom: 8px;
+}
+
+.bookmark-created-at {
+    font-size: 12px;
+    color: #666;
+}
+
+.bookmark-pubkey {
+    display: flex;
+    align-items: center;
+    margin-top: 8px;
+}
+
+.bookmark-profile-pic {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    margin-right: 8px;
+}
+
+.bookmark-pubkey span {
+    font-size: 14px;
+}
+
+.bookmark-view-online-btn {
+    margin-top: 10px;
+}
+

@@ -7,6 +7,7 @@ import { Relay } from "nostr-tools/relay";
 import { App, TFile } from "obsidian";
 import { NostrWriterPluginSettings } from "src/settings";
 import { v4 as uuidv4 } from "uuid";
+import { ReaderView } from "src/ReaderView";
 
 interface Profile {
 	profileNickname: string;
@@ -291,7 +292,6 @@ export default class NostrService {
 						}
 					},
 					oneose() {
-						console.log("Closing bookmark subscription....")
 						subscription.close();
 					}
 				});
@@ -305,58 +305,27 @@ export default class NostrService {
 	}
 
 
-	async loadUserBookmarks() {
+	async loadUserBookmarks(): Promise<Event[]> {
 		try {
 			let res = await this.getUserBookmarkIDs();
 			console.log(res)
 			if (res.success) {
-				console.log("Got the id's, now we're going to get the actual bookmarks");
 				const pool = new SimplePool()
-				console.log(pool)
-				console.log("URLS", this.relayURLs);
-				console.log("Conencted URLS", this.relayURLs);
-				let events = await pool.querySync(this.relayURLs, [{ ids: res.bookmark_event_ids }])
-				console.log("Got the events ...", events);
-
-				let event = await pool.querySync(this.relayURLs, {
-					ids: [res.bookmark_event_ids],
-				})
-
-				console.log("Got the goods ...", event);
-
-
-
-
-				for (const relay of this.connectedRelays) {
-					const subscription = relay.subscribe([
-						{
-							ids: res.bookmark_event_ids,
-						},
-					], {
-						onevent: function(event: Event) {
-							console.log("Aghhhhhhh", event);
-						},
-						oneose() {
-							console.log("Closing bookmark subscription....")
-							subscription.close();
-						}
-					});
+				let poolUrls = [];
+				for (const relay of this.connectedRelays){
+					poolUrls.push(relay.url);
 				}
-
-
-
-
-
-
+				let events = await pool.querySync(poolUrls, { ids: res.bookmark_event_ids })
+				return events;
 			}
-
 
 		} catch (err) {
 			console.error('Error occurred while fetching bookmarks:', err);
+			return [];
 		}
+
+		return [];
 	}
-
-
 
 	async publishToRelays(
 		finalEvent: Event,
