@@ -46,25 +46,58 @@ export class ReaderView extends ItemView {
 				new Notice("View refreshed")
 			});
 
-		//await this.loadUserBookmarks();
 		try {
 			let bookmarks = await this.nostrService.loadUserBookmarks();
+			console.log(bookmarks);
 
 			if (bookmarks) {
 				container.createEl("p", { text: `Total: ${bookmarks.length} ✅` });
-				bookmarks.reverse().forEach((bookmark) => {
-					const cardDiv = container.createEl("div", { cls: "bookmark-card" });
+				bookmarks.reverse().forEach(async (bookmark) => {
 
-					// Display Content
-					cardDiv.createEl("div", {
-						text: `${bookmark.content}`,
+					let bookmarkProfile = await this.nostrService.getUserProfile(bookmark.pubkey);
+
+					const cardDiv = container.createEl("div", {
+						cls: "bookmark-card",
+					});
+
+					const contentDiv = cardDiv.createDiv({
 						cls: "bookmark-content",
 					});
+
+					const contentWithoutUrls = bookmark.content.replace(/\bhttps?:\/\/\S+/gi, "");
+
+					contentDiv.innerHTML = contentWithoutUrls; 
+
+					// Extract image URLs from the bookmark's content
+					const imageUrls = this.extractImageUrls(bookmark.content);
+
+					// Display images
+					imageUrls.forEach((imageUrl) => {
+						cardDiv.createEl("img", {
+							attr: {
+								src: imageUrl,
+							},
+							cls: "bookmark-image",
+						});
+					});
+
+
+					// Check if there is an image tag in the bookmark
+					const imageTag = bookmark.tags.find((tag: any[]) => tag[0] === "image");
+					if (imageTag) {
+						const imageURL = imageTag[1];
+						const image = cardDiv.createEl("img", {
+							attr: {
+								src: imageURL,
+							},
+							cls: "bookmark-image",
+						});
+					}
 
 					// Format Created At
 					const createdAt = new Date(bookmark.created_at * 1000).toLocaleString();
 					cardDiv.createEl("div", {
-						text: `Created At: ${createdAt}`,
+						text: `Bookmarked On: ${createdAt}`,
 						cls: "bookmark-created-at",
 					});
 
@@ -159,6 +192,18 @@ export class ReaderView extends ItemView {
 `;
 
 		return markdownContent;
+	}
+
+
+	extractImageUrls(content: string): string[] {
+		const urlRegex = /(https?:\/\/[^\s]+\.(?:jpg|jpeg|png|gif))/gi;
+		const urls: string[] = [];
+		let match;
+		while ((match = urlRegex.exec(content)) !== null) {
+			urls.push(match[0]);
+		}
+		console.log("Image urls : ", urls);
+		return urls;
 	}
 
 

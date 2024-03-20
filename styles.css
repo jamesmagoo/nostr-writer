@@ -159,6 +159,7 @@
 .bookmark-content {
     font-size: 16px;
     margin-bottom: 8px;
+	word-wrap: break-word;
 }
 
 .bookmark-created-at {

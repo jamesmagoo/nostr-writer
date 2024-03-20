@@ -312,7 +312,7 @@ export default class NostrService {
 			if (res.success) {
 				const pool = new SimplePool()
 				let poolUrls = [];
-				for (const relay of this.connectedRelays){
+				for (const relay of this.connectedRelays) {
 					poolUrls.push(relay.url);
 				}
 				let events = await pool.querySync(poolUrls, { ids: res.bookmark_event_ids })
@@ -325,6 +325,24 @@ export default class NostrService {
 		}
 
 		return [];
+	}
+
+	async getUserProfile(userHexPubKey: string): Promise<Event> {
+
+		try {
+			const pool = new SimplePool()
+			let poolUrls = [];
+			for (const relay of this.connectedRelays) {
+				poolUrls.push(relay.url);
+			}
+			let profileEvent = await pool.querySync(poolUrls, { kinds : [0], authors: [userHexPubKey]})
+			console.log("Fetching the user profile for display on bookmarks...", profileEvent)
+			return profileEvent;
+
+		} catch (err) {
+			console.error('Error occurred while fetching bookmarks:', err);
+			return null;
+		}
 	}
 
 	async publishToRelays(
