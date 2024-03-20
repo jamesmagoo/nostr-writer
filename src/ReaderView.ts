@@ -55,6 +55,42 @@ export class ReaderView extends ItemView {
 				bookmarks.reverse().forEach(async (bookmark) => {
 
 					let bookmarkProfile = await this.nostrService.getUserProfile(bookmark.pubkey);
+					// Parse content string to JavaScript object
+					console.log(bookmarkProfile[0].content)
+
+					let profileName = "";
+					let profilePicURL = "";
+
+					try {
+						const profileObject = JSON.parse(bookmarkProfile[0].content);
+						// Extract profile details
+						const { name, picture, username, display_name, banner, website, about } = profileObject;
+						// Display profile details
+						console.log("Name:", name);
+						profileName = name;
+						console.log("Picture:", picture);
+						if (picture == undefined) {
+							console.log("Picture is undefined...use default or show emoji?")
+							// Loop through tags to find profile picture image URL
+							for (const tag of bookmarkProfile.tags) {
+								if (tag[0] === "image") {
+									const pictureUrl = tag[1];
+									console.log("Profile picture found in tags:", pictureUrl);
+									break;
+								}
+							}
+						} else {
+							profilePicURL = picture;
+						}
+						console.log("Username:", username);
+						console.log("Display Name:", display_name);
+						console.log("Banner:", banner);
+						console.log("Website:", website);
+						console.log("About:", about);
+					} catch (err) {
+
+						console.error("Problem Parsing Profile...setting defaults...", err)
+					}
 
 					const cardDiv = container.createEl("div", {
 						cls: "bookmark-card",
@@ -66,7 +102,7 @@ export class ReaderView extends ItemView {
 
 					const contentWithoutUrls = bookmark.content.replace(/\bhttps?:\/\/\S+/gi, "");
 
-					contentDiv.innerHTML = contentWithoutUrls; 
+					contentDiv.innerHTML = contentWithoutUrls;
 
 					// Extract image URLs from the bookmark's content
 					const imageUrls = this.extractImageUrls(bookmark.content);
@@ -94,12 +130,6 @@ export class ReaderView extends ItemView {
 						});
 					}
 
-					// Format Created At
-					const createdAt = new Date(bookmark.created_at * 1000).toLocaleString();
-					cardDiv.createEl("div", {
-						text: `Bookmarked On: ${createdAt}`,
-						cls: "bookmark-created-at",
-					});
 
 					// Display Public Key (Pubkey)
 					const publicKeyDiv = cardDiv.createEl("div", {
@@ -107,12 +137,23 @@ export class ReaderView extends ItemView {
 					});
 					publicKeyDiv.createEl("img", {
 						attr: {
-							src: "placeholder.png", // Placeholder for profile pic
+							src: `${profilePicURL}`, // Placeholder for profile pic
 							alt: "Profile Pic",
 						},
 						cls: "bookmark-profile-pic",
 					});
-					publicKeyDiv.createEl("span", { text: `Public Key: ${bookmark.pubkey}` });
+					// Check if profileName is null, empty, or undefined
+					const displayName = profileName ? profileName : "Unknown"; // Use "Unknown" if profileName is null, empty, or undefined
+
+					// Create span element with the display name
+					publicKeyDiv.createEl("span", { text: displayName });
+
+					// Format Created At
+					const createdAt = new Date(bookmark.created_at * 1000).toLocaleString();
+					cardDiv.createEl("div", {
+						text: `Bookmarked On: ${createdAt}`,
+						cls: "bookmark-created-at",
+					});
 
 					// Button to View Online
 					let detailsDiv = cardDiv.createEl("div", {
@@ -134,14 +175,15 @@ export class ReaderView extends ItemView {
 							const url = `https://njump.me/${nevent}`;
 							window.open(url, '_blank');
 						});
-					// Button to Download Content
-					const downloadBtn = detailsDiv.createEl("button", {
-						cls: "bookmark-download-btn",
-						text: "Download",
-					});
-					downloadBtn.addEventListener("click", () => {
-						this.downloadBookmark(bookmark);
-					});
+
+					new ButtonComponent(detailsDiv)
+						.setIcon("download")
+						.setClass("bookmark-btn")
+						.setCta()
+						.setTooltip("Open in Obsidian")
+						.onClick(() => {
+							this.downloadBookmark(bookmark);
+						});
 
 				});
 			} else {
@@ -184,12 +226,12 @@ export class ReaderView extends ItemView {
 
 		// Generate the markdown content with the bookmark details
 		const markdownContent = `
-# Bookmark
+			# Bookmark
 
-**Content:** ${bookmark.content}
-**Created At:** ${createdAt}
-**Public Key:** ${bookmark.pubkey}
-`;
+			**Content:** ${bookmark.content}
+			**Created At:** ${createdAt}
+			**Public Key:** ${bookmark.pubkey}
+		`;
 
 		return markdownContent;
 	}

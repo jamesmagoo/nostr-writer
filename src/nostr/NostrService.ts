@@ -7,7 +7,6 @@ import { Relay } from "nostr-tools/relay";
 import { App, TFile } from "obsidian";
 import { NostrWriterPluginSettings } from "src/settings";
 import { v4 as uuidv4 } from "uuid";
-import { ReaderView } from "src/ReaderView";
 
 interface Profile {
 	profileNickname: string;
@@ -251,6 +250,7 @@ export default class NostrService {
 				const noteTitle = activeFile.basename;
 				tags.push(["title", noteTitle]);
 			}
+
 			let eventTemplate = {
 				kind: 30023,
 				created_at: timestamp,
@@ -328,7 +328,6 @@ export default class NostrService {
 	}
 
 	async getUserProfile(userHexPubKey: string): Promise<Event> {
-
 		try {
 			const pool = new SimplePool()
 			let poolUrls = [];
