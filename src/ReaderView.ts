@@ -50,7 +50,11 @@ export class ReaderView extends ItemView {
 			let bookmarks = await this.nostrService.loadUserBookmarks();
 			console.log(bookmarks);
 
-			if (bookmarks) {
+
+			if (this.nostrService.connectedRelays.length === 0) {
+				new Notice("Re-connect to relays...")
+			}
+			if (bookmarks.length > 0) {
 				container.createEl("p", { text: `Total: ${bookmarks.length} ✅` });
 				bookmarks.reverse().forEach(async (bookmark) => {
 
@@ -122,7 +126,7 @@ export class ReaderView extends ItemView {
 					const imageTag = bookmark.tags.find((tag: any[]) => tag[0] === "image");
 					if (imageTag) {
 						const imageURL = imageTag[1];
-						const image = cardDiv.createEl("img", {
+						cardDiv.createEl("img", {
 							attr: {
 								src: imageURL,
 							},
@@ -187,15 +191,23 @@ export class ReaderView extends ItemView {
 
 				});
 			} else {
-				const noBookmarksDiv = container.createEl("div", { cls: "bookmark-card" });
-				noBookmarksDiv.createEl("h6", { text: "No Bookmarks 📚" });
+				const noBookmarksDiv = container.createEl("div", { cls: "nobookmarks-card" });
+				noBookmarksDiv.createEl("h6", { text: "No Bookmarks Found 📚" });
+				noBookmarksDiv.createEl("p", { text: "Use listr.lol to edit & manage your bookmarks" });
+				const linkEl = noBookmarksDiv.createEl("a", { text: "listr.lol" });
+				linkEl.href = "https://listr.lol";
+				linkEl.target = "_blank"; // Open the link in a new tab
+
 			}
-
-
 		} catch (err) {
 			console.error("Error reading bookmarks:", err);
-			const noBookmarksDiv = container.createEl("div", { cls: "no-bookmarks" });
-			noBookmarksDiv.createEl("h6", { text: "Error loading bookmarks" });
+			new Notice("Problem reading bookmarks - re-connect & check you list.")
+				const noBookmarksDiv = container.createEl("div", { cls: "nobookmarks-card" });
+				noBookmarksDiv.createEl("h6", { text: "No Bookmarks Found 📚" });
+				noBookmarksDiv.createEl("p", { text: "Use listr.lol to edit & manage your bookmarks" });
+				const linkEl = noBookmarksDiv.createEl("a", { text: "listr.lol" });
+				linkEl.href = "https://listr.lol";
+				linkEl.target = "_blank"; // Open the link in a new tab
 		}
 	}
 

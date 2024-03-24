@@ -156,6 +156,15 @@
     margin-bottom: 10px;
 }
 
+.nobookmarks-card {
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    padding: 10px;
+    margin-bottom: 10px;
+	align-items : center;
+	text-align : center;
+}
+
 .bookmark-content {
     font-size: 16px;
     margin-bottom: 8px;
