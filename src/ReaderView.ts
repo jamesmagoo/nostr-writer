@@ -48,7 +48,7 @@ export class ReaderView extends ItemView {
 
 		try {
 			let bookmarks = await this.nostrService.loadUserBookmarks();
-			console.log(bookmarks);
+			console.log("All BOOKMARKS: ", bookmarks);
 
 
 			if (this.nostrService.connectedRelays.length === 0) {
@@ -184,7 +184,7 @@ export class ReaderView extends ItemView {
 						.setIcon("download")
 						.setClass("bookmark-btn")
 						.setCta()
-						.setTooltip("Open in Obsidian")
+						.setTooltip("Download & Open in Obsidian")
 						.onClick(() => {
 							this.downloadBookmark(bookmark);
 						});
@@ -196,18 +196,18 @@ export class ReaderView extends ItemView {
 				noBookmarksDiv.createEl("p", { text: "Use listr.lol to edit & manage your bookmarks" });
 				const linkEl = noBookmarksDiv.createEl("a", { text: "listr.lol" });
 				linkEl.href = "https://listr.lol";
-				linkEl.target = "_blank"; // Open the link in a new tab
+				linkEl.target = "_blank"; 
 
 			}
 		} catch (err) {
 			console.error("Error reading bookmarks:", err);
 			new Notice("Problem reading bookmarks - re-connect & check you list.")
-				const noBookmarksDiv = container.createEl("div", { cls: "nobookmarks-card" });
-				noBookmarksDiv.createEl("h6", { text: "No Bookmarks Found 📚" });
-				noBookmarksDiv.createEl("p", { text: "Use listr.lol to edit & manage your bookmarks" });
-				const linkEl = noBookmarksDiv.createEl("a", { text: "listr.lol" });
-				linkEl.href = "https://listr.lol";
-				linkEl.target = "_blank"; // Open the link in a new tab
+			const noBookmarksDiv = container.createEl("div", { cls: "nobookmarks-card" });
+			noBookmarksDiv.createEl("h6", { text: "No Bookmarks Found 📚" });
+			noBookmarksDiv.createEl("p", { text: "Use listr.lol to edit & manage your bookmarks" });
+			const linkEl = noBookmarksDiv.createEl("a", { text: "listr.lol" });
+			linkEl.href = "https://listr.lol";
+			linkEl.target = "_blank";
 		}
 	}
 

@@ -272,66 +272,39 @@ export default class NostrService {
 	}
 
 
-	async getUserBookmarkIDs2(): Promise<{ success: boolean; bookmark_event_ids: string[] }> {
-		console.log("Fetching users bookmarks ids....")
-		const bookmark_event_ids: string[] = [];
-		try {
-				const pool = new SimplePool()
-				let poolUrls = [];
-				if(this.connectedRelays.length === 0){
-					return { success: false, bookmark_event_ids };
-				}
-				for (const relay of this.connectedRelays) {
-					poolUrls.push(relay.url);
-				}
-				let events = await pool.querySync(poolUrls, { kinds: [10003, 30001], authors: [this.publicKey]})
-				if(events.length > 0){
-					console.log("Got the goods", events);
-					for (let event of events){
-						for (const tag of event.tags) {
-							if (tag[0] === 'e') {
-								bookmark_event_ids.push(tag[1]);
-							}
-						}
-					}
-					return {success:true, bookmark_event_ids}
-				}
-				return events;
-		} catch (error) {
-			console.error('Error occurred while fetching bookmarks ids:', error);
-			return { success: false, bookmark_event_ids };
-		}
-	}
-
-
 	async getUserBookmarkIDs(): Promise<{ success: boolean; bookmark_event_ids: string[] }> {
-		console.log("Fetching users bookmarks ids....")
 		const bookmark_event_ids: string[] = [];
 		try {
-
+			const pool = new SimplePool()
+			let poolUrls = [];
+			if (this.connectedRelays.length === 0) {
+				return { success: false, bookmark_event_ids };
+			}
 			for (const relay of this.connectedRelays) {
-				const subscription = await relay.subscribe([
-					{
-						authors: [this.publicKey],
-						kinds: [10003, 30001],
-					},
-				], {
-					onevent: function(event: Event) {
-						for (const tag of event.tags) {
-							if (tag[0] === 'e') {
-								bookmark_event_ids.push(tag[1]);
+				poolUrls.push(relay.url);
+			}
+			let events = await pool.querySync(poolUrls, { kinds: [10003], authors: [this.publicKey] })
+			if (events.length > 0) {
+				console.log("Got the goods", events);
+				for (let event of events) {
+					console.log("Bookmark event:", event)
+					for (const tag of event.tags) {
+						if (tag[0] === 'e') {
+							bookmark_event_ids.push(tag[1]);
+						}
+						// handle kind 30023 long-form events
+						if (tag[0] === 'a') {
+							const parts = tag[1].split(':');
+							if (parts.length >= 2) {
+								const eventId = parts[1];
+								bookmark_event_ids.push(eventId);
 							}
 						}
-					},
-					oneose() {
-						subscription.close();
-						console.log("ONEOSE -- ")
-						return {success: true, bookmark_event_ids}
 					}
-				});
+				}
+				return { success: true, bookmark_event_ids }
 			}
-			console.log('Fetched bookmark event IDs:', bookmark_event_ids);
-			return { success: true, bookmark_event_ids };
+			return events;
 		} catch (error) {
 			console.error('Error occurred while fetching bookmarks ids:', error);
 			return { success: false, bookmark_event_ids };
@@ -341,7 +314,7 @@ export default class NostrService {
 
 	async loadUserBookmarks(): Promise<Event[]> {
 		try {
-			let res = await this.getUserBookmarkIDs2();
+			let res = await this.getUserBookmarkIDs();
 			console.log(res)
 			if (res.success) {
 				const pool = new SimplePool()
@@ -349,7 +322,8 @@ export default class NostrService {
 				for (const relay of this.connectedRelays) {
 					poolUrls.push(relay.url);
 				}
-				let events = await pool.querySync(poolUrls, { ids: res.bookmark_event_ids })
+				console.log("These are the ids to query for : ", res.bookmark_event_ids)
+				let events = await pool.querySync(poolUrls, { ids: res.bookmark_event_ids});
 				return events;
 			} else {
 				console.error('No bookmark IDs returned');
@@ -360,8 +334,6 @@ export default class NostrService {
 			console.error('Error occurred while fetching bookmarks:', err);
 			return [];
 		}
-
-		return [];
 	}
 
 	async getUserProfile(userHexPubKey: string): Promise<Event> {
