@@ -2,13 +2,13 @@
 > Directly publish from Obsidian to Nostr 
 
 ## A Match Made..
-[**Obsidian**](https://obsidian.md/) is an amazing markdown editor, word processor, note organiser, and idea synthesiser: the perfect tool for writers. 
+[**Obsidian**](https://obsidian.md/){:target="_blank"} is an amazing markdown editor, word processor, note organiser, and idea synthesiser: the perfect tool for writers. 
 
-[**Nostr**](https://nostr.com/) represents the future of how we communicate and distribute the written word: decentralised, free, independent, incorruptible. 
+[**Nostr**](https://nostr.com/){:target="_blank"} represents the future of how we communicate and distribute the written word: decentralised, free, independent, incorruptible. 
 
 They seem to me to be a match made in heaven...
 ***
-[![Did We Just Become Best Friends?](./docs/stepbros.png)](https://www.youtube.com/watch?v=3-ZUDtaGf3I)
+[![Did We Just Become Best Friends?](./docs/stepbros.png)](https://www.youtube.com/watch?v=3-ZUDtaGf3I){:target="_blank"}
 
 
 ## Demo Video
@@ -41,7 +41,6 @@ This tool is completely abstracted from Nostr, allowing you to stay focused - th
 - Private Key Integration: Securely set and store your private key within the plugin settings for authenticated publishing.
 - Summary and Image URL Support: Add an optional summary and image URL to accompany your note, with live preview functionality.
 - Tags: Add tags to your work to make it more discoverable. 
-- Public Key Retrieval: easily retrieve and copy your public key to the clipboard.
 - Local Record Keeping: keep a local record of published events in a JSON file for your reference and tracking.
 - Published View : See all posts sent from Obsidian
 - Short Format Message Writer: quickly compose and publish short form messages directly to Nostr from within Obsidian.
@@ -50,6 +49,7 @@ This tool is completely abstracted from Nostr, allowing you to stay focused - th
 - Multiple user profiles: publish under different nostr accounts, just add the nsecs. 
 - Frontmatter Parsing:Utilizing the parsed data from the frontmatter, the plugin now automatically populates the article information fields. This feature streamlines the process of metadata handling and improves overall user experience.
 - Frontmatter Removal from Article Body: Post data extraction, the plugin now automatically removes the frontmatter from the body of the article. This ensures that the content displayed on Nostr is free from unnecessary metadata, providing a clean article body.
+- Nostr Bookmarks: Easily view and download you Nostr bookmarks into .md files for reference and local use.
 
 ### Ideas..
 - Plugin User Relay: A relay specific to this plugin - see what everyone else is writing.
