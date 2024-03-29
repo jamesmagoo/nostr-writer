@@ -285,9 +285,7 @@ export default class NostrService {
 			}
 			let events = await pool.querySync(poolUrls, { kinds: [10003], authors: [this.publicKey] })
 			if (events.length > 0) {
-				console.log("Got the goods", events);
 				for (let event of events) {
-					console.log("Bookmark event:", event)
 					for (const tag of event.tags) {
 						if (tag[0] === 'e') {
 							bookmark_event_ids.push(tag[1]);

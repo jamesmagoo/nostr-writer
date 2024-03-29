@@ -2,6 +2,7 @@ import NostrWriterPlugin from "main";
 import NostrService from "./nostr/NostrService";
 import { ButtonComponent, ItemView, Notice, TFile, WorkspaceLeaf } from "obsidian";
 import { nip19 } from "nostr-tools";
+import { parseReferences } from 'nostr-tools/references'
 
 export const READER_VIEW = "reader-view";
 
@@ -50,7 +51,6 @@ export class ReaderView extends ItemView {
 			let bookmarks = await this.nostrService.loadUserBookmarks();
 			console.log("All BOOKMARKS: ", bookmarks);
 
-
 			if (this.nostrService.connectedRelays.length === 0) {
 				new Notice("Re-connect to relays...")
 			}
@@ -60,7 +60,6 @@ export class ReaderView extends ItemView {
 
 					let bookmarkProfile = await this.nostrService.getUserProfile(bookmark.pubkey);
 					// Parse content string to JavaScript object
-					console.log(bookmarkProfile[0].content)
 
 					let profileName = "";
 					let profilePicURL = "";
@@ -70,9 +69,8 @@ export class ReaderView extends ItemView {
 						// Extract profile details
 						const { name, picture, username, display_name, banner, website, about } = profileObject;
 						// Display profile details
-						console.log("Name:", name);
 						profileName = name;
-						console.log("Picture:", picture);
+
 						if (picture == undefined) {
 							console.log("Picture is undefined...use default or show emoji?")
 							// Loop through tags to find profile picture image URL
@@ -86,11 +84,6 @@ export class ReaderView extends ItemView {
 						} else {
 							profilePicURL = picture;
 						}
-						console.log("Username:", username);
-						console.log("Display Name:", display_name);
-						console.log("Banner:", banner);
-						console.log("Website:", website);
-						console.log("About:", about);
 					} catch (err) {
 
 						console.error("Problem Parsing Profile...setting defaults...", err)
@@ -104,9 +97,32 @@ export class ReaderView extends ItemView {
 						cls: "bookmark-content",
 					});
 
-					const contentWithoutUrls = bookmark.content.replace(/\bhttps?:\/\/\S+/gi, "");
+					// parse nostr tags, npubs wtc.
+					let references = parseReferences(bookmark)
+					let simpleAugmentedContent = bookmark.content;
 
-					contentDiv.innerHTML = contentWithoutUrls;
+					for (let i = 0; i < references.length; i++) {
+						let { text, profile, event, address } = references[i];
+
+						let augmentedReference;
+						if (profile) {
+							const taggedProfile = await this.nostrService.getUserProfile(profile.pubkey);
+							const { name } = JSON.parse(taggedProfile[0].content);
+							augmentedReference = `<strong>@${name}</strong>`;
+						} else if (event) {
+							augmentedReference = `<em>${"abscde"}</em>`;
+						} else if (address) {
+							augmentedReference = `<a href="${text}">[link]</a>`;
+						} else {
+							augmentedReference = text;
+						}
+
+						// Replace all occurrences of 'text' with 'augmentedReference'
+						simpleAugmentedContent = simpleAugmentedContent.replaceAll(text, augmentedReference);
+					}
+
+					//contentDiv.innerHTML = contentWithoutUrls;
+					contentDiv.innerHTML = simpleAugmentedContent.replace(/\bhttps?:\/\/\S+/gi, "");
 
 					// Extract image URLs from the bookmark's content
 					const imageUrls = this.extractImageUrls(bookmark.content);
@@ -196,7 +212,7 @@ export class ReaderView extends ItemView {
 				noBookmarksDiv.createEl("p", { text: "Use listr.lol to edit & manage your bookmarks" });
 				const linkEl = noBookmarksDiv.createEl("a", { text: "listr.lol" });
 				linkEl.href = "https://listr.lol";
-				linkEl.target = "_blank"; 
+				linkEl.target = "_blank";
 
 			}
 		} catch (err) {
@@ -225,9 +241,7 @@ export class ReaderView extends ItemView {
 
 	async createMarkdownFile(filename: string, content: string): Promise<TFile> {
 		// Create the markdown file in the current vault
-		const file: TFile = this.app.vault.create(filename, content);
-
-		// Return the created file
+		const file = this.app.vault.create(filename, content);
 		return file;
 	}
 
@@ -238,11 +252,15 @@ export class ReaderView extends ItemView {
 
 		// Generate the markdown content with the bookmark details
 		const markdownContent = `
-			# Bookmark
+# Nostr Bookmark
 
-			**Content:** ${bookmark.content}
-			**Created At:** ${createdAt}
-			**Public Key:** ${bookmark.pubkey}
+**Content:** 
+\n 
+${bookmark.content}
+\n
+***
+**Created At:** ${createdAt}
+**Public Key:** ${bookmark.pubkey}
 		`;
 
 		return markdownContent;
