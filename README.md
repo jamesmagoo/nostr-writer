@@ -8,10 +8,7 @@
 
 They seem to me to be a match made in heaven...
 ***
-<a href="https://www.youtube.com/watch?v=3-ZUDtaGf3I" target="_blank">
-  ![Did We Just Become Best Friends?](./docs/stepbros.png)
-</a>
-
+[![Did We Just Become Best Friends?](./docs/stepbros.png)](https://www.youtube.com/watch?v=3-ZUDtaGf3I)
 
 
 ## Demo Video
