@@ -2,13 +2,16 @@
 > Directly publish from Obsidian to Nostr 
 
 ## A Match Made..
-[**Obsidian**](https://obsidian.md/){:target="_blank"} is an amazing markdown editor, word processor, note organiser, and idea synthesiser: the perfect tool for writers. 
+[**Obsidian**](https://obsidian.md/) is an amazing markdown editor, word processor, note organiser, and idea synthesiser: the perfect tool for writers. 
 
-[**Nostr**](https://nostr.com/){:target="_blank"} represents the future of how we communicate and distribute the written word: decentralised, free, independent, incorruptible. 
+[**Nostr**](https://nostr.com/) represents the future of how we communicate and distribute the written word: decentralised, free, independent, incorruptible. 
 
 They seem to me to be a match made in heaven...
 ***
-[![Did We Just Become Best Friends?](./docs/stepbros.png)](https://www.youtube.com/watch?v=3-ZUDtaGf3I){:target="_blank"}
+<a href="https://www.youtube.com/watch?v=3-ZUDtaGf3I" target="_blank">
+  ![Did We Just Become Best Friends?](./docs/stepbros.png)
+</a>
+
 
 
 ## Demo Video
