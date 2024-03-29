@@ -56,8 +56,8 @@ export class ReaderView extends ItemView {
 			}
 			if (bookmarks.length > 0) {
 				container.createEl("p", { text: `Total: ${bookmarks.length} ✅` });
-				bookmarks.reverse().forEach(async (bookmark) => {
 
+				bookmarks.reverse().forEach(async (bookmark) => {
 					let bookmarkProfile = await this.nostrService.getUserProfile(bookmark.pubkey);
 					// Parse content string to JavaScript object
 
@@ -72,7 +72,6 @@ export class ReaderView extends ItemView {
 						profileName = name;
 
 						if (picture == undefined) {
-							console.log("Picture is undefined...use default or show emoji?")
 							// Loop through tags to find profile picture image URL
 							for (const tag of bookmarkProfile.tags) {
 								if (tag[0] === "image") {
@@ -85,13 +84,20 @@ export class ReaderView extends ItemView {
 							profilePicURL = picture;
 						}
 					} catch (err) {
-
 						console.error("Problem Parsing Profile...setting defaults...", err)
 					}
 
 					const cardDiv = container.createEl("div", {
 						cls: "bookmark-card",
 					});
+					if (bookmark.kind === 30023) {
+						console.log("long-former,,,", bookmark)
+						const titleTag = bookmark.tags.find((tag: any[]) => tag[0] === "title");
+						if (titleTag) {
+							const title = titleTag[1];
+							cardDiv.createEl("h3", { text: title });
+						}
+					}
 
 					const contentDiv = cardDiv.createDiv({
 						cls: "bookmark-content",
@@ -121,7 +127,22 @@ export class ReaderView extends ItemView {
 						simpleAugmentedContent = simpleAugmentedContent.replaceAll(text, augmentedReference);
 					}
 
-					//contentDiv.innerHTML = contentWithoutUrls;
+					if (bookmark.kind === 30023) {
+						console.log("long-former,,,", bookmark)
+						const summaryTag = bookmark.tags.find((tag: any[]) => tag[0] === "summary");
+						if (summaryTag) {
+							const summary = summaryTag[1];
+							simpleAugmentedContent = `<em>${summary}</em>`;
+
+						} else {
+							const firstLineIndex = simpleAugmentedContent.indexOf('\n');
+							if (firstLineIndex !== -1) {
+								simpleAugmentedContent = simpleAugmentedContent.substring(0, firstLineIndex);
+							} else {
+								simpleAugmentedContent = simpleAugmentedContent.substring(0, 140) + '...'
+							}
+						}
+					}
 					contentDiv.innerHTML = simpleAugmentedContent.replace(/\bhttps?:\/\/\S+/gi, "");
 
 					// Extract image URLs from the bookmark's content

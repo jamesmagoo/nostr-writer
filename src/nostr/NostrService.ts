@@ -295,11 +295,13 @@ export default class NostrService {
 							const parts = tag[1].split(':');
 							if (parts.length >= 2) {
 								const eventId = parts[1];
-								bookmark_event_ids.push(eventId);
+								//bookmark_event_ids.push(eventId);
 							}
 						}
 					}
 				}
+				// TODO harcode long-form event ot test UI/UX for now..
+				bookmark_event_ids.push('25d9273d825c5aa55811066abb7a1c2dd90ef3c454dd7848a2164b811c98d822');
 				return { success: true, bookmark_event_ids }
 			}
 			return events;
@@ -315,13 +317,14 @@ export default class NostrService {
 			let res = await this.getUserBookmarkIDs();
 			console.log(res)
 			if (res.success) {
+				// TODO should the pool be made once on start-up of service???
 				const pool = new SimplePool()
 				let poolUrls = [];
 				for (const relay of this.connectedRelays) {
 					poolUrls.push(relay.url);
 				}
 				console.log("These are the ids to query for : ", res.bookmark_event_ids)
-				let events = await pool.querySync(poolUrls, { ids: res.bookmark_event_ids});
+				let events = await pool.querySync(poolUrls, { ids: res.bookmark_event_ids, kinds: [1, 30023] });
 				return events;
 			} else {
 				console.error('No bookmark IDs returned');
