@@ -144,6 +144,9 @@ export default class NostrWriterPlugin extends Plugin {
 		this.app.workspace
 			.getLeavesOfType(PUBLISHED_VIEW)
 			.forEach((leaf) => leaf.detach());
+		this.app.workspace
+			.getLeavesOfType(READER_VIEW)
+			.forEach((leaf) => leaf.detach());
 	}
 
 	startupNostrService() {

@@ -49,7 +49,6 @@ export class ReaderView extends ItemView {
 
 		try {
 			let bookmarks = await this.nostrService.loadUserBookmarks();
-			console.log("All BOOKMARKS: ", bookmarks);
 
 			if (this.nostrService.connectedRelays.length === 0) {
 				new Notice("Re-connect to relays...")
@@ -59,8 +58,6 @@ export class ReaderView extends ItemView {
 
 				bookmarks.reverse().forEach(async (bookmark) => {
 					let bookmarkProfile = await this.nostrService.getUserProfile(bookmark.pubkey);
-					// Parse content string to JavaScript object
-
 					let profileName = "";
 					let profilePicURL = "";
 
@@ -76,7 +73,7 @@ export class ReaderView extends ItemView {
 							for (const tag of bookmarkProfile.tags) {
 								if (tag[0] === "image") {
 									const pictureUrl = tag[1];
-									console.log("Profile picture found in tags:", pictureUrl);
+									profilePicURL = pictureUrl;
 									break;
 								}
 							}
@@ -91,7 +88,6 @@ export class ReaderView extends ItemView {
 						cls: "bookmark-card",
 					});
 					if (bookmark.kind === 30023) {
-						console.log("long-former,,,", bookmark)
 						const titleTag = bookmark.tags.find((tag: any[]) => tag[0] === "title");
 						if (titleTag) {
 							const title = titleTag[1];
@@ -128,7 +124,6 @@ export class ReaderView extends ItemView {
 					}
 
 					if (bookmark.kind === 30023) {
-						console.log("long-former,,,", bookmark)
 						const summaryTag = bookmark.tags.find((tag: any[]) => tag[0] === "summary");
 						if (summaryTag) {
 							const summary = summaryTag[1];
@@ -143,6 +138,7 @@ export class ReaderView extends ItemView {
 							}
 						}
 					}
+
 					contentDiv.innerHTML = simpleAugmentedContent.replace(/\bhttps?:\/\/\S+/gi, "");
 
 					// Extract image URLs from the bookmark's content
@@ -159,7 +155,6 @@ export class ReaderView extends ItemView {
 					});
 
 
-					// Check if there is an image tag in the bookmark
 					const imageTag = bookmark.tags.find((tag: any[]) => tag[0] === "image");
 					if (imageTag) {
 						const imageURL = imageTag[1];
@@ -172,7 +167,6 @@ export class ReaderView extends ItemView {
 					}
 
 
-					// Display Public Key (Pubkey)
 					const publicKeyDiv = cardDiv.createEl("div", {
 						cls: "bookmark-pubkey",
 					});
@@ -183,20 +177,16 @@ export class ReaderView extends ItemView {
 						},
 						cls: "bookmark-profile-pic",
 					});
-					// Check if profileName is null, empty, or undefined
 					const displayName = profileName ? profileName : "Unknown"; // Use "Unknown" if profileName is null, empty, or undefined
 
-					// Create span element with the display name
 					publicKeyDiv.createEl("span", { text: displayName });
 
-					// Format Created At
 					const createdAt = new Date(bookmark.created_at * 1000).toLocaleString();
 					cardDiv.createEl("div", {
 						text: `Bookmarked On: ${createdAt}`,
 						cls: "bookmark-created-at",
 					});
 
-					// Button to View Online
 					let detailsDiv = cardDiv.createEl("div", {
 						cls: "bookmark-view-online-btn",
 					});
@@ -295,7 +285,6 @@ ${bookmark.content}
 		while ((match = urlRegex.exec(content)) !== null) {
 			urls.push(match[0]);
 		}
-		console.log("Image urls : ", urls);
 		return urls;
 	}
 

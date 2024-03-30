@@ -38,18 +38,14 @@ This tool is completely abstracted from Nostr, allowing you to stay focused - th
 
 ## Features
 - Publishing to Nostr: Directly publish your notes from Obsidian to Nostr with a couple of clicks.
-- Private Key Integration: Securely set and store your private key within the plugin settings for authenticated publishing.
 - Summary and Image URL Support: Add an optional summary and image URL to accompany your note, with live preview functionality.
 - Tags: Add tags to your work to make it more discoverable. 
-- Local Record Keeping: keep a local record of published events in a JSON file for your reference and tracking.
-- Published View : See all posts sent from Obsidian
+- Published View : See all posts sent from Obsidian with links to view.
 - Short Format Message Writer: quickly compose and publish short form messages directly to Nostr from within Obsidian.
 - Relay Configuration: configure to send to whatever relays you like.
-- Links to your published works on njump.me 
 - Multiple user profiles: publish under different nostr accounts, just add the nsecs. 
-- Frontmatter Parsing:Utilizing the parsed data from the frontmatter, the plugin now automatically populates the article information fields. This feature streamlines the process of metadata handling and improves overall user experience.
-- Frontmatter Removal from Article Body: Post data extraction, the plugin now automatically removes the frontmatter from the body of the article. This ensures that the content displayed on Nostr is free from unnecessary metadata, providing a clean article body.
-- Nostr Bookmarks: Easily view and download you Nostr bookmarks into .md files for reference and local use.
+- Frontmatter Handling : Utilizing the parsed data from the frontmatter, the plugin now automatically populates the article information fields. This feature streamlines the process of metadata handling and improves overall user experience. Post data extraction, the plugin now automatically removes the frontmatter from the body of the article for publishing to Nostr.
+- Nostr Bookmarks: Easily view and download your Nostr bookmarks into Obsidian as `.md` files for reference and local use.
 
 ### Ideas..
 - Plugin User Relay: A relay specific to this plugin - see what everyone else is writing.

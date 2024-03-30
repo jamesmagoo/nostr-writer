@@ -23,6 +23,9 @@ export default class NostrService {
 	private isConnected: boolean;
 	private relayURLs: string[];
 	connectedRelays: Relay[];
+	private pool: SimplePool;
+	private poolUrls: string[];
+
 
 	constructor(
 		plugin: NostrWriterPlugin,
@@ -112,9 +115,18 @@ export default class NostrService {
 			);
 			this.updateStatusBar();
 			if (this.connectedRelays.length > 0) {
+				this.setConnectionPool();
 				this.isConnected = true;
 			}
 		});
+	}
+
+	setConnectionPool = () => {
+		this.pool = new SimplePool()
+		this.poolUrls = [];
+		for (const relay of this.connectedRelays) {
+			this.poolUrls.push(relay.url);
+		}
 	}
 
 	updateStatusBar = () => {
@@ -275,15 +287,12 @@ export default class NostrService {
 	async getUserBookmarkIDs(): Promise<{ success: boolean; bookmark_event_ids: string[] }> {
 		const bookmark_event_ids: string[] = [];
 		try {
-			const pool = new SimplePool()
-			let poolUrls = [];
-			if (this.connectedRelays.length === 0) {
-				return { success: false, bookmark_event_ids };
+			if (this.pool === undefined || this.poolUrls.length === 0) {
+				console.log("Pool", this.pool)
+				console.error("No pool...")
+				this.setConnectionPool();
 			}
-			for (const relay of this.connectedRelays) {
-				poolUrls.push(relay.url);
-			}
-			let events = await pool.querySync(poolUrls, { kinds: [10003], authors: [this.publicKey] })
+			let events = await this.pool.querySync(this.poolUrls, { kinds: [10003], authors: [this.publicKey] })
 			if (events.length > 0) {
 				for (let event of events) {
 					for (const tag of event.tags) {
@@ -315,16 +324,13 @@ export default class NostrService {
 	async loadUserBookmarks(): Promise<Event[]> {
 		try {
 			let res = await this.getUserBookmarkIDs();
-			console.log(res)
 			if (res.success) {
-				// TODO should the pool be made once on start-up of service???
-				const pool = new SimplePool()
-				let poolUrls = [];
-				for (const relay of this.connectedRelays) {
-					poolUrls.push(relay.url);
-				}
 				console.log("These are the ids to query for : ", res.bookmark_event_ids)
-				let events = await pool.querySync(poolUrls, { ids: res.bookmark_event_ids, kinds: [1, 30023] });
+				if (this.pool === undefined || this.poolUrls.length === 0) {
+					console.error("No pool...")
+					this.setConnectionPool();
+				}
+				let events = await this.pool.querySync(this.poolUrls, { ids: res.bookmark_event_ids, kinds: [1, 30023] });
 				return events;
 			} else {
 				console.error('No bookmark IDs returned');
@@ -339,15 +345,12 @@ export default class NostrService {
 
 	async getUserProfile(userHexPubKey: string): Promise<Event> {
 		try {
-			const pool = new SimplePool()
-			let poolUrls = [];
-			for (const relay of this.connectedRelays) {
-				poolUrls.push(relay.url);
+			if (this.pool === undefined || this.poolUrls.length === 0) {
+				console.error("No pool...")
+				this.setConnectionPool();
 			}
-			let profileEvent = await pool.querySync(poolUrls, { kinds: [0], authors: [userHexPubKey] })
-			console.log("Fetching the user profile for display on bookmarks...", profileEvent)
+			let profileEvent = await this.pool.querySync(this.poolUrls, { kinds: [0], authors: [userHexPubKey] })
 			return profileEvent;
-
 		} catch (err) {
 			console.error('Error occurred while fetching bookmarks:', err);
 			return null;
@@ -415,6 +418,7 @@ export default class NostrService {
 				r.close();
 			}
 		}
+		this.pool.close();
 	}
 
 	convertKeyToHex(value: string): string {
