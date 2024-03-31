@@ -1,19 +1,12 @@
-import {
-	Event,
-	EventTemplate,
-	Kind,
-	Relay,
-	UnsignedEvent,
-	getEventHash,
-	getPublicKey,
-	getSignature,
-	nip19,
-	relayInit,
-} from "nostr-tools";
-import { TFile, App } from "obsidian";
+import NostrWriterPlugin from "main";
+import { nip19 } from "nostr-tools";
+import { SimplePool } from 'nostr-tools/pool';
+import { Event } from "nostr-tools/core"
+import { finalizeEvent, getPublicKey } from "nostr-tools/pure";
+import { Relay } from "nostr-tools/relay";
+import { App, TFile } from "obsidian";
 import { NostrWriterPluginSettings } from "src/settings";
 import { v4 as uuidv4 } from "uuid";
-import NostrWriterPlugin from "main";
 
 interface Profile {
 	profileNickname: string;
@@ -22,14 +15,17 @@ interface Profile {
 
 export default class NostrService {
 	private privateKey: string;
-	private profiles : Profile[];
-	private multipleProfilesEnabled : boolean;
+	private profiles: Profile[];
+	private multipleProfilesEnabled: boolean;
 	private publicKey: string;
 	private plugin: NostrWriterPlugin;
 	private app: App;
 	private isConnected: boolean;
 	private relayURLs: string[];
 	connectedRelays: Relay[];
+	private pool: SimplePool;
+	private poolUrls: string[];
+
 
 	constructor(
 		plugin: NostrWriterPlugin,
@@ -43,7 +39,7 @@ export default class NostrService {
 			return;
 		}
 
-		if(settings.multipleProfilesEnabled){
+		if (settings.multipleProfilesEnabled) {
 			console.log("multiple profiles enabled")
 			this.profiles = settings.profiles;
 			this.multipleProfilesEnabled = true;
@@ -75,48 +71,39 @@ export default class NostrService {
 		this.connectToRelays();
 	}
 
-	reloadMultipleAccounts(){
+	reloadMultipleAccounts() {
 		console.log("reloading multiple accounts...")
 		this.profiles = this.plugin.settings.profiles;
 		this.multipleProfilesEnabled = true;
 	}
 
+
 	async connectToRelays() {
 		this.refreshRelayUrls();
 		this.connectedRelays = [];
+
 		let connectionPromises = this.relayURLs.map((url) => {
-			return new Promise<Relay | null>((resolve) => {
-				console.log(`Initializing NostrService. with relay: ${url}`);
-				let relayAttempt = relayInit(url);
+			return new Promise<Relay | null>(async (resolve) => {
+				console.log(`Initializing NostrService with relay: ${url}`);
+				try {
+					const relayAttempt = await Relay.connect(url);
 
-				const timeout = setTimeout(() => {
-					console.log("Connection time out!!");
-					resolve(null);
-				}, 10000);
+					relayAttempt.onclose = () => {
+						handleFailure();
+					}
 
-				relayAttempt.on("connect", () => {
-					clearTimeout(timeout);
-					console.log(`connected to ${relayAttempt.url}`);
+					const handleFailure = () => {
+						console.log(`Disconnected from ${url}, updating status bar.`);
+						this.connectedRelays.remove(relayAttempt);
+						this.updateStatusBar();
+						resolve(null);
+					};
+
+					console.log(`Connected to ${relayAttempt.url}`);
 					this.connectedRelays.push(relayAttempt);
 					resolve(relayAttempt);
-				});
-
-				const handleFailure = () => {
-					clearTimeout(timeout);
-					console.log(`failed to connect to ${url}`);
-					console.log("Removing ...");
-					this.connectedRelays.remove(relayAttempt);
-					this.updateStatusBar();
-					resolve(null);
-				};
-
-				relayAttempt.on("disconnect", handleFailure);
-				relayAttempt.on("error", handleFailure);
-
-				try {
-					relayAttempt.connect();
 				} catch (error) {
-					console.log(error);
+					console.error(`Failed to connect to ${url}: ${error}`);
 					resolve(null);
 				}
 			});
@@ -128,9 +115,18 @@ export default class NostrService {
 			);
 			this.updateStatusBar();
 			if (this.connectedRelays.length > 0) {
+				this.setConnectionPool();
 				this.isConnected = true;
 			}
 		});
+	}
+
+	setConnectionPool = () => {
+		this.pool = new SimplePool()
+		this.poolUrls = [];
+		for (const relay of this.connectedRelays) {
+			this.poolUrls.push(relay.url);
+		}
 	}
 
 	updateStatusBar = () => {
@@ -146,7 +142,7 @@ export default class NostrService {
 
 	refreshRelayUrls() {
 		this.relayURLs = [];
-		if (!this.plugin.settings.relayURLs) {
+		if (!this.plugin.settings.relayURLs || this.plugin.settings.relayURLs.length === 0) {
 			console.error(
 				"YourPlugin requires a list of relay urls to be set in the settings, defaulting to Damus."
 			);
@@ -169,8 +165,8 @@ export default class NostrService {
 	getRelayInfo(relayUrl: string): boolean {
 		let connected: boolean = false;
 		for (let r of this.connectedRelays) {
-			if (r.url == relayUrl) {
-				connected = true;
+			if (r.url == relayUrl + "/") {
+				return r.connected;
 			}
 		}
 		return connected;
@@ -200,26 +196,17 @@ export default class NostrService {
 		if (message) {
 			let uuid: any = uuidv4().substr(0, 8);
 			let tags: any = [["d", uuid]];
-			let eventTemplate: EventTemplate<Kind.Text> = {
+
+			let eventTemplate = {
 				kind: 1,
 				created_at: Math.floor(Date.now() / 1000),
 				tags: tags,
 				content: message,
 			};
-			console.log(eventTemplate);
-			let event: UnsignedEvent<Kind.Text> = {
-				...eventTemplate,
-				pubkey: profilePublicKey,
-			};
 
-			let eventHash = getEventHash(event);
-
-			let finalEvent: Event<Kind.Text> = {
-				...event,
-				id: eventHash,
-				sig: getSignature(event, profilePrivateKey),
-			};
-			return this.publishToRelays<Kind.Text>(finalEvent, "","");
+			// this assigns the pubkey, calculates the event id and signs the event in a single step
+			const signedEvent = finalizeEvent(eventTemplate, Buffer.from(profilePrivateKey))
+			return this.publishToRelays(signedEvent, "", "");
 		} else {
 			console.error("No message to publish");
 			return { success: false, publishedRelays: [] };
@@ -244,7 +231,7 @@ export default class NostrService {
 			for (const { profileNickname: nickname, profilePrivateKey: key } of this.profiles) {
 				if (profileNickname === nickname) {
 					profilePrivateKey = this.convertKeyToHex(key);
-					profilePublicKey = getPublicKey(profilePrivateKey);
+					profilePublicKey = getPublicKey(Buffer.from(profilePrivateKey));
 				}
 			}
 		}
@@ -275,27 +262,17 @@ export default class NostrService {
 				const noteTitle = activeFile.basename;
 				tags.push(["title", noteTitle]);
 			}
-			let eventTemplate: EventTemplate<Kind.Article> = {
+
+			let eventTemplate = {
 				kind: 30023,
 				created_at: timestamp,
 				tags: tags,
 				content: fileContent,
 			};
 
-			let event: UnsignedEvent<Kind.Article> = {
-				...eventTemplate,
-				pubkey: profilePublicKey,
-			};
+			const finalEvent = finalizeEvent(eventTemplate, Buffer.from(profilePrivateKey))
 
-			let eventHash = getEventHash(event);
-
-			let finalEvent: Event<Kind.Article> = {
-				...event,
-				id: eventHash,
-				sig: getSignature(event, profilePrivateKey),
-			};
-
-			return this.publishToRelays<Kind.Article>(
+			return this.publishToRelays(
 				finalEvent,
 				activeFile.path,
 				profileNickname
@@ -306,55 +283,116 @@ export default class NostrService {
 		}
 	}
 
-	async publishToRelays<T extends Kind>(
-		finalEvent: Event<T>,
+
+	async getUserBookmarkIDs(): Promise<{ success: boolean; bookmark_event_ids: string[], longform_event_ids: string[] }> {
+		const bookmark_event_ids: string[] = [];
+		const longform_event_ids: string[] = [];
+		try {
+			if (this.pool === undefined || this.poolUrls.length === 0) {
+				console.error("No pool...")
+				this.setConnectionPool();
+			}
+			let events = await this.pool.querySync(this.poolUrls, { kinds: [10003], authors: [this.publicKey] })
+			if (events.length > 0) {
+				for (let event of events) {
+					for (const tag of event.tags) {
+						if (tag[0] === 'e') {
+							bookmark_event_ids.push(tag[1]);
+						}
+						// handle kind 30023 long-form events
+						if (tag[0] === 'a') {
+							longform_event_ids.push(tag[1]);
+						}
+					}
+				}
+				return { success: true, bookmark_event_ids, longform_event_ids }
+			}
+			return events;
+		} catch (error) {
+			console.error('Error occurred while fetching bookmarks ids:', error);
+			return { success: false, bookmark_event_ids, longform_event_ids };
+		}
+	}
+
+
+	async loadUserBookmarks(): Promise<Event[]> {
+		let events: Event[] = [];
+		try {
+			let res = await this.getUserBookmarkIDs();
+			if (res.success) {
+				console.log("These are the ids to query for : ", res.bookmark_event_ids)
+				if (this.pool === undefined || this.poolUrls.length === 0) {
+					this.setConnectionPool();
+				}
+				if (res.longform_event_ids.length > 0) {
+					for (let atag of res.longform_event_ids) {
+						console.log(atag);
+
+						let author = ""
+						let eTag = ""
+						let parts = atag.split(':');
+						if (parts.length >= 2) {
+							author = parts[1];
+							eTag = parts[2];
+						}
+						let articles = await this.pool.querySync(this.poolUrls, { authors: [author], kinds: [30023] });
+						for (let articleItem of articles) {
+							if (articleItem.tags.some(tag => tag[0] === "d" && tag[1] === eTag)) {
+								events.push(articleItem);
+							}
+						}
+
+					}
+				}
+				let newEvents = await this.pool.querySync(this.poolUrls, { ids: res.bookmark_event_ids, kinds: [1, 30023] });
+				events.push(...newEvents);
+				return events;
+			} else {
+				console.error('No bookmark IDs returned');
+				return [];
+			}
+
+		} catch (err) {
+			console.error('Error occurred while fetching bookmarks:', err);
+			return [];
+		}
+	}
+
+	async getUserProfile(userHexPubKey: string): Promise<Event> {
+		try {
+			if (this.pool === undefined || this.poolUrls.length === 0) {
+				this.setConnectionPool();
+			}
+			let profileEvent = await this.pool.querySync(this.poolUrls, { kinds: [0], authors: [userHexPubKey] })
+			return profileEvent;
+		} catch (err) {
+			console.error('Error occurred while fetching bookmarks:', err);
+			return null;
+		}
+	}
+
+	async publishToRelays(
+		finalEvent: Event,
 		filePath: string,
 		profileNickname: string
 	): Promise<{ success: boolean; publishedRelays: string[] }> {
 		try {
-			let publishingPromises = this.connectedRelays.map((relay) => {
-				return new Promise<{ success: boolean; url?: string }>(
-					(resolve) => {
-						const timeout = setTimeout(() => {
-							console.log(`Publishing to ${relay.url} timed out`);
-							resolve({ success: false });
-						}, 5000);
-
-						if (relay.status === 1) {
-							console.log(`Publishing to.. ${relay.url}`);
-
-							let pub = relay.publish(finalEvent);
-
-							pub?.on("ok", () => {
-								clearTimeout(timeout);
-								console.log(
-									`Event published successfully to ${relay.url}`
-								);
-								resolve({ success: true, url: relay.url });
-							});
-
-							pub?.on("failed", (reason: any) => {
-								clearTimeout(timeout);
-								console.log(
-									`Failed to publish event to ${relay.url}: ${reason}`
-								);
-								resolve({ success: false });
-							});
-
-							relay.on("disconnect", () => {
-								clearTimeout(timeout);
-								console.log(`Disconnected from ${relay.url}`);
-								resolve({ success: false });
-							});
-						} else {
-							clearTimeout(timeout);
-							console.log(
-								`Skipping disconnected relay: ${relay.url}`
-							);
-							resolve({ success: false });
-						}
+			let publishingPromises = this.connectedRelays.map(async (relay) => {
+				try {
+					console.log(`relay: ${relay}`)
+					if (relay.connected) {
+						console.log(`Publishing to ${relay.url}`);
+						await relay.publish(finalEvent);
+						console.log(`Event published successfully to ${relay.url}`);
+						return { success: true, url: relay.url };
+					} else {
+						console.log(`Skipping disconnected relay: ${relay.url}`);
+						return { success: false };
 					}
-				);
+				} catch (error) {
+					console.error(`Failed to publish event to ${relay.url}: ${error}`);
+					return { success: false };
+				}
 			});
 
 			let results = await Promise.all(publishingPromises);
@@ -370,25 +408,22 @@ export default class NostrService {
 				console.log("Didn't send to any relays");
 				return { success: false, publishedRelays: [] };
 			} else {
-				if (finalEvent.kind === Kind.Article) {
+				if (finalEvent.kind === 30023) {
 					this.savePublishedEvent(
 						finalEvent,
 						filePath,
 						publishedRelays,
 						profileNickname
-
 					);
 				}
 				return { success: true, publishedRelays };
 			}
 		} catch (error) {
-			console.error(
-				"An error occurred while publishing to relays",
-				error
-			);
+			console.error("An error occurred while publishing to relays", error);
 			return { success: false, publishedRelays: [] };
 		}
 	}
+
 
 	shutdownRelays() {
 		console.log("Shutting down Nostr service");
@@ -396,6 +431,7 @@ export default class NostrService {
 			for (let r of this.connectedRelays) {
 				r.close();
 			}
+			this.pool.close();
 		}
 	}
 
@@ -411,8 +447,8 @@ export default class NostrService {
 		return value;
 	}
 
-	async savePublishedEvent<T extends Kind>(
-		finalEvent: Event<T>,
+	async savePublishedEvent(
+		finalEvent: Event,
 		publishedFilePath: string,
 		relays: string[],
 		profileNickname: string
