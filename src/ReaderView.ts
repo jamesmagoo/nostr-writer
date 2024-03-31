@@ -49,6 +49,7 @@ export class ReaderView extends ItemView {
 
 		try {
 			let bookmarks = await this.nostrService.loadUserBookmarks();
+			console.log("here", bookmarks);
 
 			if (this.nostrService.connectedRelays.length === 0) {
 				new Notice("Re-connect to relays...")
@@ -63,13 +64,10 @@ export class ReaderView extends ItemView {
 
 					try {
 						const profileObject = JSON.parse(bookmarkProfile[0].content);
-						// Extract profile details
 						const { name, picture } = profileObject;
-						// Display profile details
 						profileName = name;
 
 						if (picture == undefined) {
-							// Loop through tags to find profile picture image URL
 							for (const tag of bookmarkProfile.tags) {
 								if (tag[0] === "image") {
 									const pictureUrl = tag[1];
@@ -114,12 +112,10 @@ export class ReaderView extends ItemView {
 							const { name } = JSON.parse(taggedProfile[0].content);
 							augmentedReference = `<strong>@${name}</strong>`;
 						} else if (event) {
-							console.log("Event:", event);
 							let linkedEventPointer: nip19.EventPointer = {
 								id: event.id,
 							}
 							let x = nip19.neventEncode(linkedEventPointer);
-							console.log(x)
 							//augmentedReference = `<a href="https://njump.me/${x}" target="_blank">Referenced Event</a>`;
 							augmentedReference = "";
 							linkedEvent = true;
@@ -129,10 +125,7 @@ export class ReaderView extends ItemView {
 						} else {
 							augmentedReference = text;
 						}
-
-						// Replace all occurrences of 'text' with 'augmentedReference'
 						simpleAugmentedContent = simpleAugmentedContent.replaceAll(text, augmentedReference);
-						console.log(simpleAugmentedContent)
 					}
 
 					if (bookmark.kind === 30023) {
@@ -153,10 +146,8 @@ export class ReaderView extends ItemView {
 
 					contentDiv.innerHTML = simpleAugmentedContent.replace(/\bhttps?:\/\/\S+/gi, "");
 
-					// Extract image URLs from the bookmark's content
 					const imageUrls = this.extractImageUrls(bookmark.content);
 
-					// Display images
 					imageUrls.forEach((imageUrl) => {
 						cardDiv.createEl("img", {
 							attr: {
@@ -184,12 +175,12 @@ export class ReaderView extends ItemView {
 					});
 					publicKeyDiv.createEl("img", {
 						attr: {
-							src: `${profilePicURL}`, // Placeholder for profile pic
+							src: `${profilePicURL}`,
 							alt: "Profile Pic",
 						},
 						cls: "bookmark-profile-pic",
 					});
-					const displayName = profileName ? profileName : "Unknown"; // Use "Unknown" if profileName is null, empty, or undefined
+					const displayName = profileName ? profileName : "Unknown";
 
 					publicKeyDiv.createEl("span", { text: displayName });
 
@@ -267,28 +258,54 @@ export class ReaderView extends ItemView {
 
 
 	async downloadBookmark(bookmark: any) {
-		const filename = `bookmark_${bookmark.id}.md`; // Generate a unique filename
-		const content = this.generateMarkdownContent(bookmark); // Generate markdown content
+		try {
+			let filename: string;
+			const titleTag = bookmark.tags.find((tag: any[]) => tag[0] === "title");
+			if (titleTag) {
+				filename = `${titleTag[1]}.md`;
+			} else {
+				filename = `bookmark_${bookmark.id.substring(0, 8)}.md`;
+			}
+			const content = this.generateMarkdownContent(bookmark); 
 
-		// Create a new markdown file in the current vault
-		const file: TFile = await this.createMarkdownFile(filename, content);
+			const file: TFile | null = await this.createMarkdownFile(filename, content);
 
-		// Open the newly created markdown file in Obsidian
-		await this.app.workspace.openLinkText(filename, file.path, true);
+			if (file !== null) {
+				await this.app.workspace.openLinkText(filename, file.path, true);
+			} else {
+				new Notice("Failed to create file. File may already exist.");
+			}
+		} catch (error) {
+			console.error("Error downloading bookmark:", error);
+			new Notice("Failed to create file. File may already exist.");
+		}
 	}
 
-	async createMarkdownFile(filename: string, content: string): Promise<TFile> {
-		// Create the markdown file in the current vault
-		const file = this.app.vault.create(filename, content);
-		return file;
+
+	async createMarkdownFile(filename: string, content: string): Promise<TFile | null> {
+		try {
+			const file = this.app.vault.create(filename, content);
+			return file;
+		} catch (error) {
+			if (error.message.includes("File already exists")) {
+				new Notice("File already exists");
+			} else {
+				console.error("Error creating file:", error);
+			}
+			return null;
+		}
 	}
+
 
 
 	generateMarkdownContent(bookmark: any): string {
-		// Format the created at date
 		const createdAt = new Date(bookmark.created_at * 1000).toLocaleString();
 
-		// Generate the markdown content with the bookmark details
+		let source : nip19.ProfilePointer = {
+			pubkey: bookmark.pubkey, 
+		}
+		let y = nip19.nprofileEncode(source);
+		const url = `https://njump.me/${y}`;
 		const markdownContent = `
 # Nostr Bookmark
 
@@ -298,7 +315,7 @@ ${bookmark.content}
 \n
 ***
 **Created At:** ${createdAt}
-**Public Key:** ${bookmark.pubkey}
+**Source:** ${url}
 		`;
 
 		return markdownContent;

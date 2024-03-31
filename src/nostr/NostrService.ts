@@ -284,8 +284,9 @@ export default class NostrService {
 	}
 
 
-	async getUserBookmarkIDs(): Promise<{ success: boolean; bookmark_event_ids: string[] }> {
+	async getUserBookmarkIDs(): Promise<{ success: boolean; bookmark_event_ids: string[], longform_event_ids: string[] }> {
 		const bookmark_event_ids: string[] = [];
+		const longform_event_ids: string[] = [];
 		try {
 			if (this.pool === undefined || this.poolUrls.length === 0) {
 				console.error("No pool...")
@@ -300,36 +301,51 @@ export default class NostrService {
 						}
 						// handle kind 30023 long-form events
 						if (tag[0] === 'a') {
-							const parts = tag[1].split(':');
-							if (parts.length >= 2) {
-								const eventId = parts[1];
-								//bookmark_event_ids.push(eventId);
-							}
+							longform_event_ids.push(tag[1]);
 						}
 					}
 				}
-				// TODO harcode long-form event ot test UI/UX for now..
-				bookmark_event_ids.push('25d9273d825c5aa55811066abb7a1c2dd90ef3c454dd7848a2164b811c98d822');
-				return { success: true, bookmark_event_ids }
+				return { success: true, bookmark_event_ids, longform_event_ids }
 			}
 			return events;
 		} catch (error) {
 			console.error('Error occurred while fetching bookmarks ids:', error);
-			return { success: false, bookmark_event_ids };
+			return { success: false, bookmark_event_ids, longform_event_ids };
 		}
 	}
 
 
 	async loadUserBookmarks(): Promise<Event[]> {
+		let events: Event[] = [];
 		try {
 			let res = await this.getUserBookmarkIDs();
 			if (res.success) {
 				console.log("These are the ids to query for : ", res.bookmark_event_ids)
 				if (this.pool === undefined || this.poolUrls.length === 0) {
-					console.error("No pool...")
 					this.setConnectionPool();
 				}
-				let events = await this.pool.querySync(this.poolUrls, { ids: res.bookmark_event_ids, kinds: [1, 30023] });
+				if (res.longform_event_ids.length > 0) {
+					for (let atag of res.longform_event_ids) {
+						console.log(atag);
+
+						let author = ""
+						let eTag = ""
+						let parts = atag.split(':');
+						if (parts.length >= 2) {
+							author = parts[1];
+							eTag = parts[2];
+						}
+						let articles = await this.pool.querySync(this.poolUrls, { authors: [author], kinds: [30023] });
+						for (let articleItem of articles) {
+							if (articleItem.tags.some(tag => tag[0] === "d" && tag[1] === eTag)) {
+								events.push(articleItem);
+							}
+						}
+
+					}
+				}
+				let newEvents = await this.pool.querySync(this.poolUrls, { ids: res.bookmark_event_ids, kinds: [1, 30023] });
+				events.push(...newEvents);
 				return events;
 			} else {
 				console.error('No bookmark IDs returned');
@@ -345,7 +361,6 @@ export default class NostrService {
 	async getUserProfile(userHexPubKey: string): Promise<Event> {
 		try {
 			if (this.pool === undefined || this.poolUrls.length === 0) {
-				console.error("No pool...")
 				this.setConnectionPool();
 			}
 			let profileEvent = await this.pool.querySync(this.poolUrls, { kinds: [0], authors: [userHexPubKey] })
@@ -416,7 +431,7 @@ export default class NostrService {
 			for (let r of this.connectedRelays) {
 				r.close();
 			}
-		this.pool.close();
+			this.pool.close();
 		}
 	}
 
