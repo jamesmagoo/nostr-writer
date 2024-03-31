@@ -320,14 +320,11 @@ export default class NostrService {
 		try {
 			let res = await this.getUserBookmarkIDs();
 			if (res.success) {
-				console.log("These are the ids to query for : ", res.bookmark_event_ids)
 				if (this.pool === undefined || this.poolUrls.length === 0) {
 					this.setConnectionPool();
 				}
 				if (res.longform_event_ids.length > 0) {
 					for (let atag of res.longform_event_ids) {
-						console.log(atag);
-
 						let author = ""
 						let eTag = ""
 						let parts = atag.split(':');

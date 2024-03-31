@@ -49,8 +49,6 @@ export class ReaderView extends ItemView {
 
 		try {
 			let bookmarks = await this.nostrService.loadUserBookmarks();
-			console.log("here", bookmarks);
-
 			if (this.nostrService.connectedRelays.length === 0) {
 				new Notice("Re-connect to relays...")
 			}
