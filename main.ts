@@ -134,7 +134,7 @@ export default class NostrWriterPlugin extends Plugin {
 		});
 
 		this.app.workspace.revealLeaf(
-			this.app.workspace.getLeavesOfType(PUBLISHED_VIEW)[0]
+			this.app.workspace.getLeavesOfType(READER_VIEW)[0]
 		);
 	};
 

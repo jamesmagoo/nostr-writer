@@ -288,7 +288,6 @@ export default class NostrService {
 		const bookmark_event_ids: string[] = [];
 		try {
 			if (this.pool === undefined || this.poolUrls.length === 0) {
-				console.log("Pool", this.pool)
 				console.error("No pool...")
 				this.setConnectionPool();
 			}
@@ -417,8 +416,8 @@ export default class NostrService {
 			for (let r of this.connectedRelays) {
 				r.close();
 			}
-		}
 		this.pool.close();
+		}
 	}
 
 	convertKeyToHex(value: string): string {

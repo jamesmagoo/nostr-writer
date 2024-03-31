@@ -64,7 +64,7 @@ export class ReaderView extends ItemView {
 					try {
 						const profileObject = JSON.parse(bookmarkProfile[0].content);
 						// Extract profile details
-						const { name, picture, username, display_name, banner, website, about } = profileObject;
+						const { name, picture } = profileObject;
 						// Display profile details
 						profileName = name;
 
@@ -101,6 +101,8 @@ export class ReaderView extends ItemView {
 
 					// parse nostr tags, npubs wtc.
 					let references = parseReferences(bookmark)
+					let linkedEvent = false;
+					let linkedEventURL = "";
 					let simpleAugmentedContent = bookmark.content;
 
 					for (let i = 0; i < references.length; i++) {
@@ -112,15 +114,25 @@ export class ReaderView extends ItemView {
 							const { name } = JSON.parse(taggedProfile[0].content);
 							augmentedReference = `<strong>@${name}</strong>`;
 						} else if (event) {
-							augmentedReference = `<em>${"abscde"}</em>`;
+							console.log("Event:", event);
+							let linkedEventPointer: nip19.EventPointer = {
+								id: event.id,
+							}
+							let x = nip19.neventEncode(linkedEventPointer);
+							console.log(x)
+							//augmentedReference = `<a href="https://njump.me/${x}" target="_blank">Referenced Event</a>`;
+							augmentedReference = "";
+							linkedEvent = true;
+							linkedEventURL = `https://njump.me/${x}`
 						} else if (address) {
-							augmentedReference = `<a href="${text}">[link]</a>`;
+							augmentedReference = `<a href="${text}">Referenced Event</a>`;
 						} else {
 							augmentedReference = text;
 						}
 
 						// Replace all occurrences of 'text' with 'augmentedReference'
 						simpleAugmentedContent = simpleAugmentedContent.replaceAll(text, augmentedReference);
+						console.log(simpleAugmentedContent)
 					}
 
 					if (bookmark.kind === 30023) {
@@ -216,6 +228,16 @@ export class ReaderView extends ItemView {
 							this.downloadBookmark(bookmark);
 						});
 
+					if (linkedEvent) {
+						new ButtonComponent(detailsDiv)
+							.setIcon("link")
+							.setCta()
+							.setTooltip("View Linked Event")
+							.onClick(() => {
+								window.open(linkedEventURL, '_blank');
+							});
+
+					}
 				});
 			} else {
 				const noBookmarksDiv = container.createEl("div", { cls: "nobookmarks-card" });
@@ -236,6 +258,11 @@ export class ReaderView extends ItemView {
 			linkEl.href = "https://listr.lol";
 			linkEl.target = "_blank";
 		}
+	}
+
+	openLink(url: string) {
+		console.log(url)
+		window.open(url, '_blank');
 	}
 
 
