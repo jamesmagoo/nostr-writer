@@ -46,6 +46,7 @@ This tool is completely abstracted from Nostr, allowing you to stay focused - th
 - Multiple user profiles: publish under different nostr accounts, just add the nsecs. 
 - Frontmatter Handling : Utilizing the parsed data from the frontmatter, the plugin now automatically populates the article information fields. This feature streamlines the process of metadata handling and improves overall user experience. Post data extraction, the plugin now automatically removes the frontmatter from the body of the article for publishing to Nostr.
 - Nostr Bookmarks: Easily view and download your Nostr bookmarks into Obsidian as `.md` files for reference and local use.
+- Image Support: Images in your `.md` file will automatically be uploaded and handled when you publish.
 
 ### Ideas..
 - Plugin User Relay: A relay specific to this plugin - see what everyone else is writing.
