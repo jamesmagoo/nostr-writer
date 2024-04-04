@@ -263,6 +263,15 @@ export default class NostrService {
 				tags.push(["title", noteTitle]);
 			}
 
+			console.log("Content: ", fileContent);
+
+			// Extract image paths from the Markdown content
+			const imagePaths: string[] = this.extractImagePaths(fileContent);
+			console.log(imagePaths)
+
+			// Print the extracted image paths
+			imagePaths.forEach(path => console.log(path));
+
 			let eventTemplate = {
 				kind: 30023,
 				created_at: timestamp,
@@ -281,6 +290,24 @@ export default class NostrService {
 			console.error("No message to publish");
 			return { success: false, publishedRelays: [] };
 		}
+	}
+
+
+	extractImagePaths(mdContent: string): string[] {
+		// Regular expression pattern to match image paths in Markdown format
+		const pattern: RegExp = /!\[\[(.*?\.(?:png|jpg|jpeg|gif|bmp|svg))\]\]/gi;
+
+		const matches: RegExpExecArray[] = [];
+		let match: RegExpExecArray | null;
+		while ((match = pattern.exec(mdContent)) !== null) {
+			matches.push(match);
+		}
+
+		console.log("matches:", matches);
+
+		const imagePaths: string[] = matches.map(match => match[1].trim());
+
+		return imagePaths;
 	}
 
 
