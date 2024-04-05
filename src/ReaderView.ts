@@ -1,5 +1,5 @@
 import NostrWriterPlugin from "main";
-import NostrService from "./nostr/NostrService";
+import NostrService from "./service/NostrService";
 import { ButtonComponent, ItemView, Notice, TFile, WorkspaceLeaf } from "obsidian";
 import { nip19 } from "nostr-tools";
 import { parseReferences } from 'nostr-tools/references'

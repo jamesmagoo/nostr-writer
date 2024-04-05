@@ -1,5 +1,5 @@
 import NostrWriterPlugin from "main";
-import { App, TFile, normalizePath, arrayBufferToBase64 } from "obsidian";
+import { App, TFile, arrayBufferToBase64 } from "obsidian";
 import { NostrWriterPluginSettings } from "src/settings";
 
 export default class ImageUploadService {
@@ -28,13 +28,18 @@ export default class ImageUploadService {
 		console.log("Uploading images....", imageFilePaths);
 
 		for (let imagePath of imageFilePaths) {
-			let imageFile = this.app.vault.getAbstractFileByPath(imagePath)
-			if (imageFile instanceof TFile) {
-				console.log(`Its a file ${imageFile.name}`)
-				let imageBinary = await this.app.vault.readBinary(imageFile);
-				let base64Image = arrayBufferToBase64(imageBinary);
-				console.log(`base64Image of ${imagePath}`);
-				console.log(base64Image);
+			try {
+
+				let imageFile = this.app.vault.getAbstractFileByPath(imagePath)
+				if (imageFile instanceof TFile) {
+					console.log(`Its a file ${imageFile.name}`)
+					let imageBinary = await this.app.vault.readBinary(imageFile);
+					let base64Image = arrayBufferToBase64(imageBinary);
+					console.log(`base64Image of ${imagePath}`);
+					console.log(base64Image);
+				}
+			} catch (error) {
+				console.error(`Problem with image file reading : ${error}`)
 			}
 
 			// TODO : next I need to take this bin/base64 data and uplaod to the URL 
@@ -49,3 +54,4 @@ export default class ImageUploadService {
 
 	}
 }
+
