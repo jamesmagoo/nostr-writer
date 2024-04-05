@@ -1,7 +1,7 @@
 import { Notice, Plugin } from "obsidian";
 import ShortFormModal from "src/ShortFormModal";
 import ConfirmPublishModal from "./src/ConfirmPublishModal";
-import NostrService from "./src/nostr/NostrService";
+import NostrService from "./src/service/NostrService";
 import {
 	NostrWriterPluginSettings,
 	NostrWriterSettingTab,

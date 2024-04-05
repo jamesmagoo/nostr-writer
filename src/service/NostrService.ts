@@ -1,12 +1,14 @@
 import NostrWriterPlugin from "main";
+import * as path from 'path';
 import { nip19 } from "nostr-tools";
 import { SimplePool } from 'nostr-tools/pool';
 import { Event } from "nostr-tools/core"
 import { finalizeEvent, getPublicKey } from "nostr-tools/pure";
 import { Relay } from "nostr-tools/relay";
-import { App, TFile } from "obsidian";
+import { App, TFile, normalizePath, arrayBufferToBase64 } from "obsidian";
 import { NostrWriterPluginSettings } from "src/settings";
 import { v4 as uuidv4 } from "uuid";
+import ImageUploadService from "./ImageUploadService";
 
 interface Profile {
 	profileNickname: string;
@@ -25,6 +27,7 @@ export default class NostrService {
 	connectedRelays: Relay[];
 	private pool: SimplePool;
 	private poolUrls: string[];
+	private imageUploadService: ImageUploadService;
 
 
 	constructor(
@@ -46,6 +49,7 @@ export default class NostrService {
 		}
 		this.plugin = plugin;
 		this.app = app;
+		this.imageUploadService = new ImageUploadService(this.plugin, this.app, settings);
 		this.privateKey = this.convertKeyToHex(settings.privateKey);
 		this.publicKey = getPublicKey(this.privateKey);
 		this.relayURLs = [];
@@ -266,11 +270,57 @@ export default class NostrService {
 			console.log("Content: ", fileContent);
 
 			// Extract image paths from the Markdown content
-			const imagePaths: string[] = this.extractImagePaths(fileContent);
+			const regexImagePaths: string[] = this.extractImagePaths(fileContent);
+			const imagePaths: string[] = [] ;
 			console.log(imagePaths)
 
 			// Print the extracted image paths
-			imagePaths.forEach(path => console.log(path));
+			regexImagePaths.forEach(path => console.log(path));
+			try {
+				let vaultResolvedLinks = this.app.metadataCache.resolvedLinks;
+
+				console.log(activeFile.basename)
+				console.log(activeFile.name)
+
+				console.log("Resolved links:", vaultResolvedLinks);
+
+				// Check if the target file exists in the data
+				if (vaultResolvedLinks[activeFile.name]) {
+					console.log(`Found ${activeFile.name} in resolved links`)
+					const fileContents = vaultResolvedLinks[activeFile.name];
+
+					// Iterate over the values (file paths) of the target file
+					for (const filePath of Object.keys(fileContents)) {
+						// Check if the file path represents an image
+						console.log(filePath)
+						if (this.isImagePath(filePath)) {
+							// Add the image path to the result array
+							console.log(`This is an image we need ${filePath}`)
+							imagePaths.push(filePath);
+						}
+					}
+				}
+
+
+				// TODO maybe use these resolvedlinks instead of regex.....
+				// this seems to give all files in vault
+				// get this files name , find it in this array 
+				// then get the links ending in image i.e .png etc.
+				// then use this full path to read binary .....
+				// this returns an ArrayBuffer 
+				// use this ArrayBuffer with arrayBufferToBase64 to get base64 of image
+				// test and go from there...
+				//
+				//
+				await this.imageUploadService.uploadImagesToStorageProvider(imagePaths)
+
+
+
+
+			} catch (e) {
+				console.log("Faile to read iamge loc:", e);
+			}
+
 
 			let eventTemplate = {
 				kind: 30023,
@@ -308,6 +358,12 @@ export default class NostrService {
 		const imagePaths: string[] = matches.map(match => match[1].trim());
 
 		return imagePaths;
+	}
+
+	isImagePath(filePath: string): boolean {
+		const imageExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.bmp', '.svg'];
+		const ext = path.extname(filePath).toLowerCase();
+		return imageExtensions.includes(ext);
 	}
 
 
@@ -403,7 +459,6 @@ export default class NostrService {
 		try {
 			let publishingPromises = this.connectedRelays.map(async (relay) => {
 				try {
-					console.log(`relay: ${relay}`)
 					if (relay.connected) {
 						console.log(`Publishing to ${relay.url}`);
 						await relay.publish(finalEvent);

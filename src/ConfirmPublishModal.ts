@@ -29,7 +29,13 @@ export default class ConfirmPublishModal extends Modal {
 		let { contentEl } = this;
 		
 		const frontmatter = await this.app.metadataCache.getFileCache(this.file)?.frontmatter;
+		const links = this.app.metadataCache.getFileCache(this.file)?.links;
+		console.log("Links:", links);
+		const embeds = this.app.metadataCache.getFileCache(this.file)?.embeds;
+		console.log("Embeds:", embeds);
         
+		// TODO check our Progress Bar Component...
+
         const frontmatterRegex = /---\s*[\s\S]*?\s*---/g;
         const content = (await this.app.vault.read(this.file)).replace(frontmatterRegex, "").trim();
         
