@@ -44,9 +44,9 @@ This tool is completely abstracted from Nostr, allowing you to stay focused - th
 - Short Format Message Writer: quickly compose and publish short form messages directly to Nostr from within Obsidian.
 - Relay Configuration: configure to send to whatever relays you like.
 - Multiple user profiles: publish under different nostr accounts, just add the nsecs. 
-- Frontmatter Handling : Utilizing the parsed data from the frontmatter, the plugin now automatically populates the article information fields. This feature streamlines the process of metadata handling and improves overall user experience. Post data extraction, the plugin now automatically removes the frontmatter from the body of the article for publishing to Nostr.
 - Nostr Bookmarks: Easily view and download your Nostr bookmarks into Obsidian as `.md` files for reference and local use.
 - Image Support: Images in your `.md` file will automatically be uploaded and handled when you publish.
+- Frontmatter Handling: The plugin now automatically populates article information fields from the frontmatter, streamlining metadata handling and enhancing user experience. Post data extraction, it also removes the frontmatter from the article body for publishing to Nostr.
 
 ### Ideas..
 - Plugin User Relay: A relay specific to this plugin - see what everyone else is writing.

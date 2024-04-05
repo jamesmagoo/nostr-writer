@@ -284,38 +284,18 @@ export default class NostrService {
 
 				console.log("Resolved links:", vaultResolvedLinks);
 
-				// Check if the target file exists in the data
 				if (vaultResolvedLinks[activeFile.name]) {
-					console.log(`Found ${activeFile.name} in resolved links`)
 					const fileContents = vaultResolvedLinks[activeFile.name];
-
-					// Iterate over the values (file paths) of the target file
 					for (const filePath of Object.keys(fileContents)) {
-						// Check if the file path represents an image
-						console.log(filePath)
 						if (this.isImagePath(filePath)) {
-							// Add the image path to the result array
 							console.log(`This is an image we need ${filePath}`)
 							imagePaths.push(filePath);
 						}
 					}
 				}
+				// TODO check if there are paths to upload...
 
-
-				// TODO maybe use these resolvedlinks instead of regex.....
-				// this seems to give all files in vault
-				// get this files name , find it in this array 
-				// then get the links ending in image i.e .png etc.
-				// then use this full path to read binary .....
-				// this returns an ArrayBuffer 
-				// use this ArrayBuffer with arrayBufferToBase64 to get base64 of image
-				// test and go from there...
-				//
-				//
 				await this.imageUploadService.uploadImagesToStorageProvider(imagePaths)
-
-
-
 
 			} catch (e) {
 				console.log("Faile to read iamge loc:", e);
