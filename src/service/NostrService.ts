@@ -267,11 +267,10 @@ export default class NostrService {
 				tags.push(["title", noteTitle]);
 			}
 
-			console.log("Content: ", fileContent);
 
 			// Extract image paths from the Markdown content
 			const regexImagePaths: string[] = this.extractImagePaths(fileContent);
-			const imagePaths: string[] = [] ;
+			const imagePaths: string[] = [];
 			console.log(imagePaths)
 
 			// Print the extracted image paths
@@ -293,14 +292,22 @@ export default class NostrService {
 						}
 					}
 				}
-				// TODO check if there are paths to upload...
-
-				await this.imageUploadService.uploadImagesToStorageProvider(imagePaths)
-
+				if (imagePaths.length > 0) {
+					let imageUploadResult = await this.imageUploadService.uploadImagesToStorageProvider(imagePaths)
+					if (imageUploadResult.success) {
+						console.log(`Got the images uploaded ${imageUploadResult}`)
+						for (const imageTarget of imageUploadResult.results){
+							console.log(`For ${imageTarget.filePath} ---> replace ${imageTarget.stringToReplace} with ${imageTarget.replacementStringURL}` )
+						}
+					} else {
+						console.error("Problem with the image upload, some or all images may not have successfully uploaded...")
+					}
+				}
 			} catch (e) {
-				console.log("Faile to read iamge loc:", e);
+				console.error("Bigger Problem with the image upload, some or all images may not have successfully uploaded...", e)
 			}
-
+			// TODO : take the imageregex and repalce with the uploaded urls in imageUploadResult
+			console.log("Content Before: ", fileContent);
 
 			let eventTemplate = {
 				kind: 30023,
