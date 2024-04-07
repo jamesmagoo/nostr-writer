@@ -1,6 +1,6 @@
 import NostrWriterPlugin from "main";
 import axios from 'axios';
-import { App, TFile, arrayBufferToBase64 } from "obsidian";
+import { App, RequestUrlParam, TFile, requestUrl } from "obsidian";
 import { NostrWriterPluginSettings } from "src/settings";
 
 export default class ImageUploadService {
@@ -25,7 +25,7 @@ export default class ImageUploadService {
 	// return data structure may be a map ? e.g. "![images/bah.png]" : "https://cdn.nostr.build/i/c50b26c94e4ee712e56653ae125a7af068eebdc07777346381187d7db3b2050c.jpg"
 	// i.e. <md string to replace> : <replacement string>
 	// it may need to be an array of this obj : {<filePath>, <stringToReplace>, <replacementStringURL>} e.g. {"imagesFolder/image.png", "![[image.png]]", "https://cdn...."}
-	async uploadImagesToStorageProvider(imageFilePaths: string[]): Promise<{ success: boolean, results: { filePath: string, stringToReplace: string, replacementStringURL: string}[] }> {
+	async uploadImagesToStorageProvider(imageFilePaths: string[]): Promise<{ success: boolean, results: { filePath: string, stringToReplace: string, replacementStringURL: string } }> {
 		console.log("Uploading images....", imageFilePaths);
 
 		const uploadResults = [];
@@ -41,14 +41,25 @@ export default class ImageUploadService {
 					const formData = new FormData();
 					formData.append('file', new Blob([imageBinary]), imageFile.name);
 
+					//const requestUrlParams: RequestUrlParam = {
+					//	url: 'https://nostr.build/api/v2/upload/files',
+					//	method: 'POST',
+					//	body: formDataString,
+					//	headers: {
+					//		//	'Content-Type': 'application/x-www-form-urlencoded',
+					//	},
+					//}
+
+					// using axios has CORS problems....
 					const response = await axios.post('https://nostr.build/api/v2/upload/files', formData, {
 						headers: {
 							'Content-Type': 'multipart/form-data',
 						},
 					});
-
+					//let response = await requestUrl(requestUrlParams);
 					console.log(response)
-					const { data } = response;
+					//const { data } = response.json();
+					const { data } = response ;
 					console.log(`full Response from nostr build`, data);
 
 					console.log('Upload successful:', data.data);

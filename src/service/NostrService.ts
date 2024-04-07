@@ -308,6 +308,7 @@ export default class NostrService {
 			}
 			// TODO : take the imageregex and repalce with the uploaded urls in imageUploadResult
 			console.log("Content Before: ", fileContent);
+			// TODO: follow nip92 for inline media attachments, add tags as neccessary
 
 			let eventTemplate = {
 				kind: 30023,
