@@ -51,6 +51,12 @@ export default class ImageUploadService {
 					//}
 
 					// using axios has CORS problems....
+					// nostr.build allows Obsidian but other stroage providers may not 
+					// so need to use Obsidian's requestUrl method for future cases....
+					// sending formData is tricky using this api - see below
+					// https://github.com/ai-chen2050/obsidian-wechat-public-platform/blob/9fdecb96966eaafdd6cbac716ffa5da3fb8d4b2b/src/api.ts#L92
+					// or...
+					// https://github.com/gavvvr/obsidian-imgur-plugin/blob/main/src/uploader/imgur/ImgurAnonymousUploader.ts
 					const response = await axios.post('https://nostr.build/api/v2/upload/files', formData, {
 						headers: {
 							'Content-Type': 'multipart/form-data',
