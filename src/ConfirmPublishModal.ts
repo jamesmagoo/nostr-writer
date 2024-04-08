@@ -27,33 +27,29 @@ export default class ConfirmPublishModal extends Modal {
 
 	async onOpen() {
 		let { contentEl } = this;
-		
-		const frontmatter = await this.app.metadataCache.getFileCache(this.file)?.frontmatter;
-		const links = this.app.metadataCache.getFileCache(this.file)?.links;
-		console.log("Links:", links);
-		const embeds = this.app.metadataCache.getFileCache(this.file)?.embeds;
-		console.log("Embeds:", embeds);
-        
+
+		const frontmatter = this.app.metadataCache.getFileCache(this.file)?.frontmatter;
+
 		// TODO check our Progress Bar Component...
 
-        const frontmatterRegex = /---\s*[\s\S]*?\s*---/g;
-        const content = (await this.app.vault.read(this.file)).replace(frontmatterRegex, "").trim();
-        
-        const noteWordCount = content.split(" ").length;
+		const frontmatterRegex = /---\s*[\s\S]*?\s*---/g;
+		const content = (await this.app.vault.read(this.file)).replace(frontmatterRegex, "").trim();
+
+		const noteWordCount = content.split(" ").length;
 
 		let noteCategoryTags: string[] = [];
-		
+
 		const regex = /#\w+/g;
 		const matches = content.match(regex) || [];
 		const hashtags = matches.map((match: string) => match.slice(1));
 
 		const properties = {
-            title: frontmatter?.title || this.file.basename,
-            summary: frontmatter?.summary || "",
-            image: isValidURL(frontmatter?.image) ? frontmatter?.image : "",
-            tags: frontmatter?.tags || hashtags,
-        }
-		
+			title: frontmatter?.title || this.file.basename,
+			summary: frontmatter?.summary || "",
+			image: isValidURL(frontmatter?.image) ? frontmatter?.image : "",
+			tags: frontmatter?.tags || hashtags,
+		}
+
 		for (const tag of properties.tags) {
 			noteCategoryTags.push(tag);
 		}
@@ -99,16 +95,41 @@ export default class ConfirmPublishModal extends Modal {
 			pillsContainer.appendChild(pillElement);
 		});
 
-		contentEl.createEl("h6", { text: `Summary & Image Link (optional)` });
+		contentEl.createEl("h6", { text: `Summary & Banner Image (optional)` });
 		let summaryText = new TextAreaComponent(contentEl)
 			.setPlaceholder("Enter a brief summary here...(optional)")
 			.setValue(properties.summary);
 
-		let imageUrlText = new TextAreaComponent(contentEl)
-			.setPlaceholder(
-				"Enter an image URL here to accompany your article...(optional)"
-			)
-			.setValue(properties.image);
+		//		let imageUrlText = new TextAreaComponent(contentEl)
+		//			.setPlaceholder(
+		//				"Enter an image URL here to accompany your article...(optional)"
+		//			)
+		//			.setValue(properties.image);
+
+		let vaultFiles = this.app.vault.getFiles();
+		console.log(vaultFiles)
+		const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp'];
+		let imageFiles = vaultFiles.filter(file => {
+			const extension = file.extension.toLowerCase();
+			return imageExtensions.includes(extension);
+		});
+		console.log(imageFiles)
+
+		new Setting(contentEl)
+			.setName("Select Cover Image")
+			.setDesc("Select an image for your articles banner.")
+			.addDropdown((dropdown) => {
+				dropdown.addOption("default", "No Image");
+				for (const { name } of imageFiles) {
+					dropdown.addOption(name, name);
+				}
+				dropdown.setValue("default");
+				dropdown.onChange(async (value) => {
+					selectedProfileKey = value;
+					new Notice(`${selectedProfileKey} selected`);
+					console.log(selectedProfileKey)
+				});
+			});
 
 		titleText.inputEl.setCssStyles({
 			width: "100%",
@@ -127,56 +148,29 @@ export default class ConfirmPublishModal extends Modal {
 
 		tagsText.inputEl.addClass("features");
 
-		imageUrlText.inputEl.setCssStyles({
-			width: "100%",
-			marginBottom: "10px",
-			marginTop: "10px",
-		});
-
-		let imagePreview = contentEl.createEl("img");
-		imagePreview.setCssStyles({
-			maxWidth: "100%",
-			display: "none",
-		});
-		imagePreview.src = "";
-
-		// Update Image Preview on URL change
-		imageUrlText.inputEl.addEventListener("input", () => {
-			let url = imageUrlText.getValue();
-			if (url) {
-				if (!isValidURL(url)) {
-					new Notice(`Invalid image URL. Please enter a valid URL.`);
-					publishButton.setDisabled(true);
-					publishButton.setButtonText("Invalid image url");
-					return;
-				} else {
-					imagePreview.src = url;
-					imagePreview.style.display = "block";
-				}
-			} else {
-				imagePreview.style.display = "none";
-			}
-			publishButton.setButtonText("Confirm and Publish");
-			publishButton.setDisabled(false);
-		});
+		//imageUrlText.inputEl.setCssStyles({
+		//	width: "100%",
+		//	marginBottom: "10px",
+		//	marginTop: "10px",
+		//});
 
 		let selectedProfileKey = "default";
-		if(this.plugin.settings.profiles.length > 0 && this.plugin.settings.multipleProfilesEnabled){
-			let x =new Setting(contentEl)
-			.setName("Select Profile")
-			.setDesc("Select a profile to send this note from.")
-			.addDropdown((dropdown) => {
-				dropdown.addOption("default", "Default");
-				for (const { profileNickname } of this.plugin.settings.profiles) {
-					dropdown.addOption(profileNickname, profileNickname);
-				}
-				dropdown.setValue("default");
-				dropdown.onChange(async (value) => {
-					selectedProfileKey = value;
-					new Notice(`${selectedProfileKey} selected`);
-					console.log(selectedProfileKey)
+		if (this.plugin.settings.profiles.length > 0 && this.plugin.settings.multipleProfilesEnabled) {
+			let x = new Setting(contentEl)
+				.setName("Select Profile")
+				.setDesc("Select a profile to send this note from.")
+				.addDropdown((dropdown) => {
+					dropdown.addOption("default", "Default");
+					for (const { profileNickname } of this.plugin.settings.profiles) {
+						dropdown.addOption(profileNickname, profileNickname);
+					}
+					dropdown.setValue("default");
+					dropdown.onChange(async (value) => {
+						selectedProfileKey = value;
+						new Notice(`${selectedProfileKey} selected`);
+						console.log(selectedProfileKey)
+					});
 				});
-			});
 		}
 
 		// TODO is this a featue I want to add? Why publish as a draft? Obsidian is the draft location.
@@ -200,44 +194,45 @@ export default class ConfirmPublishModal extends Modal {
 			.setButtonText("Confirm and Publish")
 			.setCta()
 			.onClick(async () => {
-				if(confirm("Are you sure you want to publish this note to Nostr?")){
-				// Disable the button and change the text to show a loading state
-				publishButton.setButtonText("Publishing...").setDisabled(true);
-				setTimeout(async () => {
-					try {
-						const fileContent = content;
-						const title = titleText.getValue();
-						const summary = summaryText.getValue();
-						const imageUrl = imageUrlText.getValue();
-						let res = await this.nostrService.publishNote(
-							fileContent,
-							this.file,
-							summary,
-							imageUrl,
-							title,
-							noteCategoryTags,
-							selectedProfileKey
-						);
-						if (res.success) {
-							setTimeout(() => {
-								new Notice(`Successfully sent note to Nostr.`);
-							}, 500);
-							for (let relay of res.publishedRelays) {
+				if (confirm("Are you sure you want to publish this note to Nostr?")) {
+					// Disable the button and change the text to show a loading state
+					publishButton.setButtonText("Publishing...").setDisabled(true);
+					setTimeout(async () => {
+						try {
+							const fileContent = content;
+							const title = titleText.getValue();
+							const summary = summaryText.getValue();
+							const imageUrl = imageUrlText.getValue();
+							let res = await this.nostrService.publishNote(
+								fileContent,
+								this.file,
+								summary,
+								imageUrl,
+								title,
+								noteCategoryTags,
+								selectedProfileKey
+							);
+							if (res.success) {
 								setTimeout(() => {
-									new Notice(`✅ - Sent to ${relay}`);
+									new Notice(`Successfully sent note to Nostr.`);
 								}, 500);
+								for (let relay of res.publishedRelays) {
+									setTimeout(() => {
+										new Notice(`✅ - Sent to ${relay}`);
+									}, 500);
+								}
+							} else {
+								new Notice(`❌ Failed to send note to Nostr.`);
 							}
-						} else {
-							new Notice(`❌ Failed to send note to Nostr.`);
+						} catch (error) {
+							new Notice(`Failed to publish note to Nostr.`);
 						}
-					} catch (error) {
-						new Notice(`Failed to publish note to Nostr.`);
-					}
-					publishButton
-						.setButtonText("Confirm and Publish")
-						.setDisabled(false);
-					this.close();
-				}, 3000);}
+						publishButton
+							.setButtonText("Confirm and Publish")
+							.setDisabled(false);
+						this.close();
+					}, 3000);
+				}
 			});
 
 		contentEl.classList.add("publish-modal-content");

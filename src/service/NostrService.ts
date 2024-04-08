@@ -5,7 +5,7 @@ import { SimplePool } from 'nostr-tools/pool';
 import { Event } from "nostr-tools/core"
 import { finalizeEvent, getPublicKey } from "nostr-tools/pure";
 import { Relay } from "nostr-tools/relay";
-import { App, TFile, normalizePath, arrayBufferToBase64 } from "obsidian";
+import { App, TFile } from "obsidian";
 import { NostrWriterPluginSettings } from "src/settings";
 import { v4 as uuidv4 } from "uuid";
 import ImageUploadService from "./ImageUploadService";
@@ -267,21 +267,10 @@ export default class NostrService {
 				tags.push(["title", noteTitle]);
 			}
 
-
-			// Extract image paths from the Markdown content
-			const regexImagePaths: string[] = this.extractImagePaths(fileContent);
 			const imagePaths: string[] = [];
-			console.log(imagePaths)
 
-			// Print the extracted image paths
-			regexImagePaths.forEach(path => console.log(path));
 			try {
 				let vaultResolvedLinks = this.app.metadataCache.resolvedLinks;
-
-				console.log(activeFile.basename)
-				console.log(activeFile.name)
-
-				console.log("Resolved links:", vaultResolvedLinks);
 
 				if (vaultResolvedLinks[activeFile.name]) {
 					const fileContents = vaultResolvedLinks[activeFile.name];
@@ -295,13 +284,17 @@ export default class NostrService {
 				console.log("Content Before: ", fileContent);
 				if (imagePaths.length > 0) {
 					let imageUploadResult = await this.imageUploadService.uploadImagesToStorageProvider(imagePaths)
-					if (imageUploadResult.success) {
+					if (imageUploadResult.success && imageUploadResult.results && imageUploadResult.results.length > 0) {
 						console.log(`Got the images uploaded ${imageUploadResult}`)
 						for (const imageTarget of imageUploadResult.results) {
 							console.log(`For ${imageTarget.filePath} ---> replace ${imageTarget.stringToReplace} with ${imageTarget.replacementStringURL}`)
-							fileContent.replace(imageTarget.stringToReplace, imageTarget.replacementStringURL);
-							let imetaTag = this.getImetaTagForImage(imageTarget.uploadMetadata);
-							tags.push(imetaTag);
+							if (imageTarget.replacementStringURL !== null && imageTarget.uploadMetadata !== null) {
+								fileContent = fileContent.replace(imageTarget.stringToReplace, imageTarget.replacementStringURL);
+								let imetaTag = this.getImetaTagForImage(imageTarget.uploadMetadata);
+								if (imetaTag !== null) {
+									tags.push(imetaTag);
+								}
+							}
 						}
 					} else {
 						console.error("Problem with the image upload, some or all images may not have successfully uploaded...")
@@ -332,61 +325,53 @@ export default class NostrService {
 		}
 	}
 
-	getImetaTagForImage(uploadData: any): string[] {
-		// TODO: follow nip92 for inline media attachments, add tags as neccessary
-		//
-		// url the url to download the file
-		let url = uploadData.url;
-		//m a string indicating the data type of the file. The MIME types format must be used, and they should be lowercase.
-		let mimeType = uploadData.mime
-		//x containing the SHA-256 hexencoded string of the file.
-		//ox containing the SHA-256 hexencoded string of the original file, before any transformations done by the upload server
-		let ox = uploadData.original_sha256;
-		//size (optional) size of file in bytes
-		let size = uploadData.size;
-		//dim (optional) size of file in pixels in the form <width>x<height>
-		let dim = uploadData.dimensionsString
-		//
-		//		  "tags": [
-		//    [
-		//      "imeta",
-		//      "url https://nostr.build/i/my-image.jpg",
-		//      "m image/jpeg",
-		//      "blurhash eVF$^OI:${M{o#*0-nNFxakD-?xVM}WEWB%iNKxvR-oetmo#R-aen$",
-		//      "dim 3024x4032",
-		//      "alt A scenic photo overlooking the coast of Costa Rica",
-		//      "x <sha256 hash as specified in NIP 94>",
-		//      "fallback https://nostrcheck.me/alt1.jpg",
-		//      "fallback https://void.cat/alt1.jpg"
-		//    ]
-		//  ]
-		//
+	getImetaTagForImage(uploadData: any): string[] | null {
+		let inlineTag: string[] = [];
+		let url = uploadData.url ? uploadData.url : null;
+		let mimeType = uploadData.mime ? uploadData.mime : null;
+		let ox = uploadData.original_sha256 ? uploadData.original_sha256 : null;
+		let size = uploadData.size ? uploadData.size : null;
+		let dim = uploadData.dimensionsString ? uploadData.dimensionsString : null;
+		let blurhash = uploadData.blurhash ? uploadData.blurhash : null;
+		let thumbnail = uploadData.thumbnail ? uploadData.thumbnail : null;
 
-		//blurhash(optional) the blurhash to show while the file is being loaded by the client
-		//thumb (optional) url of thumbnail with same aspect ratio
-		//image (optional) url of preview image with same dimensions
-		//summary (optional) text excerpt
-		//alt (optional) description for accessibility
-		//fallback (optional) zero or more fallback file sources in case url fails
-		["imeta"]
-
-	}
-
-	extractImagePaths(mdContent: string): string[] {
-		// Regular expression pattern to match image paths in Markdown format
-		const pattern: RegExp = /!\[\[(.*?\.(?:png|jpg|jpeg|gif|bmp|svg))\]\]/gi;
-
-		const matches: RegExpExecArray[] = [];
-		let match: RegExpExecArray | null;
-		while ((match = pattern.exec(mdContent)) !== null) {
-			matches.push(match);
+		inlineTag.push("imeta")
+		if (url !== null) {
+			inlineTag.push("imeta")
+			let urlString = `url ${url}`
+			inlineTag.push(urlString)
+		} else {
+			console.error("No upload URL in metadata, so not adding imeta tag")
+			return null;
 		}
 
-		console.log("matches:", matches);
+		if (mimeType !== null) {
+			let mimeString = `m ${mimeType}`
+			inlineTag.push(mimeString)
+		}
+		if (ox !== null) {
+			let oxString = `ox ${ox}`
+			inlineTag.push(oxString)
+		}
+		if (size !== null) {
+			let sizeString = `size ${size}`
+			inlineTag.push(sizeString)
+		}
+		if (dim !== null) {
+			let dimString = `dim ${dim}`
+			inlineTag.push(dimString)
+		}
+		if (blurhash !== null) {
+			let blurhashString = `blurhash ${blurhash}`
+			inlineTag.push(blurhashString)
+		}
 
-		const imagePaths: string[] = matches.map(match => match[1].trim());
+		if (thumbnail !== null) {
+			let thumbnailString = `thumb ${thumbnail}`
+			inlineTag.push(thumbnailString)
+		}
 
-		return imagePaths;
+		return inlineTag;
 	}
 
 	isImagePath(filePath: string): boolean {

@@ -21,14 +21,10 @@ export default class ImageUploadService {
 		this.app = app;
 	}
 
-	// a function that takws an array of file strings - gets the file data - uploads to nostr.build - and returns corresponding URL
-	// return data structure may be a map ? e.g. "![images/bah.png]" : "https://cdn.nostr.build/i/c50b26c94e4ee712e56653ae125a7af068eebdc07777346381187d7db3b2050c.jpg"
-	// i.e. <md string to replace> : <replacement string>
-	// it may need to be an array of this obj : {<filePath>, <stringToReplace>, <replacementStringURL>} e.g. {"imagesFolder/image.png", "![[image.png]]", "https://cdn...."}
-	async uploadImagesToStorageProvider(imageFilePaths: string[]): Promise<{ success: boolean, results: { filePath: string, stringToReplace: string, replacementStringURL: string, uploadMetadata : any } }> {
+	async uploadImagesToStorageProvider(imageFilePaths: string[]): Promise<{ success: boolean, results: { filePath: string, stringToReplace: string, replacementStringURL: string, uploadMetadata : any }[] }> {
 		console.log("Uploading images....", imageFilePaths);
 
-		const uploadResults = [];
+		let  uploadResults = [];
 		let success = true;
 
 		for (let imagePath of imageFilePaths) {
@@ -86,15 +82,6 @@ export default class ImageUploadService {
 				success = false;
 			}
 
-
-			// TODO : next I need to take this bin/base64 data and uplaod to the URL 
-			// wait for repsonse (a URL of the succesfully loaded image)
-			// then add both the imageParh and the new upload URL to an object and push to result array
-			// CASES:
-			// all upload : {success: true, results : [{"image1.png" : "https://cdn.nostr.build/abcxyz..."},{"folderA/image5.png" : "https://cdn.nostr.build/abcxy..."}]}
-			// one uplaod fails and others do not 
-			// all fail : {success: false, result: []}
-			// image too big .. could we check this first and warn? may need a progress screen after publish button is click (showing progress/success of each upload)
 		}
 
 		console.log(`Final Result : ${uploadResults} --- Success: ${success}`);
