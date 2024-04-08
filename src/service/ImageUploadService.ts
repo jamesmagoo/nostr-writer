@@ -25,7 +25,7 @@ export default class ImageUploadService {
 	// return data structure may be a map ? e.g. "![images/bah.png]" : "https://cdn.nostr.build/i/c50b26c94e4ee712e56653ae125a7af068eebdc07777346381187d7db3b2050c.jpg"
 	// i.e. <md string to replace> : <replacement string>
 	// it may need to be an array of this obj : {<filePath>, <stringToReplace>, <replacementStringURL>} e.g. {"imagesFolder/image.png", "![[image.png]]", "https://cdn...."}
-	async uploadImagesToStorageProvider(imageFilePaths: string[]): Promise<{ success: boolean, results: { filePath: string, stringToReplace: string, replacementStringURL: string } }> {
+	async uploadImagesToStorageProvider(imageFilePaths: string[]): Promise<{ success: boolean, results: { filePath: string, stringToReplace: string, replacementStringURL: string, uploadMetadata : any } }> {
 		console.log("Uploading images....", imageFilePaths);
 
 		const uploadResults = [];
@@ -46,7 +46,7 @@ export default class ImageUploadService {
 					//	method: 'POST',
 					//	body: formDataString,
 					//	headers: {
-					//		//	'Content-Type': 'application/x-www-form-urlencoded',
+					//		//	'Content-Type': 'multipart/form-data',
 					//	},
 					//}
 
@@ -74,7 +74,8 @@ export default class ImageUploadService {
 						const result = {
 							filePath: imagePath,
 							stringToReplace: `![[${imageFile.name}]]`,
-							replacementStringURL: data.data[0].url
+							replacementStringURL: data.data[0].url,
+							uploadMetadata : data.data[0]
 						};
 						uploadResults.push(result);
 					}

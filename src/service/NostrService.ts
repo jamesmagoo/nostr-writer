@@ -292,12 +292,16 @@ export default class NostrService {
 						}
 					}
 				}
+				console.log("Content Before: ", fileContent);
 				if (imagePaths.length > 0) {
 					let imageUploadResult = await this.imageUploadService.uploadImagesToStorageProvider(imagePaths)
 					if (imageUploadResult.success) {
 						console.log(`Got the images uploaded ${imageUploadResult}`)
-						for (const imageTarget of imageUploadResult.results){
-							console.log(`For ${imageTarget.filePath} ---> replace ${imageTarget.stringToReplace} with ${imageTarget.replacementStringURL}` )
+						for (const imageTarget of imageUploadResult.results) {
+							console.log(`For ${imageTarget.filePath} ---> replace ${imageTarget.stringToReplace} with ${imageTarget.replacementStringURL}`)
+							fileContent.replace(imageTarget.stringToReplace, imageTarget.replacementStringURL);
+							let imetaTag = this.getImetaTagForImage(imageTarget.uploadMetadata);
+							tags.push(imetaTag);
 						}
 					} else {
 						console.error("Problem with the image upload, some or all images may not have successfully uploaded...")
@@ -306,9 +310,7 @@ export default class NostrService {
 			} catch (e) {
 				console.error("Bigger Problem with the image upload, some or all images may not have successfully uploaded...", e)
 			}
-			// TODO : take the imageregex and repalce with the uploaded urls in imageUploadResult
-			console.log("Content Before: ", fileContent);
-			// TODO: follow nip92 for inline media attachments, add tags as neccessary
+			console.log("Content After F&R: ", fileContent);
 
 			let eventTemplate = {
 				kind: 30023,
@@ -330,6 +332,45 @@ export default class NostrService {
 		}
 	}
 
+	getImetaTagForImage(uploadData: any): string[] {
+		// TODO: follow nip92 for inline media attachments, add tags as neccessary
+		//
+		// url the url to download the file
+		let url = uploadData.url;
+		//m a string indicating the data type of the file. The MIME types format must be used, and they should be lowercase.
+		let mimeType = uploadData.mime
+		//x containing the SHA-256 hexencoded string of the file.
+		//ox containing the SHA-256 hexencoded string of the original file, before any transformations done by the upload server
+		let ox = uploadData.original_sha256;
+		//size (optional) size of file in bytes
+		let size = uploadData.size;
+		//dim (optional) size of file in pixels in the form <width>x<height>
+		let dim = uploadData.dimensionsString
+		//
+		//		  "tags": [
+		//    [
+		//      "imeta",
+		//      "url https://nostr.build/i/my-image.jpg",
+		//      "m image/jpeg",
+		//      "blurhash eVF$^OI:${M{o#*0-nNFxakD-?xVM}WEWB%iNKxvR-oetmo#R-aen$",
+		//      "dim 3024x4032",
+		//      "alt A scenic photo overlooking the coast of Costa Rica",
+		//      "x <sha256 hash as specified in NIP 94>",
+		//      "fallback https://nostrcheck.me/alt1.jpg",
+		//      "fallback https://void.cat/alt1.jpg"
+		//    ]
+		//  ]
+		//
+
+		//blurhash(optional) the blurhash to show while the file is being loaded by the client
+		//thumb (optional) url of thumbnail with same aspect ratio
+		//image (optional) url of preview image with same dimensions
+		//summary (optional) text excerpt
+		//alt (optional) description for accessibility
+		//fallback (optional) zero or more fallback file sources in case url fails
+		["imeta"]
+
+	}
 
 	extractImagePaths(mdContent: string): string[] {
 		// Regular expression pattern to match image paths in Markdown format
