@@ -100,36 +100,94 @@ export default class ConfirmPublishModal extends Modal {
 			.setPlaceholder("Enter a brief summary here...(optional)")
 			.setValue(properties.summary);
 
-		//		let imageUrlText = new TextAreaComponent(contentEl)
-		//			.setPlaceholder(
-		//				"Enter an image URL here to accompany your article...(optional)"
-		//			)
-		//			.setValue(properties.image);
-
-		let vaultFiles = this.app.vault.getFiles();
-		console.log(vaultFiles)
-		const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp'];
-		let imageFiles = vaultFiles.filter(file => {
-			const extension = file.extension.toLowerCase();
-			return imageExtensions.includes(extension);
-		});
-		console.log(imageFiles)
+		let selectedBannerImage: File | null = null;
 
 		new Setting(contentEl)
-			.setName("Select Cover Image")
-			.setDesc("Select an image for your articles banner.")
-			.addDropdown((dropdown) => {
-				dropdown.addOption("default", "No Image");
-				for (const { name } of imageFiles) {
-					dropdown.addOption(name, name);
-				}
-				dropdown.setValue("default");
-				dropdown.onChange(async (value) => {
-					selectedProfileKey = value;
-					new Notice(`${selectedProfileKey} selected`);
-					console.log(selectedProfileKey)
-				});
-			});
+			.setName("Upload Banner Image")
+			.setDesc("Upload an image to be shown alongside you articles title.")
+			.addButton((button) =>
+				button
+					.setButtonText("Upload")
+					.setIcon("upload")
+					.setTooltip("Upload an image file for your article banner.")
+					.onClick(async () => {
+						const input = document.createElement('input');
+						input.type = 'file';
+						input.multiple = false;
+
+						input.click();
+
+						input.addEventListener('change', async () => {
+							if (input.files !== null) {
+								const file = input.files[0];
+								if (file) {
+									if (!file.type.startsWith('image/')) {
+										new Notice('❌ Invalid file type. Please upload an image.');
+										return;
+									}
+
+									const maxSizeInBytes = 10 * 1024 * 1024; // 10 MB
+									// TODO only do this check for non-premium nostr build users..
+									//if (premiumImageStorageUser){
+									//	maxSizeInBytes = 100 * 1024 * 1024;
+									//}
+									// Option toggle in settings for user to indicate this ?
+									if (file.size > maxSizeInBytes) {
+										new Notice('❌ File size exceeds the limit. Please upload a smaller image.');
+										return;
+									}
+									selectedBannerImage = file;
+
+									imagePreview.src = URL.createObjectURL(selectedBannerImage);
+									imagePreview.style.display = "block";
+									clearImageButton.style.display = "inline-block";
+
+
+									imageNameDiv.textContent = selectedBannerImage.name;
+									new Notice(`✅ Selected image : ${file.name}`);
+								}
+							} else {
+								new Notice(`❗️ No file selected.`);
+							}
+						});
+
+					})
+			);
+
+		let imagePreview = contentEl.createEl("img");
+		imagePreview.setCssStyles({
+			maxWidth: "100%",
+			display: "none",
+		});
+
+		const imageNameDiv = contentEl.createEl("div");
+		imageNameDiv.setCssStyles({
+			display: "none",
+		});
+
+		const clearImageButton = contentEl.createEl("div");
+		clearImageButton.setCssStyles({
+			display: "none",
+			background: "none",
+			border: "none",
+			cursor: "pointer",
+			fontSize: "14px",
+			color: "red",
+		});
+
+		clearImageButton.textContent = "❌ Don't use this image.";
+
+		function clearSelectedImage() {
+			selectedBannerImage = null;
+			imagePreview.src = "";
+			imagePreview.style.display = "none";
+			imageNameDiv.textContent = "";
+			imageNameDiv.style.display = "none";
+			clearImageButton.style.display = "none";
+		}
+
+		clearImageButton.addEventListener("click", clearSelectedImage);
+
 
 		titleText.inputEl.setCssStyles({
 			width: "100%",
@@ -147,12 +205,6 @@ export default class ConfirmPublishModal extends Modal {
 		});
 
 		tagsText.inputEl.addClass("features");
-
-		//imageUrlText.inputEl.setCssStyles({
-		//	width: "100%",
-		//	marginBottom: "10px",
-		//	marginTop: "10px",
-		//});
 
 		let selectedProfileKey = "default";
 		if (this.plugin.settings.profiles.length > 0 && this.plugin.settings.multipleProfilesEnabled) {
@@ -202,6 +254,7 @@ export default class ConfirmPublishModal extends Modal {
 							const fileContent = content;
 							const title = titleText.getValue();
 							const summary = summaryText.getValue();
+							// TODO pass the uplaoded banner image file for uploading
 							const imageUrl = imageUrlText.getValue();
 							let res = await this.nostrService.publishNote(
 								fileContent,
