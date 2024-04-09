@@ -30,7 +30,7 @@ export default class ConfirmPublishModal extends Modal {
 
 		const frontmatter = this.app.metadataCache.getFileCache(this.file)?.frontmatter;
 
-		// TODO check our Progress Bar Component...
+		// TODO check out Progress Bar Component...
 
 		const frontmatterRegex = /---\s*[\s\S]*?\s*---/g;
 		const content = (await this.app.vault.read(this.file)).replace(frontmatterRegex, "").trim();
@@ -95,16 +95,16 @@ export default class ConfirmPublishModal extends Modal {
 			pillsContainer.appendChild(pillElement);
 		});
 
-		contentEl.createEl("h6", { text: `Summary & Banner Image (optional)` });
+		contentEl.createEl("h6", { text: `Summary` });
 		let summaryText = new TextAreaComponent(contentEl)
-			.setPlaceholder("Enter a brief summary here...(optional)")
+			.setPlaceholder("Optional brief summary of your article...")
 			.setValue(properties.summary);
 
-		let selectedBannerImage: File | null = null;
+		let selectedBannerImage: any | null = null;
 
 		new Setting(contentEl)
 			.setName("Upload Banner Image")
-			.setDesc("Upload an image to be shown alongside you articles title.")
+			.setDesc("Optional image to be shown alongside your articles title.")
 			.addButton((button) =>
 				button
 					.setButtonText("Upload")
@@ -144,6 +144,7 @@ export default class ConfirmPublishModal extends Modal {
 
 
 									imageNameDiv.textContent = selectedBannerImage.name;
+									console.log(file)
 									new Notice(`✅ Selected image : ${file.name}`);
 								}
 							} else {
@@ -175,7 +176,7 @@ export default class ConfirmPublishModal extends Modal {
 			color: "red",
 		});
 
-		clearImageButton.textContent = "❌ Don't use this image.";
+		clearImageButton.textContent = "❌ Remove image.";
 
 		function clearSelectedImage() {
 			selectedBannerImage = null;
@@ -254,20 +255,18 @@ export default class ConfirmPublishModal extends Modal {
 							const fileContent = content;
 							const title = titleText.getValue();
 							const summary = summaryText.getValue();
-							// TODO pass the uplaoded banner image file for uploading
-							const imageUrl = imageUrlText.getValue();
 							let res = await this.nostrService.publishNote(
 								fileContent,
 								this.file,
 								summary,
-								imageUrl,
+								selectedBannerImage.path ? selectedBannerImage.path : null, 
 								title,
 								noteCategoryTags,
 								selectedProfileKey
 							);
 							if (res.success) {
 								setTimeout(() => {
-									new Notice(`Successfully sent note to Nostr.`);
+									new Notice(`✅ Successfully sent note to Nostr.`);
 								}, 500);
 								for (let relay of res.publishedRelays) {
 									setTimeout(() => {

@@ -5,7 +5,7 @@ import { SimplePool } from 'nostr-tools/pool';
 import { Event } from "nostr-tools/core"
 import { finalizeEvent, getPublicKey } from "nostr-tools/pure";
 import { Relay } from "nostr-tools/relay";
-import { App, TFile } from "obsidian";
+import { App, Notice, TFile } from "obsidian";
 import { NostrWriterPluginSettings } from "src/settings";
 import { v4 as uuidv4 } from "uuid";
 import ImageUploadService from "./ImageUploadService";
@@ -221,7 +221,7 @@ export default class NostrService {
 		fileContent: string,
 		activeFile: TFile,
 		summary: string,
-		imageUrl: string,
+		imageBannerFilePath: string | null,
 		title: string,
 		userSelectedTags: string[],
 		profileNickname: string
@@ -247,8 +247,15 @@ export default class NostrService {
 				tags.push(["summary", summary]);
 			}
 
-			if (imageUrl) {
-				tags.push(["image", imageUrl]);
+			if (imageBannerFilePath !== null) {
+					let imageUploadResult = await this.imageUploadService.uploadArticleBannerImage(imageBannerFilePath);
+					if (imageUploadResult !== null) {
+						console.log(`Banner image here: ${imageUploadResult}`)
+						tags.push(["image", imageUploadResult]);
+						new Notice("✅ Uploaded Banner Image")
+					} else {
+						new Notice("❌ Problem Uploading Banner Image..")
+					}
 			}
 
 			let timestamp = Math.floor(Date.now() / 1000);
@@ -267,6 +274,7 @@ export default class NostrService {
 				tags.push(["title", noteTitle]);
 			}
 
+			// Handle inline images, upload if possible, and replace their strings with urls in the .md content
 			const imagePaths: string[] = [];
 
 			try {
@@ -283,6 +291,7 @@ export default class NostrService {
 				}
 				console.log("Content Before: ", fileContent);
 				if (imagePaths.length > 0) {
+					new Notice("✅ Found inline images - uploading with article.")
 					let imageUploadResult = await this.imageUploadService.uploadImagesToStorageProvider(imagePaths)
 					if (imageUploadResult.success && imageUploadResult.results && imageUploadResult.results.length > 0) {
 						console.log(`Got the images uploaded ${imageUploadResult}`)
@@ -380,7 +389,6 @@ export default class NostrService {
 		return imageExtensions.includes(ext);
 	}
 
-
 	async getUserBookmarkIDs(): Promise<{ success: boolean; bookmark_event_ids: string[], longform_event_ids: string[] }> {
 		const bookmark_event_ids: string[] = [];
 		const longform_event_ids: string[] = [];
@@ -410,7 +418,6 @@ export default class NostrService {
 			return { success: false, bookmark_event_ids, longform_event_ids };
 		}
 	}
-
 
 	async loadUserBookmarks(): Promise<Event[]> {
 		let events: Event[] = [];

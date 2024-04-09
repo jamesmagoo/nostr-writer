@@ -1,6 +1,6 @@
 import NostrWriterPlugin from "main";
 import axios from 'axios';
-import { App, RequestUrlParam, TFile, requestUrl } from "obsidian";
+import { App, FileSystemAdapter, RequestUrlParam, TFile, normalizePath, requestUrl } from "obsidian";
 import { NostrWriterPluginSettings } from "src/settings";
 
 export default class ImageUploadService {
@@ -21,10 +21,34 @@ export default class ImageUploadService {
 		this.app = app;
 	}
 
-	async uploadImagesToStorageProvider(imageFilePaths: string[]): Promise<{ success: boolean, results: { filePath: string, stringToReplace: string, replacementStringURL: string, uploadMetadata : any }[] }> {
+	async uploadArticleBannerImage(imageFilePath: string): Promise<string | null> {
+		let result = null;
+		try {
+			let path = normalizePath(imageFilePath);
+			let imageBuffer = await FileSystemAdapter.readLocalFile(path);
+			if (imageBuffer) {
+				const formData = new FormData();
+				formData.append('file', new Blob([imageBuffer]));
+				const response = await axios.post('https://nostr.build/api/v2/upload/files', formData, {
+					headers: {
+						'Content-Type': 'multipart/form-data',
+					},
+				});
+				const { data } = response;
+				if (Array.isArray(data.data) && data.data.length > 0) {
+					result = data.data[0].url;
+				}
+			}
+		} catch (error) {
+			console.error(`Problem with image file reading : ${error}`)
+		}
+		return result;
+	}
+
+	async uploadImagesToStorageProvider(imageFilePaths: string[]): Promise<{ success: boolean, results: { filePath: string, stringToReplace: string, replacementStringURL: string, uploadMetadata: any }[] }> {
 		console.log("Uploading images....", imageFilePaths);
 
-		let  uploadResults = [];
+		let uploadResults = [];
 		let success = true;
 
 		for (let imagePath of imageFilePaths) {
@@ -33,6 +57,7 @@ export default class ImageUploadService {
 				if (imageFile instanceof TFile) {
 					console.log(`Uploading....${imageFile.name}`)
 					let imageBinary = await this.app.vault.readBinary(imageFile);
+
 
 					const formData = new FormData();
 					formData.append('file', new Blob([imageBinary]), imageFile.name);
@@ -61,7 +86,7 @@ export default class ImageUploadService {
 					//let response = await requestUrl(requestUrlParams);
 					console.log(response)
 					//const { data } = response.json();
-					const { data } = response ;
+					const { data } = response;
 					console.log(`full Response from nostr build`, data);
 
 					console.log('Upload successful:', data.data);
@@ -71,7 +96,7 @@ export default class ImageUploadService {
 							filePath: imagePath,
 							stringToReplace: `![[${imageFile.name}]]`,
 							replacementStringURL: data.data[0].url,
-							uploadMetadata : data.data[0]
+							uploadMetadata: data.data[0]
 						};
 						uploadResults.push(result);
 					}
