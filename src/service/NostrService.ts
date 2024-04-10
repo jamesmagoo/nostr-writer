@@ -279,6 +279,7 @@ export default class NostrService {
 
 			try {
 				let vaultResolvedLinks = this.app.metadataCache.resolvedLinks;
+				console.log(vaultResolvedLinks)
 
 				if (vaultResolvedLinks[activeFile.name]) {
 					const fileContents = vaultResolvedLinks[activeFile.name];
@@ -308,9 +309,12 @@ export default class NostrService {
 					} else {
 						console.error("Problem with the image upload, some or all images may not have successfully uploaded...")
 					}
+				} else {
+					console.error("No images found in vault for this file..")
 				}
 			} catch (e) {
 				console.error("Bigger Problem with the image upload, some or all images may not have successfully uploaded...", e)
+				new Notice("❌ Problem uploading inline images.")
 			}
 			console.log("Content After F&R: ", fileContent);
 

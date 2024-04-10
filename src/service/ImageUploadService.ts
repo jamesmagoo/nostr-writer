@@ -1,6 +1,6 @@
 import NostrWriterPlugin from "main";
 import axios from 'axios';
-import { App, FileSystemAdapter, RequestUrlParam, TFile, normalizePath, requestUrl } from "obsidian";
+import { App, Notice, FileSystemAdapter, RequestUrlParam, TFile, normalizePath, requestUrl } from "obsidian";
 import { NostrWriterPluginSettings } from "src/settings";
 
 export default class ImageUploadService {
@@ -58,7 +58,10 @@ export default class ImageUploadService {
 					console.log(`Uploading....${imageFile.name}`)
 					let imageBinary = await this.app.vault.readBinary(imageFile);
 
-
+					if(this.isFileSizeOverLimit(imageBinary)){
+						continue;
+					}
+					console.log("herre");
 					const formData = new FormData();
 					formData.append('file', new Blob([imageBinary]), imageFile.name);
 
@@ -88,8 +91,6 @@ export default class ImageUploadService {
 					//const { data } = response.json();
 					const { data } = response;
 					console.log(`full Response from nostr build`, data);
-
-					console.log('Upload successful:', data.data);
 					if (Array.isArray(data.data) && data.data.length > 0) {
 						console.log("in here")
 						const result = {
@@ -99,10 +100,14 @@ export default class ImageUploadService {
 							uploadMetadata: data.data[0]
 						};
 						uploadResults.push(result);
+						new Notice(`✅ Uploaded ${imageFile.name}`)
+					} else {
+						new Notice(`❌ Problem uploading ${imageFile.name}`)
 					}
 
 				}
 			} catch (error) {
+				new Notice(`❌ Problem uploading `)
 				console.error(`Problem with image file reading : ${error}`)
 				success = false;
 			}
@@ -111,6 +116,20 @@ export default class ImageUploadService {
 
 		console.log(`Final Result : ${uploadResults} --- Success: ${success}`);
 		return { success, results: uploadResults };
+	}
+
+	isFileSizeOverLimit(file: ArrayBuffer): boolean {
+		const maxSizeInBytes = 10 * 1024 * 1024; // 10 MB
+		// TODO only do this check for non-premium nostr build users..
+		//if (premiumImageStorageUser){
+		//	maxSizeInBytes = 100 * 1024 * 1024;
+		//}
+		// Option toggle in settings for user to indicate this ?
+		if (file.byteLength > maxSizeInBytes) {
+			new Notice('❌ Inline image size exceeds the limit. Will not upload.');
+			return true;
+		}
+		return false;
 	}
 }
 

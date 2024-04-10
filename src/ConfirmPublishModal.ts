@@ -243,6 +243,12 @@ export default class ConfirmPublishModal extends Modal {
 		});
 		info.addClass("publish-modal-info");
 
+		console.error(selectedBannerImage)
+		let bannerPath : string | null = null;
+		if(selectedBannerImage !== null){
+			bannerPath = selectedBannerImage.path ? selectedBannerImage.path : null ;
+		}
+
 		let publishButton = new ButtonComponent(contentEl)
 			.setButtonText("Confirm and Publish")
 			.setCta()
@@ -259,7 +265,7 @@ export default class ConfirmPublishModal extends Modal {
 								fileContent,
 								this.file,
 								summary,
-								selectedBannerImage.path ? selectedBannerImage.path : null, 
+								bannerPath, 
 								title,
 								noteCategoryTags,
 								selectedProfileKey
@@ -277,7 +283,8 @@ export default class ConfirmPublishModal extends Modal {
 								new Notice(`❌ Failed to send note to Nostr.`);
 							}
 						} catch (error) {
-							new Notice(`Failed to publish note to Nostr.`);
+							console.error(error);
+							new Notice(`❌ Failed to publish note to Nostr.`);
 						}
 						publishButton
 							.setButtonText("Confirm and Publish")
