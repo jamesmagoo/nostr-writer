@@ -169,6 +169,11 @@ export default class NostrWriterPlugin extends Plugin {
 					"wss://nostr.rocks",
 					"wss://nostr.fmt.wiz.biz",
 				],
+				imageStorageProviders : [
+					"www.nostr.build",
+					"www.another.build",
+				],
+				selectedImageStorageProvider: "www.nostr.build",
 				multipleProfilesEnabled: false,
 				profiles: [],
 			},

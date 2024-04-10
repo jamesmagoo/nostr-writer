@@ -6,17 +6,14 @@ import { NostrWriterPluginSettings } from "src/settings";
 export default class ImageUploadService {
 	private plugin: NostrWriterPlugin;
 	private app: App;
+	private targetProvider: string;
 
 
 	constructor(plugin: NostrWriterPlugin, app: App, settings: NostrWriterPluginSettings) {
 		// TODO need to get the media storage provider from settings eventually, for now - nostr.build
-		//	if (!settings.privateKey) {
-		//		console.error(
-		//			"YourPlugin requires a private key to be set in the settings."
-		//		);
-		//		return;
-		//	}
-
+		
+		this.targetProvider = settings.selectedImageStorageProvider;
+		console.log(`Image uploader will use ${this.targetProvider}`)
 		this.plugin = plugin;
 		this.app = app;
 	}
