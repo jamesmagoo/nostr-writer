@@ -281,8 +281,8 @@ export default class NostrService {
 
 			try {
 				let vaultResolvedLinks = this.app.metadataCache.resolvedLinks;
-				if (vaultResolvedLinks[activeFile.name]) {
-					const fileContents = vaultResolvedLinks[activeFile.name];
+				if (vaultResolvedLinks[activeFile.path]) {
+					const fileContents = vaultResolvedLinks[activeFile.path];
 					for (const filePath of Object.keys(fileContents)) {
 						if (this.isImagePath(filePath)) {
 							imagePaths.push(filePath);
