@@ -243,11 +243,6 @@ export default class ConfirmPublishModal extends Modal {
 		});
 		info.addClass("publish-modal-info");
 
-		let bannerPath : string | null = null;
-		if(selectedBannerImage !== null){
-			bannerPath = selectedBannerImage.path ? selectedBannerImage.path : null ;
-		}
-
 		let publishButton = new ButtonComponent(contentEl)
 			.setButtonText("Confirm and Publish")
 			.setCta()
@@ -264,7 +259,7 @@ export default class ConfirmPublishModal extends Modal {
 								fileContent,
 								this.file,
 								summary,
-								bannerPath, 
+								selectedBannerImage && selectedBannerImage.path ? selectedBannerImage.path : null,
 								title,
 								noteCategoryTags,
 								selectedProfileKey

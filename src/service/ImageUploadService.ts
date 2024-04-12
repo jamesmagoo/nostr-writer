@@ -37,6 +37,7 @@ export default class ImageUploadService {
 					let base64encodedEventString = await nip98.getToken(ImageUploadService.UPLOAD_ENDPOINT, 'post',
 						(authEvent) => finalizeEvent(authEvent, Buffer.from(this.privateKey)), true);
 					headers['Authorization'] = base64encodedEventString;
+					new Notice("⏳ Uploading as premium user.")
 				}
 
 				const response = await axios.post('https://nostr.build/api/v2/upload/files', formData, {
@@ -93,7 +94,7 @@ export default class ImageUploadService {
 						let base64encodedEventString = await nip98.getToken(ImageUploadService.UPLOAD_ENDPOINT, 'post',
 							(authEvent) => finalizeEvent(authEvent, Buffer.from(this.privateKey)), true);
 						headers['Authorization'] = base64encodedEventString;
-
+						new Notice("⏳ Uploading as premium user.")
 					}
 					const response = await axios.post('https://nostr.build/api/v2/upload/files', formData, {
 						headers: headers,

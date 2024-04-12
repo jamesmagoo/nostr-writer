@@ -248,6 +248,7 @@ export default class NostrService {
 			}
 
 			if (imageBannerFilePath !== null) {
+					new Notice("🖼️ Uploading Banner Image")
 					let imageUploadResult = await this.imageUploadService.uploadArticleBannerImage(imageBannerFilePath);
 					if (imageUploadResult !== null) {
 						console.log(`Banner image here: ${imageUploadResult}`)
@@ -256,6 +257,8 @@ export default class NostrService {
 					} else {
 						new Notice("❌ Problem Uploading Banner Image..")
 					}
+			} else {
+				console.info("No banner image...")
 			}
 
 			let timestamp = Math.floor(Date.now() / 1000);
