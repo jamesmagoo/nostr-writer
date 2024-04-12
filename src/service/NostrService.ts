@@ -1,12 +1,14 @@
 import NostrWriterPlugin from "main";
+import * as path from 'path';
 import { nip19 } from "nostr-tools";
 import { SimplePool } from 'nostr-tools/pool';
 import { Event } from "nostr-tools/core"
 import { finalizeEvent, getPublicKey } from "nostr-tools/pure";
 import { Relay } from "nostr-tools/relay";
-import { App, TFile } from "obsidian";
+import { App, Notice, TFile } from "obsidian";
 import { NostrWriterPluginSettings } from "src/settings";
 import { v4 as uuidv4 } from "uuid";
+import ImageUploadService from "./ImageUploadService";
 
 interface Profile {
 	profileNickname: string;
@@ -25,6 +27,7 @@ export default class NostrService {
 	connectedRelays: Relay[];
 	private pool: SimplePool;
 	private poolUrls: string[];
+	private imageUploadService: ImageUploadService;
 
 
 	constructor(
@@ -46,6 +49,7 @@ export default class NostrService {
 		}
 		this.plugin = plugin;
 		this.app = app;
+		this.imageUploadService = new ImageUploadService(this.plugin, this.app, settings);
 		this.privateKey = this.convertKeyToHex(settings.privateKey);
 		this.publicKey = getPublicKey(this.privateKey);
 		this.relayURLs = [];
@@ -217,7 +221,7 @@ export default class NostrService {
 		fileContent: string,
 		activeFile: TFile,
 		summary: string,
-		imageUrl: string,
+		imageBannerFilePath: string | null,
 		title: string,
 		userSelectedTags: string[],
 		profileNickname: string
@@ -243,8 +247,17 @@ export default class NostrService {
 				tags.push(["summary", summary]);
 			}
 
-			if (imageUrl) {
-				tags.push(["image", imageUrl]);
+			if (imageBannerFilePath !== null) {
+					new Notice("🖼️ Uploading Banner Image")
+					let imageUploadResult = await this.imageUploadService.uploadArticleBannerImage(imageBannerFilePath);
+					if (imageUploadResult !== null) {
+						tags.push(["image", imageUploadResult]);
+						new Notice("✅ Uploaded Banner Image")
+					} else {
+						new Notice("❌ Problem Uploading Banner Image..")
+					}
+			} else {
+				console.info("No banner image...")
 			}
 
 			let timestamp = Math.floor(Date.now() / 1000);
@@ -261,6 +274,43 @@ export default class NostrService {
 			} else {
 				const noteTitle = activeFile.basename;
 				tags.push(["title", noteTitle]);
+			}
+
+			// Handle inline images, upload if possible, and replace their strings with urls in the .md content
+			const imagePaths: string[] = [];
+
+			try {
+				let vaultResolvedLinks = this.app.metadataCache.resolvedLinks;
+				if (vaultResolvedLinks[activeFile.name]) {
+					const fileContents = vaultResolvedLinks[activeFile.name];
+					for (const filePath of Object.keys(fileContents)) {
+						if (this.isImagePath(filePath)) {
+							imagePaths.push(filePath);
+						}
+					}
+				}
+				if (imagePaths.length > 0) {
+					new Notice("✅ Found inline images - uploading with article.")
+					let imageUploadResult = await this.imageUploadService.uploadImagesToStorageProvider(imagePaths)
+					if (imageUploadResult.success && imageUploadResult.results && imageUploadResult.results.length > 0) {
+						for (const imageTarget of imageUploadResult.results) {
+							if (imageTarget.replacementStringURL !== null && imageTarget.uploadMetadata !== null) {
+								fileContent = fileContent.replace(imageTarget.stringToReplace, imageTarget.replacementStringURL);
+								let imetaTag = this.getImetaTagForImage(imageTarget.uploadMetadata);
+								if (imetaTag !== null) {
+									tags.push(imetaTag);
+								}
+							}
+						}
+					} else {
+						console.error("Problem with the image upload, some or all images may not have successfully uploaded...")
+					}
+				} else {
+					console.error("No images found in vault for this file..")
+				}
+			} catch (e) {
+				console.error("Bigger Problem with the image upload, some or all images may not have successfully uploaded...", e)
+				new Notice("❌ Problem uploading inline images.")
 			}
 
 			let eventTemplate = {
@@ -283,6 +333,59 @@ export default class NostrService {
 		}
 	}
 
+	getImetaTagForImage(uploadData: any): string[] | null {
+		let inlineTag: string[] = [];
+		let url = uploadData.url ? uploadData.url : null;
+		let mimeType = uploadData.mime ? uploadData.mime : null;
+		let ox = uploadData.original_sha256 ? uploadData.original_sha256 : null;
+		let size = uploadData.size ? uploadData.size : null;
+		let dim = uploadData.dimensionsString ? uploadData.dimensionsString : null;
+		let blurhash = uploadData.blurhash ? uploadData.blurhash : null;
+		let thumbnail = uploadData.thumbnail ? uploadData.thumbnail : null;
+
+		if (url !== null) {
+			inlineTag.push("imeta")
+			let urlString = `url ${url}`
+			inlineTag.push(urlString)
+		} else {
+			console.error("No upload URL in metadata, so not adding imeta tag")
+			return null;
+		}
+
+		if (mimeType !== null) {
+			let mimeString = `m ${mimeType}`
+			inlineTag.push(mimeString)
+		}
+		if (ox !== null) {
+			let oxString = `ox ${ox}`
+			inlineTag.push(oxString)
+		}
+		if (size !== null) {
+			let sizeString = `size ${size}`
+			inlineTag.push(sizeString)
+		}
+		if (dim !== null) {
+			let dimString = `dim ${dim}`
+			inlineTag.push(dimString)
+		}
+		if (blurhash !== null) {
+			let blurhashString = `blurhash ${blurhash}`
+			inlineTag.push(blurhashString)
+		}
+
+		if (thumbnail !== null) {
+			let thumbnailString = `thumb ${thumbnail}`
+			inlineTag.push(thumbnailString)
+		}
+
+		return inlineTag;
+	}
+
+	isImagePath(filePath: string): boolean {
+		const imageExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.bmp', '.svg'];
+		const ext = path.extname(filePath).toLowerCase();
+		return imageExtensions.includes(ext);
+	}
 
 	async getUserBookmarkIDs(): Promise<{ success: boolean; bookmark_event_ids: string[], longform_event_ids: string[] }> {
 		const bookmark_event_ids: string[] = [];
@@ -313,7 +416,6 @@ export default class NostrService {
 			return { success: false, bookmark_event_ids, longform_event_ids };
 		}
 	}
-
 
 	async loadUserBookmarks(): Promise<Event[]> {
 		let events: Event[] = [];
@@ -376,7 +478,6 @@ export default class NostrService {
 		try {
 			let publishingPromises = this.connectedRelays.map(async (relay) => {
 				try {
-					console.log(`relay: ${relay}`)
 					if (relay.connected) {
 						console.log(`Publishing to ${relay.url}`);
 						await relay.publish(finalEvent);

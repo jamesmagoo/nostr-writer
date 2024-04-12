@@ -1,7 +1,7 @@
 import { Notice, Plugin } from "obsidian";
 import ShortFormModal from "src/ShortFormModal";
 import ConfirmPublishModal from "./src/ConfirmPublishModal";
-import NostrService from "./src/nostr/NostrService";
+import NostrService from "./src/service/NostrService";
 import {
 	NostrWriterPluginSettings,
 	NostrWriterSettingTab,
@@ -169,6 +169,12 @@ export default class NostrWriterPlugin extends Plugin {
 					"wss://nostr.rocks",
 					"wss://nostr.fmt.wiz.biz",
 				],
+				imageStorageProviders : [
+					"www.nostr.build",
+					"www.another.build",
+				],
+				selectedImageStorageProvider: "www.nostr.build",
+				premiumStorageEnabled: false,
 				multipleProfilesEnabled: false,
 				profiles: [],
 			},

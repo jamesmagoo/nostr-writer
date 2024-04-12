@@ -6,7 +6,7 @@ import {
 	TextAreaComponent,
 	Setting,
 } from "obsidian";
-import NostrService from "./nostr/NostrService";
+import NostrService from "./service/NostrService";
 import NostrWriterPlugin from "../main";
 
 export default class ShortFormModal extends Modal {

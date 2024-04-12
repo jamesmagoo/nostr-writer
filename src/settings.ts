@@ -20,6 +20,9 @@ export interface NostrWriterPluginSettings {
 	relayURLs: string[];
 	multipleProfilesEnabled: boolean;
 	profiles: Profile[];
+	imageStorageProviders: string[];
+	selectedImageStorageProvider: string;
+	premiumStorageEnabled: boolean;
 }
 
 export class NostrWriterSettingTab extends PluginSettingTab {
@@ -55,12 +58,10 @@ export class NostrWriterSettingTab extends PluginSettingTab {
 							this.plugin.startupNostrService();
 							new Notice("Private key saved!");
 						} else {
-							// Invalid private key
 							new Notice("Invalid private key", 5000);
 						}
 					});
 
-				// Store the reference to the input field and change its type to 'password'
 				privateKeyField = text.inputEl;
 				privateKeyField.type = "password";
 				privateKeyField.style.width = "400px";
@@ -110,6 +111,42 @@ export class NostrWriterSettingTab extends PluginSettingTab {
 				})
 			);
 
+//		new Setting(containerEl)
+//			.setName("Image Storage Provider")
+//			.setDesc(
+//				"Configure where you store images in your published work."
+//			)
+//				.addDropdown((dropdown) => {
+//					for (const  storageProvider of this.plugin.settings.imageStorageProviders) {
+//						dropdown.addOption(storageProvider, storageProvider);
+//					}
+//					dropdown.setValue(this.plugin.settings.selectedImageStorageProvider);
+//					dropdown.onChange(async (value) => {
+//						this.plugin.settings.selectedImageStorageProvider = value;
+//						new Notice(`🖼️ ${this.plugin.settings.selectedImageStorageProvider} selected`);
+//						await this.plugin.saveSettings();
+//						this.refreshDisplay();
+//					});
+//				});
+
+		new Setting(containerEl)
+			.setName("Premium Storage User")
+			.setDesc(
+				`Turn on if you have a premium account with nostr.build storage service.`
+			)
+			.addToggle((toggle) =>
+				toggle
+					.setValue(this.plugin.settings.premiumStorageEnabled)
+					.onChange(async (value) => {
+						this.plugin.settings.premiumStorageEnabled = value;
+						new Notice(
+							`✅ Premium image user mode ${value ? "enabled" : "disabled"}`
+						);
+						await this.plugin.saveSettings();
+						this.refreshDisplay();
+					})
+			);
+
 		new Setting(containerEl)
 			.setName("Enable multiple Nostr profiles")
 			.setDesc(
@@ -141,7 +178,7 @@ export class NostrWriterSettingTab extends PluginSettingTab {
 						if (value.toLowerCase() !== "default") {
 							newProfileNicknameField = value;
 						} else {
-							new Notice("Can't call an additional profile default");
+							new Notice("❌ Can't call an additional profile default");
 						}
 					});
 
@@ -151,9 +188,9 @@ export class NostrWriterSettingTab extends PluginSettingTab {
 					newAccountNsecInput.onChange(async (value) => {
 						if (isValidPrivateKey(value)) {
 							newProfilePrivateKeyField = value;
-							new Notice("Private key OK!");
+							new Notice("✅ Private key OK!");
 						} else {
-							new Notice("Invalid private key", 5000);
+							new Notice("❌ Invalid private key", 5000);
 						}
 					});
 					multiplePrivateKeyField = newAccountNsecInput.inputEl;
@@ -180,7 +217,7 @@ export class NostrWriterSettingTab extends PluginSettingTab {
 						} else {
 							new Notice("Add a profile nickname & a valid nsec");
 							if (!this.isValidNickname(newProfileNicknameField)) {
-								new Notice("Invalid nickname - already in use");
+								new Notice("❌ Invalid nickname - already in use");
 							}
 						}
 					});
@@ -202,7 +239,7 @@ export class NostrWriterSettingTab extends PluginSettingTab {
 								await this.plugin.saveSettings();
 								this.refreshDisplay();
 								this.plugin.nostrService.reloadMultipleAccounts();
-								new Notice("Profile successfully deleted.");
+								new Notice("🗑️ Profile successfully deleted.");
 							}
 						});
 					});
@@ -225,7 +262,7 @@ export class NostrWriterSettingTab extends PluginSettingTab {
 							)
 						) {
 							clearLocalPublishedFile();
-							new Notice("Published History deleted!");
+							new Notice("🗑️ Published History deleted!");
 						}
 					})
 			);
@@ -241,7 +278,7 @@ export class NostrWriterSettingTab extends PluginSettingTab {
 						await this.plugin.saveSettings();
 						this.plugin.updateRibbonIcon();
 						new Notice(
-							`Short form mode ${value ? "enabled" : "disabled"}`
+							`✅ Short form mode ${value ? "enabled" : "disabled"}`
 						);
 					})
 			);
@@ -316,17 +353,15 @@ export class NostrWriterSettingTab extends PluginSettingTab {
 			for (const [i, url] of this.plugin.settings.relayURLs.entries()) {
 				new Setting(this.containerEl)
 					.setDesc(
-						`${url} is ${
-							this.plugin.nostrService.getRelayInfo(url)
-								? "connected"
-								: "disconnected"
+						`${url} is ${this.plugin.nostrService.getRelayInfo(url)
+							? "connected"
+							: "disconnected"
 						}`
 					)
 					.setName(
-						`${
-							this.plugin.nostrService.getRelayInfo(url)
-								? "🟢"
-								: "💀"
+						`${this.plugin.nostrService.getRelayInfo(url)
+							? "🟢"
+							: "💀"
 						} - Relay ${i + 1} `
 					)
 					.addButton((btn) => {
@@ -350,13 +385,13 @@ export class NostrWriterSettingTab extends PluginSettingTab {
 			}
 		}
 
-		containerEl.createEl("h5", { text: "Sponsor" });
+		containerEl.createEl("h5", { text: "Support" });
 		new Setting(this.containerEl)
 			.setDesc(
-				"Has this plugin enhanced your workflow? Say thanks as a one-time payment and buy me a coffee."
+				"Has this plugin enhanced your workflow? Say thanks as a one-time payment and zap/buy me a coffee."
 			)
 			.addButton((bt) => {
-				bt.setTooltip("Copy lightning address")
+				bt.setTooltip("Copy 20k sats lightning invoice")
 					.setIcon("zap")
 					.setCta()
 					.onClick(() => {
