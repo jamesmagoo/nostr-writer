@@ -132,7 +132,7 @@ export class NostrWriterSettingTab extends PluginSettingTab {
 		new Setting(containerEl)
 			.setName("Premium Storage User")
 			.setDesc(
-				`Turn on if you have a premium account with your selected storage service.`
+				`Turn on if you have a premium account with nostr.build storage service.`
 			)
 			.addToggle((toggle) =>
 				toggle

@@ -251,7 +251,6 @@ export default class NostrService {
 					new Notice("🖼️ Uploading Banner Image")
 					let imageUploadResult = await this.imageUploadService.uploadArticleBannerImage(imageBannerFilePath);
 					if (imageUploadResult !== null) {
-						console.log(`Banner image here: ${imageUploadResult}`)
 						tags.push(["image", imageUploadResult]);
 						new Notice("✅ Uploaded Banner Image")
 					} else {
@@ -282,13 +281,10 @@ export default class NostrService {
 
 			try {
 				let vaultResolvedLinks = this.app.metadataCache.resolvedLinks;
-				console.log(vaultResolvedLinks)
-
 				if (vaultResolvedLinks[activeFile.name]) {
 					const fileContents = vaultResolvedLinks[activeFile.name];
 					for (const filePath of Object.keys(fileContents)) {
 						if (this.isImagePath(filePath)) {
-							console.log(`This is an image we need ${filePath}`)
 							imagePaths.push(filePath);
 						}
 					}
