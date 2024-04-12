@@ -103,7 +103,6 @@ export default class ImageUploadService {
 					//const { data } = response.json();
 					const { data } = response;
 					if (Array.isArray(data.data) && data.data.length > 0) {
-						console.log("in here")
 						const result = {
 							filePath: imagePath,
 							stringToReplace: `![[${imageFile.name}]]`,
