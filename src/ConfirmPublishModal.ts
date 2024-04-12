@@ -243,7 +243,6 @@ export default class ConfirmPublishModal extends Modal {
 		});
 		info.addClass("publish-modal-info");
 
-		console.error(selectedBannerImage)
 		let bannerPath : string | null = null;
 		if(selectedBannerImage !== null){
 			bannerPath = selectedBannerImage.path ? selectedBannerImage.path : null ;

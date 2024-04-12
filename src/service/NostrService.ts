@@ -290,14 +290,11 @@ export default class NostrService {
 						}
 					}
 				}
-				console.log("Content Before: ", fileContent);
 				if (imagePaths.length > 0) {
 					new Notice("✅ Found inline images - uploading with article.")
 					let imageUploadResult = await this.imageUploadService.uploadImagesToStorageProvider(imagePaths)
 					if (imageUploadResult.success && imageUploadResult.results && imageUploadResult.results.length > 0) {
-						console.log(`Got the images uploaded ${imageUploadResult}`)
 						for (const imageTarget of imageUploadResult.results) {
-							console.log(`For ${imageTarget.filePath} ---> replace ${imageTarget.stringToReplace} with ${imageTarget.replacementStringURL}`)
 							if (imageTarget.replacementStringURL !== null && imageTarget.uploadMetadata !== null) {
 								fileContent = fileContent.replace(imageTarget.stringToReplace, imageTarget.replacementStringURL);
 								let imetaTag = this.getImetaTagForImage(imageTarget.uploadMetadata);
@@ -316,7 +313,6 @@ export default class NostrService {
 				console.error("Bigger Problem with the image upload, some or all images may not have successfully uploaded...", e)
 				new Notice("❌ Problem uploading inline images.")
 			}
-			console.log("Content After F&R: ", fileContent);
 
 			let eventTemplate = {
 				kind: 30023,

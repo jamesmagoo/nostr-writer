@@ -174,6 +174,7 @@ export default class NostrWriterPlugin extends Plugin {
 					"www.another.build",
 				],
 				selectedImageStorageProvider: "www.nostr.build",
+				premiumStorageEnabled: false,
 				multipleProfilesEnabled: false,
 				profiles: [],
 			},

@@ -2,19 +2,22 @@ import NostrWriterPlugin from "main";
 import axios from 'axios';
 import { App, Notice, FileSystemAdapter, RequestUrlParam, TFile, normalizePath, requestUrl } from "obsidian";
 import { NostrWriterPluginSettings } from "src/settings";
+import { finalizeEvent, nip98, nip19 } from "nostr-tools";
 
 export default class ImageUploadService {
 	private plugin: NostrWriterPlugin;
 	private app: App;
 	private targetProvider: string;
+	private premiumNIP98User: boolean;
+	private privateKey: string;
+	private static readonly UPLOAD_ENDPOINT = "https://nostr.build/api/v2/upload/files";
 
 
 	constructor(plugin: NostrWriterPlugin, app: App, settings: NostrWriterPluginSettings) {
-		// TODO need to get the media storage provider from settings eventually, for now - nostr.build
-		
 		this.targetProvider = settings.selectedImageStorageProvider;
-		console.log(`Image uploader will use ${this.targetProvider}`)
+		this.premiumNIP98User = settings.premiumStorageEnabled;
 		this.plugin = plugin;
+		this.privateKey = this.convertKeyToHex(settings.privateKey);
 		this.app = app;
 	}
 
@@ -26,10 +29,18 @@ export default class ImageUploadService {
 			if (imageBuffer) {
 				const formData = new FormData();
 				formData.append('file', new Blob([imageBuffer]));
+				let headers: Record<string, string> = {
+					'Content-Type': 'multipart/form-data',
+				};
+
+				if (this.premiumNIP98User) {
+					let base64encodedEventString = await nip98.getToken(ImageUploadService.UPLOAD_ENDPOINT, 'post',
+						(authEvent) => finalizeEvent(authEvent, Buffer.from(this.privateKey)), true);
+					headers['Authorization'] = base64encodedEventString;
+				}
+
 				const response = await axios.post('https://nostr.build/api/v2/upload/files', formData, {
-					headers: {
-						'Content-Type': 'multipart/form-data',
-					},
+					headers: headers,
 				});
 				const { data } = response;
 				if (Array.isArray(data.data) && data.data.length > 0) {
@@ -43,8 +54,6 @@ export default class ImageUploadService {
 	}
 
 	async uploadImagesToStorageProvider(imageFilePaths: string[]): Promise<{ success: boolean, results: { filePath: string, stringToReplace: string, replacementStringURL: string, uploadMetadata: any }[] }> {
-		console.log("Uploading images....", imageFilePaths);
-
 		let uploadResults = [];
 		let success = true;
 
@@ -52,13 +61,11 @@ export default class ImageUploadService {
 			try {
 				let imageFile = this.app.vault.getAbstractFileByPath(imagePath)
 				if (imageFile instanceof TFile) {
-					console.log(`Uploading....${imageFile.name}`)
 					let imageBinary = await this.app.vault.readBinary(imageFile);
 
-					if(this.isFileSizeOverLimit(imageBinary)){
+					if (this.isFileSizeOverLimit(imageBinary)) {
 						continue;
 					}
-					console.log("herre");
 					const formData = new FormData();
 					formData.append('file', new Blob([imageBinary]), imageFile.name);
 
@@ -78,16 +85,22 @@ export default class ImageUploadService {
 					// https://github.com/ai-chen2050/obsidian-wechat-public-platform/blob/9fdecb96966eaafdd6cbac716ffa5da3fb8d4b2b/src/api.ts#L92
 					// or...
 					// https://github.com/gavvvr/obsidian-imgur-plugin/blob/main/src/uploader/imgur/ImgurAnonymousUploader.ts
+					let headers: Record<string, string> = {
+						'Content-Type': 'multipart/form-data',
+					};
+
+					if (this.premiumNIP98User) {
+						let base64encodedEventString = await nip98.getToken(ImageUploadService.UPLOAD_ENDPOINT, 'post',
+							(authEvent) => finalizeEvent(authEvent, Buffer.from(this.privateKey)), true);
+						headers['Authorization'] = base64encodedEventString;
+
+					}
 					const response = await axios.post('https://nostr.build/api/v2/upload/files', formData, {
-						headers: {
-							'Content-Type': 'multipart/form-data',
-						},
+						headers: headers,
 					});
 					//let response = await requestUrl(requestUrlParams);
-					console.log(response)
 					//const { data } = response.json();
 					const { data } = response;
-					console.log(`full Response from nostr build`, data);
 					if (Array.isArray(data.data) && data.data.length > 0) {
 						console.log("in here")
 						const result = {
@@ -110,23 +123,35 @@ export default class ImageUploadService {
 			}
 
 		}
-
-		console.log(`Final Result : ${uploadResults} --- Success: ${success}`);
 		return { success, results: uploadResults };
 	}
 
 	isFileSizeOverLimit(file: ArrayBuffer): boolean {
-		const maxSizeInBytes = 10 * 1024 * 1024; // 10 MB
-		// TODO only do this check for non-premium nostr build users..
-		//if (premiumImageStorageUser){
-		//	maxSizeInBytes = 100 * 1024 * 1024;
-		//}
-		// Option toggle in settings for user to indicate this ?
+		let maxSizeInBytes = 10 * 1024 * 1024; // 10 MB
+		if (this.premiumNIP98User) {
+			maxSizeInBytes = 50 * 1024 * 1024; // 100MB
+		}
 		if (file.byteLength > maxSizeInBytes) {
+			if (this.premiumNIP98User) {
+				new Notice('❌ 50 MB inline image limit. Will not upload.');
+				return true;
+			}
 			new Notice('❌ Inline image size exceeds the limit. Will not upload.');
 			return true;
 		}
 		return false;
+	}
+
+	convertKeyToHex(value: string): string {
+		if (value && value.startsWith("nsec")) {
+			let decodedPrivateKey = nip19.decode(value);
+			return decodedPrivateKey.data as string;
+		}
+		if (value && value.startsWith("npub")) {
+			let decodedPublicKey = nip19.decode(value);
+			return decodedPublicKey.data as string;
+		}
+		return value;
 	}
 }
 

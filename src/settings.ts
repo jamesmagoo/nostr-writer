@@ -128,24 +128,24 @@ export class NostrWriterSettingTab extends PluginSettingTab {
 //						this.refreshDisplay();
 //					});
 //				});
-//
-//		new Setting(containerEl)
-//			.setName("Premium Storage User")
-//			.setDesc(
-//				`Turn on if you have a premium account with your selected storage service.`
-//			)
-//			.addToggle((toggle) =>
-//				toggle
-//					.setValue(this.plugin.settings.premiumStorageEnabled)
-//					.onChange(async (value) => {
-//						this.plugin.settings.premiumStorageEnabled = value;
-//						new Notice(
-//							`✅ Premium image user mode ${value ? "enabled" : "disabled"}`
-//						);
-//						await this.plugin.saveSettings();
-//						this.refreshDisplay();
-//					})
-//			);
+
+		new Setting(containerEl)
+			.setName("Premium Storage User")
+			.setDesc(
+				`Turn on if you have a premium account with your selected storage service.`
+			)
+			.addToggle((toggle) =>
+				toggle
+					.setValue(this.plugin.settings.premiumStorageEnabled)
+					.onChange(async (value) => {
+						this.plugin.settings.premiumStorageEnabled = value;
+						new Notice(
+							`✅ Premium image user mode ${value ? "enabled" : "disabled"}`
+						);
+						await this.plugin.saveSettings();
+						this.refreshDisplay();
+					})
+			);
 
 		new Setting(containerEl)
 			.setName("Enable multiple Nostr profiles")
