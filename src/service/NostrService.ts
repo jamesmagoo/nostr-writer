@@ -343,7 +343,6 @@ export default class NostrService {
 		let blurhash = uploadData.blurhash ? uploadData.blurhash : null;
 		let thumbnail = uploadData.thumbnail ? uploadData.thumbnail : null;
 
-		inlineTag.push("imeta")
 		if (url !== null) {
 			inlineTag.push("imeta")
 			let urlString = `url ${url}`
