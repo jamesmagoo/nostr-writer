@@ -10,6 +10,10 @@ They seem to me to be a match made in heaven...
 ***
 [![Did We Just Become Best Friends?](./docs/stepbros.png)](https://www.youtube.com/watch?v=3-ZUDtaGf3I)
 
+## A Quiet Place
+> Avoid the web browser and all its distractions!
+
+This tool is completely abstracted from Nostr, allowing you to stay focused - the plugin does not read Nostr messages or give you any view into the public space. It just publishes what you've written. Stay focused on your work and disconnected from the noise. 
 
 ## Demo Video
 <div align="center">
@@ -31,22 +35,16 @@ Big thank you to Tony for making this user guide!
 2. Write in Obsidian
 3. Hit publish to Nostr, and that's it. 
 
-## A Quiet Place
-> Avoid the web browser and all its distractions!
-
-This tool is completely abstracted from Nostr, allowing you to stay focused - the plugin does not read Nostr messages or give you any view into the public space. It just publishes what you've written. Stay focused on your work and disconnected from the noise. 
-
 ## Features
-- Publishing to Nostr: Directly publish your notes from Obsidian to Nostr with a couple of clicks.
-- Summary and Image URL Support: Add an optional summary and image URL to accompany your note, with live preview functionality.
+- Publishing to Nostr: directly publish your notes from Obsidian to Nostr with a couple of clicks.
+- Image Support: images in your `.md` file will automatically be uploaded and handled when you publish.
 - Tags: Add tags to your work to make it more discoverable. 
-- Published View : See all posts sent from Obsidian with links to view.
-- Short Format Message Writer: quickly compose and publish short form messages directly to Nostr from within Obsidian.
+- Published View : see all posts sent from Obsidian with links to view.
+- Note Writer: quickly compose and publish short form notes directly to Nostr from within Obsidian.
 - Relay Configuration: configure to send to whatever relays you like.
-- Multiple user profiles: publish under different nostr accounts, just add the nsecs. 
-- Nostr Bookmarks: Easily view and download your Nostr bookmarks into Obsidian as `.md` files for reference and local use.
-- Image Support: Images in your `.md` file will automatically be uploaded and handled when you publish.
-- Frontmatter Handling: The plugin now automatically populates article information fields from the frontmatter, streamlining metadata handling and enhancing user experience. Post data extraction, it also removes the frontmatter from the article body for publishing to Nostr.
+- Multiple User Profiles: publish under different nostr accounts, just add the nsecs. 
+- Nostr Bookmarks: easily view and download your Nostr bookmarks into Obsidian as `.md` files for reference and local use.
+- Frontmatter handling: the plugin now automatically populates article information fields from the frontmatter, streamlining metadata handling and enhancing user experience. Post data extraction, it also removes the frontmatter from the article body for publishing to Nostr.
 
 ### Ideas..
 - Plugin User Relay: A relay specific to this plugin - see what everyone else is writing.
