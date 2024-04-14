@@ -126,12 +126,10 @@ export default class ConfirmPublishModal extends Modal {
 										return;
 									}
 
-									const maxSizeInBytes = 10 * 1024 * 1024; // 10 MB
-									// TODO only do this check for non-premium nostr build users..
-									//if (premiumImageStorageUser){
-									//	maxSizeInBytes = 100 * 1024 * 1024;
-									//}
-									// Option toggle in settings for user to indicate this ?
+									let maxSizeInBytes = 10 * 1024 * 1024; // 10 MB
+									if (this.plugin.settings.premiumStorageEnabled) {
+										maxSizeInBytes = 100 * 1024 * 1024;
+									}
 									if (file.size > maxSizeInBytes) {
 										new Notice('❌ File size exceeds the limit. Please upload a smaller image.');
 										return;
@@ -221,20 +219,24 @@ export default class ConfirmPublishModal extends Modal {
 					dropdown.onChange(async (value) => {
 						selectedProfileKey = value;
 						new Notice(`${selectedProfileKey} selected`);
-						console.log(selectedProfileKey)
 					});
 				});
 		}
 
-		// TODO is this a featue I want to add? Why publish as a draft? Obsidian is the draft location.
-		// let x = new Setting(contentEl)
-		// 	.setName("Publish as a draft")
-		// 	.setDesc("Nostr clients allow you to edit your drafts later.")
-		// 	.addToggle((toggle) =>
-		// 		toggle.setValue(false).onChange(async (value) => {
-		// 			console.log("Toggled", value);
-		// 		})
-		// 	);
+		let publishAsDraft = false;
+		new Setting(contentEl)
+			.setName("Publish as a draft")
+			.setDesc("Nostr clients allow you to edit your drafts later.")
+			.addToggle((toggle) =>
+				toggle.setValue(false).onChange(async (value) => {
+					publishAsDraft = value;
+					if (publishAsDraft) {
+						new Notice(`🗒️ Publishing as a draft.`);
+					} else {
+						new Notice(`📜 Publishing as final.`);
+					}
+				})
+			);
 
 		contentEl.createEl("hr");
 
@@ -247,7 +249,7 @@ export default class ConfirmPublishModal extends Modal {
 			.setButtonText("Confirm and Publish")
 			.setCta()
 			.onClick(async () => {
-				if (confirm("Are you sure you want to publish this note to Nostr?")) {
+				if (confirm(`Are you sure you want to publish this note ${publishAsDraft ? "as a draft" : "publically" } to Nostr?`)) {
 					// Disable the button and change the text to show a loading state
 					publishButton.setButtonText("Publishing...").setDisabled(true);
 					setTimeout(async () => {
@@ -262,7 +264,8 @@ export default class ConfirmPublishModal extends Modal {
 								selectedBannerImage && selectedBannerImage.path ? selectedBannerImage.path : null,
 								title,
 								noteCategoryTags,
-								selectedProfileKey
+								selectedProfileKey,
+								publishAsDraft
 							);
 							if (res.success) {
 								setTimeout(() => {
@@ -312,8 +315,8 @@ export default class ConfirmPublishModal extends Modal {
 
 		function addTagAsPill(tag: string) {
 			if (tag.trim() === "") return;
-			noteCategoryTags.push(tag);
-			const pillElement = createPillElement(tag);
+			noteCategoryTags.push(tag.trim());
+			const pillElement = createPillElement(tag.trim());
 			pillsContainer.appendChild(pillElement);
 			tagsText.setValue("");
 		}

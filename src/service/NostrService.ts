@@ -224,9 +224,14 @@ export default class NostrService {
 		imageBannerFilePath: string | null,
 		title: string,
 		userSelectedTags: string[],
-		profileNickname: string
+		profileNickname: string,
+		publishAsDraft: boolean
 	): Promise<{ success: boolean; publishedRelays: string[] }> {
-		console.log(`Publishing your note to Nostr...`);
+		if (!publishAsDraft) {
+			new Notice(`⏳ Publishing your note ${activeFile.name} to nostr...`)
+		} else {
+			new Notice(`⏳ Publishing your note ${activeFile.name} as a draft to nostr...`)
+		}
 
 		let profilePrivateKey = this.privateKey;
 		let profilePublicKey = this.publicKey;
@@ -248,14 +253,14 @@ export default class NostrService {
 			}
 
 			if (imageBannerFilePath !== null) {
-					new Notice("🖼️ Uploading Banner Image")
-					let imageUploadResult = await this.imageUploadService.uploadArticleBannerImage(imageBannerFilePath);
-					if (imageUploadResult !== null) {
-						tags.push(["image", imageUploadResult]);
-						new Notice("✅ Uploaded Banner Image")
-					} else {
-						new Notice("❌ Problem Uploading Banner Image..")
-					}
+				new Notice("🖼️ Uploading Banner Image")
+				let imageUploadResult = await this.imageUploadService.uploadArticleBannerImage(imageBannerFilePath);
+				if (imageUploadResult !== null) {
+					tags.push(["image", imageUploadResult]);
+					new Notice("✅ Uploaded Banner Image")
+				} else {
+					new Notice("❌ Problem Uploading Banner Image..")
+				}
 			} else {
 				console.info("No banner image...")
 			}
@@ -314,7 +319,7 @@ export default class NostrService {
 			}
 
 			let eventTemplate = {
-				kind: 30023,
+				kind: publishAsDraft ? 30024 : 30023,
 				created_at: timestamp,
 				tags: tags,
 				content: fileContent,
