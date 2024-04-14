@@ -139,9 +139,7 @@ export class NostrWriterSettingTab extends PluginSettingTab {
 					.setValue(this.plugin.settings.premiumStorageEnabled)
 					.onChange(async (value) => {
 						this.plugin.settings.premiumStorageEnabled = value;
-						new Notice(
-							`✅ Premium image user mode ${value ? "enabled" : "disabled"}`
-						);
+						new Notice( `✅ Premium image user mode ${value ? "enabled" : "disabled"}`);
 						await this.plugin.saveSettings();
 						this.refreshDisplay();
 					})

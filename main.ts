@@ -193,7 +193,7 @@ export default class NostrWriterPlugin extends Plugin {
 	async checkAndPublish() {
 		if (!this.settings.privateKey) {
 			new Notice(
-				`Please set your private key in the Nostr Writer Plugin settings before publishing.`
+				`🔑 Please set your private key in the Nostr Writer Plugin settings before publishing.`
 			);
 			return;
 		}
@@ -201,7 +201,7 @@ export default class NostrWriterPlugin extends Plugin {
 		if (activeFile) {
 			const fileContent: string = await this.app.vault.read(activeFile);
 			if (this.isEmptyContent(fileContent)) {
-				new Notice("The note is empty and cannot be published.");
+				new Notice("❌ The note is empty and cannot be published.");
 				return;
 			}
 			if (this.nostrService.getConnectionStatus()) {
@@ -212,10 +212,10 @@ export default class NostrWriterPlugin extends Plugin {
 					this
 				).open();
 			} else {
-				new Notice(`Please connect to Nostr before publishing.`);
+				new Notice(`❗️ Please connect to Nostr before publishing.`);
 			}
 		} else {
-			new Notice("No note is currently active. Click into a note.");
+			new Notice("❗️ No note is currently active. Click into a note.");
 		}
 	}
 
@@ -228,7 +228,7 @@ export default class NostrWriterPlugin extends Plugin {
 					(evt: MouseEvent) => {
 						if (!this.settings.privateKey) {
 							new Notice(
-								`Please set your private key in the Nostr Writer Plugin settings before publishing.`
+								`🔑 Please set your private key in the Nostr Writer Plugin settings before publishing.`
 							);
 							return;
 						}
@@ -241,7 +241,7 @@ export default class NostrWriterPlugin extends Plugin {
 							return;
 						} else {
 							new Notice(
-								`Please connect to Nostr before publishing.`
+								`❗️ Please connect to Nostr before publishing.`
 							);
 						}
 					}
@@ -264,7 +264,7 @@ export default class NostrWriterPlugin extends Plugin {
 				});
 				this.statusBar.addEventListener("click", () => {
 					this.nostrService.connectToRelays();
-					new Notice("Re-connecting to Nostr..");
+					new Notice("⚡️ Re-connecting to Nostr..");
 				});
 			}
 		} else if (this.statusBar) {
