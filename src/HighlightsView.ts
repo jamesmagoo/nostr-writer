@@ -90,7 +90,7 @@ export class HighlightsView extends ItemView {
 					console.log(`Source /; ${sourceTag}`)
 
 					const contentDiv = cardDiv.createDiv({
-						cls: "bookmark-content",
+						cls: "highlight-content",
 					});
 
 					// parse nostr tags, npubs wtc.
@@ -124,6 +124,26 @@ export class HighlightsView extends ItemView {
 					}
 
 					contentDiv.innerHTML = simpleAugmentedContent.replace(/\bhttps?:\/\/\S+/gi, "");
+					contentDiv.addEventListener("click", function() {
+						// Copy text to clipboard
+						const textToCopy = contentDiv.textContent;
+						navigator.clipboard.writeText(textToCopy)
+							.then(() => {
+								// Show tooltip
+								const tooltip = document.createElement("div");
+								tooltip.textContent = "Copied to clipboard!";
+								tooltip.classList.add("tooltip");
+								contentDiv.appendChild(tooltip);
+
+								// Remove tooltip after a certain duration
+								setTimeout(() => {
+									tooltip.remove();
+								}, 2000);
+							})
+							.catch(error => {
+								console.error("Failed to copy text: ", error);
+							});
+					});
 
 					const contentSourceDiv = cardDiv.createEl("div", {
 						cls: "highlight-content-source",
@@ -170,34 +190,34 @@ export class HighlightsView extends ItemView {
 
 					let nevent = nip19.neventEncode(target)
 
-					new ButtonComponent(detailsDiv)
-						.setIcon("popup-open")
-						.setCta()
-						.setTooltip("View Online")
-						.onClick(() => {
-							const url = `https://njump.me/${nevent}`;
-							window.open(url, '_blank');
-						});
-
-					new ButtonComponent(detailsDiv)
-						.setIcon("download")
-						.setClass("bookmark-btn")
-						.setCta()
-						.setTooltip("Download & Open in Obsidian")
-						.onClick(() => {
-							this.downloadBookmark(highlight);
-						});
-
-					if (linkedEvent) {
-						new ButtonComponent(detailsDiv)
-							.setIcon("link")
-							.setCta()
-							.setTooltip("View Linked Event")
-							.onClick(() => {
-								window.open(linkedEventURL, '_blank');
-							});
-
-					}
+					//					new ButtonComponent(detailsDiv)
+					//						.setIcon("popup-open")
+					//						.setCta()
+					//						.setTooltip("View Online")
+					//						.onClick(() => {
+					//							const url = `https://njump.me/${nevent}`;
+					//							window.open(url, '_blank');
+					//						});
+					//
+					//					new ButtonComponent(detailsDiv)
+					//						.setIcon("download")
+					//						.setClass("bookmark-btn")
+					//						.setCta()
+					//						.setTooltip("Download & Open in Obsidian")
+					//						.onClick(() => {
+					//							this.downloadBookmark(highlight);
+					//						});
+					//
+					//					if (linkedEvent) {
+					//						new ButtonComponent(detailsDiv)
+					//							.setIcon("link")
+					//							.setCta()
+					//							.setTooltip("View Linked Event")
+					//							.onClick(() => {
+					//								window.open(linkedEventURL, '_blank');
+					//							});
+					//
+					//					}
 				});
 			} else {
 				const noBookmarksDiv = container.createEl("div", { cls: "nobookmarks-card" });

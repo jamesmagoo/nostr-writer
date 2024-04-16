@@ -174,6 +174,7 @@
 .bookmark-created-at {
     font-size: 12px;
     color: #666;
+    margin-top: 8px;
 }
 
 .bookmark-pubkey {
@@ -211,6 +212,20 @@
 }
 
 .highlight-content-source > span {
-    margin-right: 5px; /* Add space between elements */
+    margin-right: 5px; 
 }
 
+.highlight-content {
+    font-size: 16px;
+    margin-bottom: 8px;
+    word-wrap: break-word;
+    cursor: pointer;
+    padding: 5px; 
+    border-radius: 5px; 
+    transition: background-color 0.3s, color 0.3s; 
+}
+
+.highlight-content:hover {
+    background-color: #f0f0f0; 
+    color: black; 
+}
