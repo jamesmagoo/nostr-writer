@@ -462,6 +462,30 @@ export default class NostrService {
 		}
 	}
 
+	async loadUserHighlights(): Promise<Event[]> {
+		let events: Event[] = [];
+		console.log("Loading user highlights...");
+		try {
+			if (this.pool === undefined || this.poolUrls.length === 0) {
+				this.setConnectionPool();
+			}
+			let highlights = await this.pool.querySync(this.poolUrls, { authors: [this.publicKey], kinds: [9802] });
+			console.log(`Highlights: ${highlights}`);
+			if (highlights.length > 0) {
+				for (let event of highlights) {
+					console.log(event);
+					events.push(event);
+				}
+			}
+			return events;
+
+		} catch (err) {
+			console.error('Error occurred while fetching bookmarks:', err);
+			return [];
+		}
+	}
+
+
 	async getUserProfile(userHexPubKey: string): Promise<Event> {
 		try {
 			if (this.pool === undefined || this.poolUrls.length === 0) {

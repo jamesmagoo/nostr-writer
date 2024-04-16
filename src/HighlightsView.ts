@@ -48,25 +48,26 @@ export class HighlightsView extends ItemView {
 			});
 
 		try {
-			let bookmarks = await this.nostrService.loadUserBookmarks();
+			let highlights = await this.nostrService.loadUserHighlights();
 			if (this.nostrService.connectedRelays.length === 0) {
 				new Notice("Re-connect to relays...")
 			}
-			if (bookmarks.length > 0) {
-				container.createEl("p", { text: `Total: ${bookmarks.length} ✅` });
+			if (highlights.length > 0) {
+				container.createEl("p", { text: `Total: ${highlights.length} ✅` });
 
-				bookmarks.reverse().forEach(async (bookmark) => {
-					let bookmarkProfile = await this.nostrService.getUserProfile(bookmark.pubkey);
+				highlights.reverse().forEach(async (highlight) => {
+					const authorTag = highlight.tags.find((tag: any[]) => tag[0] === "p");
+					let highlightProfile = await this.nostrService.getUserProfile(authorTag[1]);
 					let profileName = "";
 					let profilePicURL = "";
 
 					try {
-						const profileObject = JSON.parse(bookmarkProfile[0].content);
+						const profileObject = JSON.parse(highlightProfile[0].content);
 						const { name, picture } = profileObject;
 						profileName = name;
 
 						if (picture == undefined) {
-							for (const tag of bookmarkProfile.tags) {
+							for (const tag of highlightProfile.tags) {
 								if (tag[0] === "image") {
 									const pictureUrl = tag[1];
 									profilePicURL = pictureUrl;
@@ -83,23 +84,20 @@ export class HighlightsView extends ItemView {
 					const cardDiv = container.createEl("div", {
 						cls: "bookmark-card",
 					});
-					if (bookmark.kind === 30023) {
-						const titleTag = bookmark.tags.find((tag: any[]) => tag[0] === "title");
-						if (titleTag) {
-							const title = titleTag[1];
-							cardDiv.createEl("h3", { text: title });
-						}
-					}
+
+					// TODO Need to get the highlight source article and display it with a link this is the "a" tag 
+					const sourceTag = highlight.tags.find((tag: any[]) => tag[0] === "a");
+					console.log(`Source /; ${sourceTag}`)
 
 					const contentDiv = cardDiv.createDiv({
 						cls: "bookmark-content",
 					});
 
 					// parse nostr tags, npubs wtc.
-					let references = parseReferences(bookmark)
+					let references = parseReferences(highlight)
 					let linkedEvent = false;
 					let linkedEventURL = "";
-					let simpleAugmentedContent = bookmark.content;
+					let simpleAugmentedContent = highlight.content;
 
 					for (let i = 0; i < references.length; i++) {
 						let { text, profile, event, address } = references[i];
@@ -114,7 +112,6 @@ export class HighlightsView extends ItemView {
 								id: event.id,
 							}
 							let x = nip19.neventEncode(linkedEventPointer);
-							//augmentedReference = `<a href="https://njump.me/${x}" target="_blank">Referenced Event</a>`;
 							augmentedReference = "";
 							linkedEvent = true;
 							linkedEventURL = `https://njump.me/${x}`
@@ -126,52 +123,12 @@ export class HighlightsView extends ItemView {
 						simpleAugmentedContent = simpleAugmentedContent.replaceAll(text, augmentedReference);
 					}
 
-					if (bookmark.kind === 30023) {
-						const summaryTag = bookmark.tags.find((tag: any[]) => tag[0] === "summary");
-						if (summaryTag) {
-							const summary = summaryTag[1];
-							simpleAugmentedContent = `<em>${summary}</em>`;
-
-						} else {
-							const firstLineIndex = simpleAugmentedContent.indexOf('\n');
-							if (firstLineIndex !== -1) {
-								simpleAugmentedContent = simpleAugmentedContent.substring(0, firstLineIndex);
-							} else {
-								simpleAugmentedContent = simpleAugmentedContent.substring(0, 140) + '...'
-							}
-						}
-					}
-
 					contentDiv.innerHTML = simpleAugmentedContent.replace(/\bhttps?:\/\/\S+/gi, "");
 
-					const imageUrls = this.extractImageUrls(bookmark.content);
-
-					imageUrls.forEach((imageUrl) => {
-						cardDiv.createEl("img", {
-							attr: {
-								src: imageUrl,
-							},
-							cls: "bookmark-image",
-						});
+					const contentSourceDiv = cardDiv.createEl("div", {
+						cls: "highlight-content-source",
 					});
-
-
-					const imageTag = bookmark.tags.find((tag: any[]) => tag[0] === "image");
-					if (imageTag) {
-						const imageURL = imageTag[1];
-						cardDiv.createEl("img", {
-							attr: {
-								src: imageURL,
-							},
-							cls: "bookmark-image",
-						});
-					}
-
-
-					const publicKeyDiv = cardDiv.createEl("div", {
-						cls: "bookmark-pubkey",
-					});
-					publicKeyDiv.createEl("img", {
+					contentSourceDiv.createEl("img", {
 						attr: {
 							src: `${profilePicURL}`,
 							alt: "Profile Pic",
@@ -180,11 +137,25 @@ export class HighlightsView extends ItemView {
 					});
 					const displayName = profileName ? profileName : "Unknown";
 
-					publicKeyDiv.createEl("span", { text: displayName });
+					//publicKeyDiv.createEl("span", { text: `${sourceArticleTitle} by ` });
+					let sourceArticleTitle = "Dummy Data "
+					//// Create a span element for the article name (as a clickable link)
+					contentSourceDiv.createEl("a", {
+						attr: {
+							href: "YOUR_EXTERNAL_WEBSITE_URL_HERE", // Replace with the actual URL
+							target: "_blank", // Open link in a new tab
+						},
+						text: `${sourceArticleTitle}`,
+						cls: "source-article-link",
+					});
 
-					const createdAt = new Date(bookmark.created_at * 1000).toLocaleString();
+					contentSourceDiv.createEl("span", { text: "  " });
+					contentSourceDiv.createEl("span", { text: " | " });
+					contentSourceDiv.createEl("span", { text: displayName });
+
+					const createdAt = new Date(highlight.created_at * 1000).toLocaleString();
 					cardDiv.createEl("div", {
-						text: `Bookmarked On: ${createdAt}`,
+						text: `Highlighted on: ${createdAt}`,
 						cls: "bookmark-created-at",
 					});
 
@@ -193,8 +164,8 @@ export class HighlightsView extends ItemView {
 					});
 
 					let target: nip19.EventPointer = {
-						id: bookmark.id,
-						author: bookmark.pubkey,
+						id: highlight.id,
+						author: highlight.pubkey,
 					}
 
 					let nevent = nip19.neventEncode(target)
@@ -214,7 +185,7 @@ export class HighlightsView extends ItemView {
 						.setCta()
 						.setTooltip("Download & Open in Obsidian")
 						.onClick(() => {
-							this.downloadBookmark(bookmark);
+							this.downloadBookmark(highlight);
 						});
 
 					if (linkedEvent) {
@@ -230,21 +201,21 @@ export class HighlightsView extends ItemView {
 				});
 			} else {
 				const noBookmarksDiv = container.createEl("div", { cls: "nobookmarks-card" });
-				noBookmarksDiv.createEl("h6", { text: "No Bookmarks Found 📚" });
-				noBookmarksDiv.createEl("p", { text: "Use listr.lol to edit & manage your bookmarks" });
-				const linkEl = noBookmarksDiv.createEl("a", { text: "listr.lol" });
-				linkEl.href = "https://listr.lol";
+				noBookmarksDiv.createEl("h6", { text: "No Highlights Found 📚" });
+				noBookmarksDiv.createEl("p", { text: "Use highlighter.com to read and highlight." });
+				const linkEl = noBookmarksDiv.createEl("a", { text: "highlighter.com" });
+				linkEl.href = "https://highlighter.com";
 				linkEl.target = "_blank";
 
 			}
 		} catch (err) {
-			console.error("Error reading bookmarks:", err);
-			new Notice("Problem reading bookmarks - re-connect & check you list.")
+			console.error("Error reading highlights:", err);
+			new Notice("Problem reading highlights - re-connect & check you list.")
 			const noBookmarksDiv = container.createEl("div", { cls: "nobookmarks-card" });
-			noBookmarksDiv.createEl("h6", { text: "No Bookmarks Found 📚" });
-			noBookmarksDiv.createEl("p", { text: "Use listr.lol to edit & manage your bookmarks" });
-			const linkEl = noBookmarksDiv.createEl("a", { text: "listr.lol" });
-			linkEl.href = "https://listr.lol";
+			noBookmarksDiv.createEl("h6", { text: "No Highlights Found 📚" });
+			noBookmarksDiv.createEl("p", { text: "Use highlighter.com to read and highlight." });
+			const linkEl = noBookmarksDiv.createEl("a", { text: "highlighter.com" });
+			linkEl.href = "https://highlighter.com";
 			linkEl.target = "_blank";
 		}
 	}
@@ -264,7 +235,7 @@ export class HighlightsView extends ItemView {
 			} else {
 				filename = `bookmark_${bookmark.id.substring(0, 8)}.md`;
 			}
-			const content = this.generateMarkdownContent(bookmark); 
+			const content = this.generateMarkdownContent(bookmark);
 
 			const file: TFile | null = await this.createMarkdownFile(filename, content);
 
@@ -299,8 +270,8 @@ export class HighlightsView extends ItemView {
 	generateMarkdownContent(bookmark: any): string {
 		const createdAt = new Date(bookmark.created_at * 1000).toLocaleString();
 
-		let source : nip19.ProfilePointer = {
-			pubkey: bookmark.pubkey, 
+		let source: nip19.ProfilePointer = {
+			pubkey: bookmark.pubkey,
 		}
 		let y = nip19.nprofileEncode(source);
 		const url = `https://njump.me/${y}`;

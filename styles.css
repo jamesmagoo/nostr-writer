@@ -199,3 +199,18 @@
 	margin-right: 5px;
 }
 
+.source-article-link {
+    font-weight: bold;
+}
+
+.highlight-content-source {
+    display: flex;
+    align-items: center;
+    margin-top: 8px;
+    font-size: 14px;
+}
+
+.highlight-content-source > span {
+    margin-right: 5px; /* Add space between elements */
+}
+
