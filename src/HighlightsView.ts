@@ -3,7 +3,6 @@ import NostrService from "./service/NostrService";
 import { ButtonComponent, ItemView, Notice, TFile, WorkspaceLeaf } from "obsidian";
 import { nip19 } from "nostr-tools";
 import { parseReferences } from 'nostr-tools/references'
-import { urlToHttpOptions } from "url";
 
 export const HIGHLIGHTS_VIEW = "highlights-view";
 
@@ -101,7 +100,7 @@ export class HighlightsView extends ItemView {
 						navigator.clipboard.writeText(textToCopy)
 							.then(() => {
 								// Show tooltip
-								new Notice("📋 Copied to clipboard.")
+								new Notice("📋 Copied to clipboard ✅.")
 							})
 							.catch(error => {
 								console.error("Failed to copy text: ", error);
@@ -116,9 +115,11 @@ export class HighlightsView extends ItemView {
 						// try the "e" tag
 						sourceTag = highlight.tags.find((tag: any[]) => tag[0] === "e");
 					}
-
-					// if there's no a tag is there an r tag? 
 					const externalSourceTag = highlight.tags.find((tag: any[]) => tag[0] === "r");
+					let highlightSource: any = null;
+					if (sourceTag !== undefined) {
+						highlightSource = await this.nostrService.getEventFromATag(sourceTag[1]);
+					}
 
 					if (authorTag !== undefined) {
 						let highlightProfile = await this.nostrService.getUserProfile(authorTag[1]);
@@ -146,11 +147,6 @@ export class HighlightsView extends ItemView {
 						}
 
 						if (sourceTag !== undefined) {
-							console.log(`Source Tag found : ${sourceTag} need to get this event from Nostr... and display its title.....`)
-							let highlightSource = await this.nostrService.getEventFromATag(sourceTag[1]);
-
-							console.log("Highlight source....")
-							console.log(highlightSource)
 							if (highlightSource !== null) {
 								let sourceTitle = "Unknown..."
 								for (const tag of highlightSource.tags) {
@@ -182,8 +178,8 @@ export class HighlightsView extends ItemView {
 
 								contentSourceDiv.createEl("a", {
 									attr: {
-										href: url, 
-										target: "_blank", 
+										href: url,
+										target: "_blank",
 									},
 									text: `${sourceTitle}`,
 									cls: "source-article-link",
@@ -211,16 +207,20 @@ export class HighlightsView extends ItemView {
 					}
 
 					const createdAt = new Date(highlight.created_at * 1000).toLocaleString();
-					cardDiv.createEl("div", {
+					let bottomDiv = cardDiv.createEl("div", {
 						text: `Highlighted on: ${createdAt}`,
-						cls: "bookmark-created-at",
+						cls: "highlight-created-at",
 					});
 
-					let detailsDiv = cardDiv.createEl("div", {
-						cls: "bookmark-view-online-btn",
-					});
-
-
+					if (highlightSource !== null) {
+						new ButtonComponent(bottomDiv)
+							.setIcon("download")
+							.setClass("highlight-btn")
+							.setTooltip("Download full source article.")
+							.onClick(() => {
+								this.downloadBookmark(highlightSource);
+							});
+					}
 				});
 			} else {
 				const noBookmarksDiv = container.createEl("div", { cls: "nobookmarks-card" });
@@ -299,7 +299,7 @@ export class HighlightsView extends ItemView {
 		let y = nip19.nprofileEncode(source);
 		const url = `https://njump.me/${y}`;
 		const markdownContent = `
-# Nostr Bookmark
+# Nostr Highlight Source
 
 **Content:** 
 \n 

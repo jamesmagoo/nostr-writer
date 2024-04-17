@@ -209,6 +209,17 @@
     align-items: center;
     margin-top: 8px;
     font-size: 14px;
+	padding-left: 5px;
+}
+
+.highlight-created-at {
+    font-size: 12px;
+    color: #666;
+    margin-top: 8px;
+	margin-left: 5px;
+    align-items: center;
+	justify-content: space-between;
+	display: flex;
 }
 
 .highlight-content-source > span {
@@ -228,4 +239,12 @@
 .highlight-content:hover {
     background-color: #f0f0f0; 
     color: black; 
+}
+
+.highlight-btn {
+    margin-top: 2px;
+	margin-left: 5px;
+	margin-right: 5px;
+	cursor: pointer;
+	background-color: transparent;
 }
