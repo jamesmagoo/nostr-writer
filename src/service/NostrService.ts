@@ -471,7 +471,6 @@ export default class NostrService {
 			let highlights = await this.pool.querySync(this.poolUrls, { authors: [this.publicKey], kinds: [9802] });
 			if (highlights.length > 0) {
 				for (let event of highlights) {
-					console.log(event);
 					events.push(event);
 				}
 			}
