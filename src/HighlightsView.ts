@@ -3,6 +3,7 @@ import NostrService from "./service/NostrService";
 import { ButtonComponent, ItemView, Notice, TFile, WorkspaceLeaf } from "obsidian";
 import { nip19 } from "nostr-tools";
 import { parseReferences } from 'nostr-tools/references'
+import { urlToHttpOptions } from "url";
 
 export const HIGHLIGHTS_VIEW = "highlights-view";
 
@@ -110,7 +111,11 @@ export class HighlightsView extends ItemView {
 					const authorTag = highlight.tags.find((tag: any[]) => tag[0] === "p");
 
 					// TODO Need to get the highlight source article and display it with a link this is the "a" tag 
-					const sourceTag = highlight.tags.find((tag: any[]) => tag[0] === "a");
+					let sourceTag = highlight.tags.find((tag: any[]) => tag[0] === "a");
+					if (sourceTag == undefined) {
+						// try the "e" tag
+						sourceTag = highlight.tags.find((tag: any[]) => tag[0] === "e");
+					}
 
 					// if there's no a tag is there an r tag? 
 					const externalSourceTag = highlight.tags.find((tag: any[]) => tag[0] === "r");
@@ -142,51 +147,68 @@ export class HighlightsView extends ItemView {
 
 						if (sourceTag !== undefined) {
 							console.log(`Source Tag found : ${sourceTag} need to get this event from Nostr... and display its title.....`)
-							const contentSourceDiv = cardDiv.createEl("div", {
-								cls: "highlight-content-source",
-							});
-							contentSourceDiv.createEl("img", {
-								attr: {
-									src: `${profilePicURL}`,
-									alt: "Profile Pic",
-								},
-								cls: "bookmark-profile-pic",
-							});
-							const displayName = profileName ? profileName : "Unknown";
+							let highlightSource = await this.nostrService.getEventFromATag(sourceTag[1]);
 
-							//publicKeyDiv.createEl("span", { text: `${sourceArticleTitle} by ` });
-							let sourceArticleTitle = "Dummy Data "
-							//// Create a span element for the article name (as a clickable link)
-							contentSourceDiv.createEl("a", {
-								attr: {
-									href: "YOUR_EXTERNAL_WEBSITE_URL_HERE", // Replace with the actual URL
-									target: "_blank", // Open link in a new tab
-								},
-								text: `${sourceArticleTitle}`,
-								cls: "source-article-link",
-							});
+							console.log("Highlight source....")
+							console.log(highlightSource)
+							if (highlightSource !== null) {
+								let sourceTitle = "Unknown..."
+								for (const tag of highlightSource.tags) {
+									if (tag[0] === "title") {
+										sourceTitle = tag[1];
+										break;
+									}
+								}
 
-							contentSourceDiv.createEl("span", { text: "  " });
-							contentSourceDiv.createEl("span", { text: " | " });
-							contentSourceDiv.createEl("span", { text: displayName });
+								let target: nip19.EventPointer = {
+									id: highlightSource.id,
+									author: highlightSource.pubkey,
+								}
+
+								let nevent = nip19.neventEncode(target)
+								const url = `https://njump.me/${nevent}`;
+
+								const contentSourceDiv = cardDiv.createEl("div", {
+									cls: "highlight-content-source",
+								});
+								contentSourceDiv.createEl("img", {
+									attr: {
+										src: `${profilePicURL}`,
+										alt: "Profile Pic",
+									},
+									cls: "bookmark-profile-pic",
+								});
+								const displayName = profileName ? profileName : "Unknown";
+
+								contentSourceDiv.createEl("a", {
+									attr: {
+										href: url, 
+										target: "_blank", 
+									},
+									text: `${sourceTitle}`,
+									cls: "source-article-link",
+								});
+
+								contentSourceDiv.createEl("span", { text: "  " });
+								contentSourceDiv.createEl("span", { text: " | " });
+								contentSourceDiv.createEl("span", { text: displayName });
+							}
 						}
 					} else {
 						if (externalSourceTag !== undefined) {
-							console.log(`External source : ${externalSourceTag} - will just displat this....`)
 							let externalSourceDiv = cardDiv.createEl("div", {
 								cls: "highlight-content-source",
 							});
-							let link = externalSourceDiv.createEl("a", {
+							externalSourceDiv.createEl("a", {
 								attr: {
-									href: externalSourceTag[1], 
+									href: externalSourceTag[1],
 									target: "_blank",
 								},
-								text: externalSourceTag[1], 
+								text: externalSourceTag[1],
 								cls: "source-article-link",
 							});
 						}
 					}
-
 
 					const createdAt = new Date(highlight.created_at * 1000).toLocaleString();
 					cardDiv.createEl("div", {
@@ -198,12 +220,6 @@ export class HighlightsView extends ItemView {
 						cls: "bookmark-view-online-btn",
 					});
 
-					let target: nip19.EventPointer = {
-						id: highlight.id,
-						author: highlight.pubkey,
-					}
-
-					let nevent = nip19.neventEncode(target)
 
 				});
 			} else {
