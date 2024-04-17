@@ -56,39 +56,9 @@ export class HighlightsView extends ItemView {
 				container.createEl("p", { text: `Total: ${highlights.length} ✅` });
 
 				highlights.reverse().forEach(async (highlight) => {
-					const authorTag = highlight.tags.find((tag: any[]) => tag[0] === "p");
-					let highlightProfile = await this.nostrService.getUserProfile(authorTag[1]);
-					let profileName = "";
-					let profilePicURL = "";
-
-					try {
-						const profileObject = JSON.parse(highlightProfile[0].content);
-						const { name, picture } = profileObject;
-						profileName = name;
-
-						if (picture == undefined) {
-							for (const tag of highlightProfile.tags) {
-								if (tag[0] === "image") {
-									const pictureUrl = tag[1];
-									profilePicURL = pictureUrl;
-									break;
-								}
-							}
-						} else {
-							profilePicURL = picture;
-						}
-					} catch (err) {
-						console.error("Problem Parsing Profile...setting defaults...", err)
-					}
-
 					const cardDiv = container.createEl("div", {
 						cls: "bookmark-card",
 					});
-
-					// TODO Need to get the highlight source article and display it with a link this is the "a" tag 
-					const sourceTag = highlight.tags.find((tag: any[]) => tag[0] === "a");
-					console.log(`Source /; ${sourceTag}`)
-
 					const contentDiv = cardDiv.createDiv({
 						cls: "highlight-content",
 					});
@@ -124,54 +94,99 @@ export class HighlightsView extends ItemView {
 					}
 
 					contentDiv.innerHTML = simpleAugmentedContent.replace(/\bhttps?:\/\/\S+/gi, "");
+
 					contentDiv.addEventListener("click", function() {
-						// Copy text to clipboard
 						const textToCopy = contentDiv.textContent;
 						navigator.clipboard.writeText(textToCopy)
 							.then(() => {
 								// Show tooltip
-								const tooltip = document.createElement("div");
-								tooltip.textContent = "Copied to clipboard!";
-								tooltip.classList.add("tooltip");
-								contentDiv.appendChild(tooltip);
-
-								// Remove tooltip after a certain duration
-								setTimeout(() => {
-									tooltip.remove();
-								}, 2000);
+								new Notice("📋 Copied to clipboard.")
 							})
 							.catch(error => {
 								console.error("Failed to copy text: ", error);
 							});
 					});
 
-					const contentSourceDiv = cardDiv.createEl("div", {
-						cls: "highlight-content-source",
-					});
-					contentSourceDiv.createEl("img", {
-						attr: {
-							src: `${profilePicURL}`,
-							alt: "Profile Pic",
-						},
-						cls: "bookmark-profile-pic",
-					});
-					const displayName = profileName ? profileName : "Unknown";
+					const authorTag = highlight.tags.find((tag: any[]) => tag[0] === "p");
 
-					//publicKeyDiv.createEl("span", { text: `${sourceArticleTitle} by ` });
-					let sourceArticleTitle = "Dummy Data "
-					//// Create a span element for the article name (as a clickable link)
-					contentSourceDiv.createEl("a", {
-						attr: {
-							href: "YOUR_EXTERNAL_WEBSITE_URL_HERE", // Replace with the actual URL
-							target: "_blank", // Open link in a new tab
-						},
-						text: `${sourceArticleTitle}`,
-						cls: "source-article-link",
-					});
+					// TODO Need to get the highlight source article and display it with a link this is the "a" tag 
+					const sourceTag = highlight.tags.find((tag: any[]) => tag[0] === "a");
 
-					contentSourceDiv.createEl("span", { text: "  " });
-					contentSourceDiv.createEl("span", { text: " | " });
-					contentSourceDiv.createEl("span", { text: displayName });
+					// if there's no a tag is there an r tag? 
+					const externalSourceTag = highlight.tags.find((tag: any[]) => tag[0] === "r");
+
+					if (authorTag !== undefined) {
+						let highlightProfile = await this.nostrService.getUserProfile(authorTag[1]);
+						let profileName = "";
+						let profilePicURL = "";
+
+						try {
+							const profileObject = JSON.parse(highlightProfile[0].content);
+							const { name, picture } = profileObject;
+							profileName = name;
+
+							if (picture == undefined) {
+								for (const tag of highlightProfile.tags) {
+									if (tag[0] === "image") {
+										const pictureUrl = tag[1];
+										profilePicURL = pictureUrl;
+										break;
+									}
+								}
+							} else {
+								profilePicURL = picture;
+							}
+						} catch (err) {
+							console.error("Problem Parsing Profile...setting defaults...", err)
+						}
+
+						if (sourceTag !== undefined) {
+							console.log(`Source Tag found : ${sourceTag} need to get this event from Nostr... and display its title.....`)
+							const contentSourceDiv = cardDiv.createEl("div", {
+								cls: "highlight-content-source",
+							});
+							contentSourceDiv.createEl("img", {
+								attr: {
+									src: `${profilePicURL}`,
+									alt: "Profile Pic",
+								},
+								cls: "bookmark-profile-pic",
+							});
+							const displayName = profileName ? profileName : "Unknown";
+
+							//publicKeyDiv.createEl("span", { text: `${sourceArticleTitle} by ` });
+							let sourceArticleTitle = "Dummy Data "
+							//// Create a span element for the article name (as a clickable link)
+							contentSourceDiv.createEl("a", {
+								attr: {
+									href: "YOUR_EXTERNAL_WEBSITE_URL_HERE", // Replace with the actual URL
+									target: "_blank", // Open link in a new tab
+								},
+								text: `${sourceArticleTitle}`,
+								cls: "source-article-link",
+							});
+
+							contentSourceDiv.createEl("span", { text: "  " });
+							contentSourceDiv.createEl("span", { text: " | " });
+							contentSourceDiv.createEl("span", { text: displayName });
+						}
+					} else {
+						if (externalSourceTag !== undefined) {
+							console.log(`External source : ${externalSourceTag} - will just displat this....`)
+							let externalSourceDiv = cardDiv.createEl("div", {
+								cls: "highlight-content-source",
+							});
+							let link = externalSourceDiv.createEl("a", {
+								attr: {
+									href: externalSourceTag[1], 
+									target: "_blank",
+								},
+								text: externalSourceTag[1], 
+								cls: "source-article-link",
+							});
+						}
+					}
+
 
 					const createdAt = new Date(highlight.created_at * 1000).toLocaleString();
 					cardDiv.createEl("div", {
@@ -190,34 +205,6 @@ export class HighlightsView extends ItemView {
 
 					let nevent = nip19.neventEncode(target)
 
-					//					new ButtonComponent(detailsDiv)
-					//						.setIcon("popup-open")
-					//						.setCta()
-					//						.setTooltip("View Online")
-					//						.onClick(() => {
-					//							const url = `https://njump.me/${nevent}`;
-					//							window.open(url, '_blank');
-					//						});
-					//
-					//					new ButtonComponent(detailsDiv)
-					//						.setIcon("download")
-					//						.setClass("bookmark-btn")
-					//						.setCta()
-					//						.setTooltip("Download & Open in Obsidian")
-					//						.onClick(() => {
-					//							this.downloadBookmark(highlight);
-					//						});
-					//
-					//					if (linkedEvent) {
-					//						new ButtonComponent(detailsDiv)
-					//							.setIcon("link")
-					//							.setCta()
-					//							.setTooltip("View Linked Event")
-					//							.onClick(() => {
-					//								window.open(linkedEventURL, '_blank');
-					//							});
-					//
-					//					}
 				});
 			} else {
 				const noBookmarksDiv = container.createEl("div", { cls: "nobookmarks-card" });
