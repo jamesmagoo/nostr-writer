@@ -8,6 +8,7 @@ import {
 } from "./src/settings";
 import { PublishedView, PUBLISHED_VIEW } from "./src/PublishedView";
 import { ReaderView, READER_VIEW } from "./src/ReaderView";
+import { HighlightsView , HIGHLIGHTS_VIEW } from "./src/HighlightsView";
 
 export default class NostrWriterPlugin extends Plugin {
 	nostrService: NostrService;
@@ -31,14 +32,24 @@ export default class NostrWriterPlugin extends Plugin {
 			(leaf) => new ReaderView(leaf, this, this.nostrService)
 		);
 
+		this.registerView(
+			HIGHLIGHTS_VIEW,
+			(leaf) => new HighlightsView(leaf, this, this.nostrService)
+		);
+
 		// icon candidates : 'checkmark', 'blocks', 'scroll', 'pin'
 		this.addRibbonIcon("blocks", "See notes published to Nostr", () => {
 			this.togglePublishedView();
 		});
 
-		// icon candidates: 'bookmark', 'magnifying-glass', 'star-list', 'blocks'
+		// icon candidates: 'bookmark', 'magnifying-glass', 'star-list', 'blocks', 'sheets-in-box'
 		this.addRibbonIcon("star-list", "See your Nostr Bookmarks", () => {
 			this.toggleReaderView();
+		});
+
+		// icon candidates: "lines-of-text",'quote-glyph'
+		this.addRibbonIcon("lines-of-text", "See your Nostr Highlights", () => {
+			this.toggleHighlightsView();
 		});
 
 		this.addRibbonIcon(
@@ -138,6 +149,23 @@ export default class NostrWriterPlugin extends Plugin {
 		);
 	};
 
+	toggleHighlightsView = async (): Promise<void> => {
+		const existing = this.app.workspace.getLeavesOfType(HIGHLIGHTS_VIEW);
+		if (existing.length) {
+			this.app.workspace.revealLeaf(existing[0]);
+			return;
+		}
+
+		await this.app.workspace.getRightLeaf(false).setViewState({
+			type: HIGHLIGHTS_VIEW,
+			active: true,
+		});
+
+		this.app.workspace.revealLeaf(
+			this.app.workspace.getLeavesOfType(HIGHLIGHTS_VIEW)[0]
+		);
+	};
+
 
 	onunload(): void {
 		this.nostrService.shutdownRelays();
@@ -146,6 +174,9 @@ export default class NostrWriterPlugin extends Plugin {
 			.forEach((leaf) => leaf.detach());
 		this.app.workspace
 			.getLeavesOfType(READER_VIEW)
+			.forEach((leaf) => leaf.detach());
+		this.app.workspace
+			.getLeavesOfType(HIGHLIGHTS_VIEW)
 			.forEach((leaf) => leaf.detach());
 	}
 

@@ -174,6 +174,7 @@
 .bookmark-created-at {
     font-size: 12px;
     color: #666;
+    margin-top: 8px;
 }
 
 .bookmark-pubkey {
@@ -199,3 +200,51 @@
 	margin-right: 5px;
 }
 
+.source-article-link {
+    font-weight: bold;
+}
+
+.highlight-content-source {
+    display: flex;
+    align-items: center;
+    margin-top: 8px;
+    font-size: 14px;
+	padding-left: 5px;
+}
+
+.highlight-created-at {
+    font-size: 12px;
+    color: #666;
+    margin-top: 8px;
+	margin-left: 5px;
+    align-items: center;
+	justify-content: space-between;
+	display: flex;
+}
+
+.highlight-content-source > span {
+    margin-right: 5px; 
+}
+
+.highlight-content {
+    font-size: 16px;
+    margin-bottom: 8px;
+    word-wrap: break-word;
+    cursor: pointer;
+    padding: 5px; 
+    border-radius: 5px; 
+    transition: background-color 0.3s, color 0.3s; 
+}
+
+.highlight-content:hover {
+    background-color: #f0f0f0; 
+    color: black; 
+}
+
+.highlight-btn {
+    margin-top: 2px;
+	margin-left: 5px;
+	margin-right: 5px;
+	cursor: pointer;
+	background-color: transparent;
+}

@@ -462,6 +462,27 @@ export default class NostrService {
 		}
 	}
 
+	async loadUserHighlights(): Promise<Event[]> {
+		let events: Event[] = [];
+		try {
+			if (this.pool === undefined || this.poolUrls.length === 0) {
+				this.setConnectionPool();
+			}
+			let highlights = await this.pool.querySync(this.poolUrls, { authors: [this.publicKey], kinds: [9802] });
+			if (highlights.length > 0) {
+				for (let event of highlights) {
+					events.push(event);
+				}
+			}
+			return events;
+
+		} catch (err) {
+			console.error('Error occurred while fetching bookmarks:', err);
+			return [];
+		}
+	}
+
+
 	async getUserProfile(userHexPubKey: string): Promise<Event> {
 		try {
 			if (this.pool === undefined || this.poolUrls.length === 0) {
@@ -469,6 +490,29 @@ export default class NostrService {
 			}
 			let profileEvent = await this.pool.querySync(this.poolUrls, { kinds: [0], authors: [userHexPubKey] })
 			return profileEvent;
+		} catch (err) {
+			console.error('Error occurred while fetching bookmarks:', err);
+			return null;
+		}
+	}
+
+	//	The a tag, used to refer to a (maybe parameterized) replaceable event
+	//for a parameterized replaceable event: ["a", <kind integer>:<32-bytes lowercase hex of a pubkey>:<d tag value>, <recommended relay URL, optional>]
+	//for a non-parameterized replaceable event: ["a", <kind integer>:<32-bytes lowercase hex of a pubkey>:, <recommended relay URL, optional>]
+	async getEventFromATag(tagValue: string): Promise<Event> {
+		let events = [];
+		try {
+			if (this.pool === undefined || this.poolUrls.length === 0) {
+				this.setConnectionPool();
+			}
+			let eventParts = tagValue.split(":");
+			let articles = await this.pool.querySync(this.poolUrls, { kinds: [parseInt(eventParts[0], 10)], authors: [eventParts[1]] })
+			for (let articleItem of articles) {
+				if (articleItem.tags.some(tag => tag[0] === "d" && tag[1] === eventParts[2])) {
+					events.push(articleItem);
+				}
+			}
+			return events[0];
 		} catch (err) {
 			console.error('Error occurred while fetching bookmarks:', err);
 			return null;
