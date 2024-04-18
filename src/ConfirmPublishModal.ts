@@ -32,6 +32,12 @@ export default class ConfirmPublishModal extends Modal {
 
 		// TODO check out Progress Bar Component...
 
+		if(this.file.extension !== "md"){
+			new Notice("❌ Only markdown files can be published.")
+			this.close()
+			return;
+		}
+
 		const frontmatterRegex = /---\s*[\s\S]*?\s*---/g;
 		const content = (await this.app.vault.read(this.file)).replace(frontmatterRegex, "").trim();
 
@@ -142,7 +148,6 @@ export default class ConfirmPublishModal extends Modal {
 
 
 									imageNameDiv.textContent = selectedBannerImage.name;
-									console.log(file)
 									new Notice(`✅ Selected image : ${file.name}`);
 								}
 							} else {
@@ -249,7 +254,7 @@ export default class ConfirmPublishModal extends Modal {
 			.setButtonText("Confirm and Publish")
 			.setCta()
 			.onClick(async () => {
-				if (confirm(`Are you sure you want to publish this note ${publishAsDraft ? "as a draft" : "publically" } to Nostr?`)) {
+				if (confirm(`Are you sure you want to publish this note ${publishAsDraft ? "as a draft" : "publically"} to Nostr?`)) {
 					// Disable the button and change the text to show a loading state
 					publishButton.setButtonText("Publishing...").setDisabled(true);
 					setTimeout(async () => {
